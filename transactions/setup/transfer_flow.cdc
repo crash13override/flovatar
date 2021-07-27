@@ -1,0 +1,30 @@
+
+//import FungibleToken from 0xee82856bf20e2aa6
+//import FungibleToken from "../../contracts/FungibleToken.cdc"
+//import FlowToken from "../../contracts/FlowToken.cdc"
+import FungibleToken from 0x9a0766d93b6608b7
+import FlowToken from 0x7e60df042a9c0868
+
+//This transactions transfers flow on testnet from one account to another
+transaction(
+    amount: UFix64,
+    to: Address) {
+
+      let sentVault: @FungibleToken.Vault
+
+      prepare(signer: AuthAccount) {
+        let vaultRef = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
+          ?? panic("Could not borrow reference to the owner's Vault!")
+
+        self.sentVault <- vaultRef.withdraw(amount: amount)
+      }
+
+      execute {
+        let recipient = getAccount(to)
+
+        let receiverRef = recipient.getCapability(/public/flowTokenReceiver)!.borrow<&{FungibleToken.Receiver}>()
+          ?? panic("Could not borrow receiver reference to the recipient's Vault")
+
+        receiverRef.deposit(from: <-self.sentVault)
+      }
+}

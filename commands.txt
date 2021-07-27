@@ -1,0 +1,122 @@
+
+SETUP
+-----------------------------------------------------------------
+
+//DEPLOY THE PROJECT WITH ALL THE CONTRACTS
+flow project deploy
+
+//SETUP ADMIN ACCOUNT
+flow transactions send ./transactions/setup/admin.cdc
+
+//INITIALIZE AUCTION COLLECTION TO WEBSITE OWNER
+flow transactions send ./transactions/setup/auction_collection.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+
+//INITIALIZE WEBSHOT COLLECTION TO ACCOUNT
+flow transactions send ./transactions/setup/webshot_collection.cdc
+
+//INITIALIZE WEBSITE COLLECTION TO ACCOUNT
+flow transactions send ./transactions/setup/website_collection.cdc
+
+
+//CREATE A NEW WEBSITE
+flow transactions send ./transactions/create/website.cdc --args-json '[{"type": "String","value": "a16z"},{"type": "String","value": "https://a16z.com"},{"type": "String","value": "a16z"},{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "String","value": "a16z homepage"},{"type": "UInt64","value": "60"},{"type": "Bool","value": false}]'
+
+
+WEBSHOT AND AUCTION
+-----------------------------------------------------------------
+
+//CREATE A NEW WEBSHOT
+flow transactions send ./transactions/create/webshot.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "Dictionary","value": [{"key": {"type":"String", "value":"mobile"}, "value": {"type":"String", "value":"mobileImg.png"}}]},{"type": "String","value": "image content goes here"},{"type": "String","value": "https://d16qhp206h6o3o.cloudfront.net/28/a16z26-httpsa16zcom26-2021-04-14-15-00-11-desktop.png"}]'
+
+//CREATE A NEW AUCTION
+flow transactions send ./transactions/create/auction.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "60.0"},{"type": "UFix64", "value": "60.0"}]'
+
+//CREATE A NEW WEBSHOT AND START AN AUCTION FOR IT
+flow transactions send ./transactions/create/auction_webshot.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "Dictionary","value": [{"key": {"type":"String", "value":"mobile"}, "value": {"type":"String", "value":"mobileImg.png"}}]},{"type": "String","value": "image content goes here"},{"type": "String","value": "https://d16qhp206h6o3o.cloudfront.net/28/a16z26-httpsa16zcom26-2021-04-14-15-00-11-desktop.png"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "60.0"},{"type": "UFix64", "value": "60.0"}]'
+
+//PLACES A BID FOR AN AUCTION
+flow transactions send ./transactions/buy/place_bid.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64", "value": "1"},{"type": "UFix64", "value": "10.0"}]'
+
+//PURCHASE A WEBSHOT FROM A DIRECT SALE LISTING
+flow transactions send ./transactions/buy/purchase_sale.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64", "value": "1"},{"type": "UFix64", "value": "1.0"}]'
+
+//SETTLE AN AUCTION ONCE TIME HAS EXPIRED
+flow transactions send ./transactions/buy/settle.cdc --args-json '[{"type": "UInt64", "value": "1"}]'
+
+
+SALE OFFER
+-----------------------------------------------------------------
+
+//CREATE A DIRECT SALE LISTING FOR A WEBSHOT
+flow transactions send ./transactions/create/sale.cdc --args-json '[{"type": "UInt64", "value": "1"}, {"type": "UFix64", "value": "1.0"}]'
+flow transactions send ./transactions/create/sale.cdc --args-json '[{"type": "UInt64", "value": "1"}, {"type": "UFix64", "value": "1.0"}]'  --network testnet
+
+//UPDATE THE PRICE FOR A SALE OFFER
+flow transactions send ./transactions/buy/update_sale.cdc --args-json '[{"type": "UInt64", "value": "1"}, {"type": "UFix64", "value": "2.0"}]'
+
+//CANCEL A SALE OFFER
+flow transactions send ./transactions/buy/cancel_sale.cdc --args-json '[{"type": "UInt64", "value": "1"}]'
+
+
+SCRIPTS
+-----------------------------------------------------------------
+
+//CHECK ACCOUNT AND DEPLOYED CONTRACTS
+flow accounts get 0xf8d6e0586b0a20c7
+
+//CHECK ACCOUNT FOR WEBSITE, WEBSHOT AND SALE COLLECTION DATA
+flow scripts execute ./scripts/check_account.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+flow scripts execute ./scripts/check_account.cdc --args-json '[{"type": "Address","value": "0xba333ae18b0a83b9"}]' --network testnet
+
+//GET ALL AUCTIONS
+flow scripts execute ./scripts/get_auctions.cdc
+
+//GET ALL WEBSITES FOR AN ADDRESS
+flow scripts execute ./scripts/get_websites.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+flow scripts execute ./scripts/get_websites.cdc --args-json '[{"type": "Address","value": "0xba333ae18b0a83b9"}]' --network testnet
+
+//GET ALL WEBSHOTS FOR AN ADDRESS
+flow scripts execute ./scripts/get_webshots.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+
+//GET ALL SALES FOR AN ADDRESS
+flow scripts execute ./scripts/get_sales.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+
+
+EVENTS
+-----------------------------------------------------------------
+
+//GET WEBSITE CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Website.Created 0
+
+//GET WEBSHOT CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Webshot.Created 0
+flow events get A.ba333ae18b0a83b9.Webshot.Created 0 --network testnet
+
+//GET SALE CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.ForSale 0
+
+//GET SALE COMPLETED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.WebshotPurchased 0
+
+//GET SALE PRICE CHANGED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.PriceChanged 0
+
+//GET SALE REMOVED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.SaleWithdrawn 0
+
+
+
+-----------------------------------------------------------------
+
+{"type": "String", "value": "a16z"}
+{"type": "UInt64", "value": "0"}
+{"type": "UFix64", "value": "1.0"}
+{"type": "Bool", "value": false}
+{"type": "Dictionary", "value": [{"key": {"type": "String", "value": "mobile"}, "value": {"type": "String", "value": "mobileImg.png"}}]}
+
+
+-----------------------------------------------------------------
+
+
+
+

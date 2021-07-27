@@ -1,0 +1,78 @@
+{
+  "emulators": {
+    "default": {
+      "port": 3569,
+      "serviceAccount": "emulator-account"
+    }
+  },
+  "contracts": {
+    "Website": "./contracts/Website.cdc",
+    "Webshot": "./contracts/Webshot.cdc",
+    "Marketplace": "./contracts/Marketplace.cdc",
+    "Drop": "./contracts/Drop.cdc",
+    "FungibleToken": {
+      "source": "./contracts/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "0xee82856bf20e2aa6",
+        "testnet": "0x9a0766d93b6608b7"
+      }
+    },
+    "NonFungibleToken": {
+      "source": "./contracts/NonFungibleToken.cdc",
+      "aliases": {
+        "testnet": "0x631e88ae7f1d7c20"
+      }
+    },
+    "FlowToken": {
+      "source": "./contracts/FlowToken.cdc",
+      "aliases": {
+          "testnet": "0x7e60df042a9c0868",
+          "emulator": "0x0ae53cb6e3f42a79"
+      }
+    },
+    "FUSD": {
+      "source": "./contracts/FUSD.cdc",
+      "aliases": {
+        "testnet": "0xe223d8a629e49c68",
+        "emulator": "0x0ae53cb6e3f42a79"
+      }
+    }
+  },
+  "networks": {
+    "emulator": {
+      "host": "127.0.0.1:3569",
+      "chain": "flow-emulator"
+    },
+    "testnet": {
+      "host": "access.testnet.nodes.onflow.org:9000",
+      "chain": "flow-testnet"
+    }
+  },
+  "accounts": {
+    "emulator-account": {
+      "address": "0xf8d6e0586b0a20c7",
+      "keys": "6aeadb5ccba5cb1c20e8228306115852e29a1d19a4b0013eee291147da493175"
+    },
+    "testnet-account": {"fromFile": "./flow.testnet.json"}
+  },
+  "deployments": {
+    "testnet": {
+      "testnet-account": [
+        "Website",
+        "Webshot",
+        "Marketplace",
+        "Drop"
+      ]
+    },
+    "emulator": {
+      "emulator-account": [
+        "Website",
+        "Webshot",
+        "Marketplace",
+        "Drop",
+        "NonFungibleToken",
+        "FUSD"
+      ]
+    }
+  }
+}
