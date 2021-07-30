@@ -119,7 +119,7 @@ pub contract FlovatarComponentType {
         pub let type: String
         pub let color: String
         pub let description: String
-        pub let svg: String
+        pub let svg: String?
         pub let maxMintableComponents: UInt64
         pub let totalMintedComponents: UInt64
         pub let lastComponentMintedAt: UFix64
@@ -130,7 +130,7 @@ pub contract FlovatarComponentType {
             type: String,
             color: String,
             description: String,
-            svg: String,
+            svg: String?,
             maxMintableComponents: UInt64
         ) {
             self.id = id
@@ -158,7 +158,7 @@ pub contract FlovatarComponentType {
                     type: componentType!.type,
                     color: componentType!.color,
                     description: componentType!.description,
-                    svg: '',
+                    svg: nil,
                     maxMintableComponents: componentType!.maxMintableComponents
                     ))
             }
