@@ -218,6 +218,12 @@ pub contract FlovatarComponent: NonFungibleToken {
     //This method can only be called from another contract in the same account. In FlovatarComponent case it is called from the Admin that is used to administer the components
     access(account) fun createComponent(type_id: UInt64) : @FlovatarComponent.NFT {
 
+        pre {
+            let componentType: FlovatarComponentType.ComponentTypeData = FlovatarComponentType.getComponentType(self.type_id)!
+            let totalMintedComponents: UInt64 = FlovatarComponentType.getTotalMintedComponents(id: type_id)!
+            totalMintedComponents < componentType.maxMintableComponents : "Reached maximum mintable components for this type"
+        }
+        
 
         var newNFT <- create NFT(type_id: type_id)
         emit Created(id: newNFT.id, type_id: type_id)
