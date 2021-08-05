@@ -5,16 +5,11 @@ import FungibleToken from "./FungibleToken.cdc"
 
  The contract that defines the Flovatar NFT and a Collection to manage them
 
-1 head shape -> 10 colors
-10 hairs -> 10 colors
-10 eyes+eyebrows -> 5 colors
-10 nose -> 10 colors
-10 mouth -> 5 colors
-10 clothes -> 10 colors
+Base components that will be used to generate the unique combination of the Flovatar
+'head', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
 
-10 facial hair -> 10 colors
-10 eyeglasses -> 10 colors
-50 accessories (hat, necklace, piercing, earring, pet, stethoscope, ...) -> 1 color
+Extra components that can be added in a second moment
+'hat', eyeglass', 'accessory'
 
  */
 
@@ -24,106 +19,78 @@ pub contract Flovatar: NonFungibleToken {
     pub let CollectionPublicPath: PublicPath
 
     pub var totalSupply: UInt64
-    pub let maxSupply: UInt64
-    pub let componentTypes: [String]
-    pub let componentBaseTypes: [String]
+    access(contract) let mintedCombinations: [String]
+    access(contract) let mintedNames: [String]
 
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, creator: Address)
+    pub event Created(id: UInt64, metadata: Metadata)
+
+
+    //content is embedded in the NFT both as content and as URL pointing to an IPFS
+    pub struct Metadata {
+        pub let name: String
+        pub let mint: UInt64
+        pub let svg: String
+        pub let combination: String
+        pub let creatorAddress: Address
+        pub let components: {String: UInt64}
+
+
+        init(
+            name: String,
+            mint: UInt64
+            svg: String,
+            combination: String,
+            creatorAddress: Address,
+            components: {String: UInt64},
+        ) {
+                self.name = name
+                self.mint = mint
+                self.svg = svg
+                self.combination = combination
+                self.creatorAddress = creatorAddress
+                self.components = components
+        }
+    }
 
     //The public interface can show metadata and the content for the Flovatar
     pub resource interface Public {
         pub let id: UInt64
         pub let metadata: Metadata
+        access(contract) let additionalComponents: {String: UInt64}
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
         pub let description: String
         pub let schema: String?
 
-        pub let content: String
+        pub fun getAdditionalComponents(): {String: UInt64}
+        pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64}
 
-        access(contract) let royalty: {String: Royalty}
-    }
-
-    //content is embedded in the NFT both as content and as URL pointing to an IPFS
-    pub struct Metadata {
-        pub let websiteAddress: Address
-        pub let websiteId: UInt64
-        pub let mint: UInt64
-        pub let name: String
-        pub let url: String
-        pub let owner: String
-        pub let ownerAddress: Address
-        pub let description: String
-        pub let date: UFix64
-        pub let ipfs: {String: String}
-        pub let imgUrl: String
-
-        init(
-            websiteAddress: Address,
-            websiteId: UInt64,
-            mint: UInt64
-            name: String,
-            url: String,
-            owner: String,
-            ownerAddress:Address,
-            description: String,
-            date: UFix64,
-            ipfs: {String: String},
-            imgUrl: String
-        ) {
-                self.websiteAddress = websiteAddress
-                self.websiteId = websiteId
-                self.mint = mint
-                self.name = name
-                self.url = url
-                self.owner = owner
-                self.ownerAddress = ownerAddress
-                self.description = description
-                self.date = date
-                self.ipfs = ipfs
-                self.imgUrl = imgUrl
-        }
-    }
-
-    pub struct Royalty{
-        pub let wallet: Capability<&{FungibleToken.Receiver}>
-        pub let cut: UFix64
-
-        init(wallet: Capability<&{FungibleToken.Receiver}>, cut: UFix64 ){
-           self.wallet = wallet
-           self.cut = cut
-        }
     }
 
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
+        pub let metadata: Metadata
+        access(contract) let additionalComponents: {String: UInt64}
+
         pub let name: String
         pub let description: String
         pub let schema: String?
-        pub let content: String
-        pub let metadata: Metadata
-        access(contract) let royalty: {String: Royalty}
 
-        init(
-            content: String,
-            metadata: Metadata,
-            royalty: {String: Royalty}) {
+        init(metadata: Metadata) {
 
             Flovatar.totalSupply = Flovatar.totalSupply + UInt64(1)
-            Website.setTotalMintedFlovatars(id: metadata.websiteId, value: Website.getTotalMintedFlovatars(id: metadata.websiteId)! + UInt64(1))
-            Website.setLastFlovatarMintedAt(id: metadata.websiteId, value: metadata.date)
 
             self.id = Flovatar.totalSupply
-            self.content = content
             self.metadata = metadata
-            self.royalty = royalty
+            self.additionalComponents = {}
+
             self.schema = nil
             self.name = metadata.name
-            self.description = metadata.description
+            self.description = metadata.name
         }
 
         pub fun getID(): UInt64 {
@@ -134,8 +101,15 @@ pub contract Flovatar: NonFungibleToken {
             return self.metadata
         }
 
-        pub fun getRoyalty(): {String: Royalty} {
-            return self.royalty
+        pub fun getAdditionalComponents(): {String: UInt64} {
+            return self.additionalComponents
+        }
+        pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64} {
+            //TODO check limitations for each type
+            let componentType = component.getType()
+            self.additionalComponents.insert(key: componentType.type, component.typeId)
+            //TODO burn the additional component NFT
+            return self.additionalComponents
         }
     }
 
@@ -226,15 +200,7 @@ pub contract Flovatar: NonFungibleToken {
         }
     }
 
-    pub fun getContentForFlovatar(address: Address, FlovatarId: UInt64) : String? {
-        let account = getAccount(address)
-        if let FlovatarCollection= account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            return FlovatarCollection.borrowFlovatar(id: FlovatarId)!.content
-        }
-        return nil
-    }
 
-    // We cannot return the content here since it will be too big to run in a script
     pub fun getFlovatar(address: Address, FlovatarId: UInt64) : FlovatarData? {
 
         let account = getAccount(address)
@@ -250,7 +216,6 @@ pub contract Flovatar: NonFungibleToken {
         return nil
     }
 
-    // We cannot return the content here since it will be too big to run in a script
     pub fun getFlovatars(address: Address) : [FlovatarData] {
 
         var FlovatarData: [FlovatarData] = []
@@ -268,15 +233,110 @@ pub contract Flovatar: NonFungibleToken {
         return FlovatarData
     }
 
-    pub fun createFlovatar(
-        components: {String: @FlovatarComponent.NFT},
-        name: String) : @Flovatar.NFT {
 
-        var newNFT <- create NFT(
-            components: components,
-            name: name
+    pub fun getMintedCombinations() : [String] {
+        return Flovatar.mintedCombinations
+    }
+    pub fun getMintedNames() : [String] {
+        return Flovatar.mintedNames
+    }
+
+    pub fun checkMintedCombination(combination: String) : Bool {
+        return Flovatar.mintedCombinations.contains(combination)
+    }
+    pub fun checkMintedName(name: String) : [String] {
+        return Flovatar.mintedNames.contains(name)
+    }
+
+    access(account) fun addMintedCombination(combination: String) {
+        Flovatar.mintedCombinations.append(combination)
+    }
+    access(account) fun addMintedName(name: String) {
+        Flovatar.mintedNames.append(name)
+    }
+
+    pub fun getCombinationString(
+        head: UInt64,
+        hair: UInt64,
+        facialHair: UInt64?,
+        eyes: UInt64,
+        nose: UInt64,
+        mouth: UInt64,
+        clothing: UInt64
+    ) : String {
+        return String("Head").concat(String(head)).concat("-Hair").concat(String(hair)).concat("-FacialHair").concat(String(facialHair ?? "x")).concat("-Eyes").concat(String(eyes)).concat("-Nose").concat(String(nose)).concat("-Mouth").concat(String(mouth)).concat("-Clothing").concat(String(clothing))
+    }
+
+    pub fun checkCombinationAvailable(
+        head: UInt64,
+        hair: UInt64,
+        facialHair: UInt64?,
+        eyes: UInt64,
+        nose: UInt64,
+        mouth: UInt64,
+        clothing: UInt64
+    ) : Bool {
+        let combinationString = Flovatar.getCombinationString(
+            head: head,
+            hair: hair,
+            facialHair: facialHair,
+            eyes: eyes,
+            nose: nose,
+            mouth: mouth,
+            clothing: clothing
         )
-        emit Created(id: Flovatar.totalSupply, components: {String: UInt64})
+        return Flovatar.checkMintedCombination(combinationString)
+    }
+
+    //'head', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
+    pub fun createFlovatar(
+        name: String,
+        head: @FlovatarComponent.NFT,
+        hair: @FlovatarComponent.NFT,
+        facialHair: @FlovatarComponent.NFT?,
+        eyes: @FlovatarComponent.NFT,
+        nose: @FlovatarComponent.NFT,
+        mouth: @FlovatarComponent.NFT,
+        clothing: @FlovatarComponent.NFT
+    ) : @Flovatar.NFT {
+
+
+        pre {
+            let combinationString = Flovatar.getCombinationString(
+                head: head.typeId, 
+                hair: hair.typeId, 
+                facialHair: facialHair ? facialHair.typeId : nil, 
+                eyes: eyes.typeId, 
+                nose: nose.typeId, 
+                mouth: mouth.typeId, 
+                clothing: clothing.typeId)
+
+                Flovatar.checkMintedCombination(combinationString) == false : "This combination has already been minted"
+
+                Flovatar.checkMintedName(combinationString) == false : "This name has already been minted"
+        }
+
+        let metadata = Metadata(
+            name: name,
+            mint: Flovatar.totalSupply + UInt64(1),
+            svg: "" //TODO implement createSVG function
+            combination: combinationString,
+            creatorAddress: self.account.address //TODO check and implement via parameter?
+            components: {
+                "head": head.typeId, 
+                "hair": hair.typeId, 
+                "facialHair": facialHair ? facialHair.typeId : nil, 
+                "eyes": eyes.typeId, 
+                "nose": nose.typeId, 
+                "mouth": mouth.typeId, 
+                "clothing": clothing.typeId
+            }
+        )
+
+        var newNFT <- create NFT(metadata: metadata)
+        emit Created(id: Flovatar.totalSupply, metadata: metadata)
+
+        //TODO burn all the components
 
         return <- newNFT
     }
@@ -287,10 +347,8 @@ pub contract Flovatar: NonFungibleToken {
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
-        self.maxSupply = UInt64(100000)
-        self.componentTypes = ['head', 'hair', 'eye', 'nose', 'mouth', 'clothe', 'facialhair', 'eyeglass', 'accessory']
-        self.componentBaseTypes = ['head', 'hair', 'eye', 'nose', 'mouth', 'clothe']
-
+        self.mintedCombinations = []
+        self.mintedNames = []
         self.account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
         self.account.link<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
 
