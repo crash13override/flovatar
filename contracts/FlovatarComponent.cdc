@@ -1,6 +1,6 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import FungibleToken from "./FungibleToken.cdc"
-import FlovatarComponentType from "./FlovatarComponentType.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 
 /*
 
@@ -18,15 +18,16 @@ pub contract FlovatarComponent: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, typeId: UInt64)
+    pub event Created(id: UInt64, templateId: UInt64)
 
     //The public interface can show metadata and the content for the Webshot
     pub resource interface Public {
         pub let id: UInt64
-        pub let typeId: UInt64
+        pub let templateId: UInt64
         pub let mint: UInt64
+        pub fun getTemplate(): FlovatarComponentTemplate.ComponentTemplateData
         pub fun getSvg(): String
-        pub fun getType(): FlovatarComponentType.ComponentTypeData
+        pub fun getCategory(): String
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -38,38 +39,42 @@ pub contract FlovatarComponent: NonFungibleToken {
 
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
-        pub let typeId: UInt64
+        pub let templateId: UInt64
         pub let mint: UInt64
         pub let name: String
         pub let description: String
         pub let schema: String?
 
-        init(typeId: UInt64) {
+        init(templateId: UInt64) {
 
             FlovatarComponent.totalSupply = FlovatarComponent.totalSupply + UInt64(1)
 
-            let componentType = FlovatarComponentType.getComponentType(self.typeId)!
+            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
 
             self.id = FlovatarComponent.totalSupply
-            self.typeId = typeId
-            self.mint = FlovatarComponentType.getTotalMintedComponents(id: typeId)! + UInt64(1)
-            self.name = componentType.name
-            self.description = componentType.description
+            self.templateId = templateId
+            self.mint = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)! + UInt64(1)
+            self.name = componentTemplate.name
+            self.description = componentTemplate.description
 
-            FlovatarComponentType.setTotalMintedComponents(id: typeId, value: self.mint)
-            FlovatarComponentType.setLastComponentMintedAt(id: typeId, value: getCurrentBlock().timestamp)
+            FlovatarComponentTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
+            FlovatarComponentTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
         }
 
         pub fun getID(): UInt64 {
             return self.id
         }
 
-        pub fun getType(): FlovatarComponentType.ComponentTypeData {
-            return FlovatarComponentType.getComponentType(self.typeId)!
+        pub fun getTemplate(): FlovatarComponentTemplate.ComponentTemplateData {
+            return FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
         }
 
         pub fun getSvg(): String {
-            return self.getType().svg
+            return self.getTemplate().svg
+        }
+
+        pub fun getCategory(): String {
+            return self.getTemplate().category
         }
     }
 
@@ -153,7 +158,7 @@ pub contract FlovatarComponent: NonFungibleToken {
 
     pub struct ComponentData {
         pub let id: UInt64
-        pub let typeId: UInt64
+        pub let templateId: UInt64
         pub let mint: UInt64
         pub let name: String
         pub let description: String
@@ -161,16 +166,16 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub let color: String
         //pub let svg: String?
 
-        init(id: UInt64, typeId: UInt64, mint: UInt64) {
+        init(id: UInt64, templateId: UInt64, mint: UInt64) {
             self.id = id
-            self.typeId = typeId
+            self.templateId = templateId
             self.mint = mint
-            let componentType = FlovatarComponentType.getComponentType(typeId)!
-            self.name = componentType.name
-            self.description = componentType.description
-            self.type = componentType.type
-            self.color = componentType.color
-            //self.svg = componentType.svg
+            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(templateId)!
+            self.name = componentTemplate.name
+            self.description = componentTemplate.description
+            self.type = componentTemplate.type
+            self.color = componentTemplate.color
+            //self.svg = componentTemplate.svg
         }
     }
 
@@ -188,7 +193,7 @@ pub contract FlovatarComponent: NonFungibleToken {
             if let component = componentCollection.borrowComponent(id: componentId) {
                 return ComponentData(
                     id: componentId,
-                    typeId: component!.typeId,
+                    templateId: component!.templateId,
                     mint: component!.mint
                 )
             }
@@ -207,7 +212,7 @@ pub contract FlovatarComponent: NonFungibleToken {
                     var component = componentCollection.borrowComponent(id: id)
                     componentData.append(ComponentData(
                         id: id,
-                        typeId: component!.typeId,
+                        templateId: component!.templateId,
                         mint: component!.mint
                         ))
                 }
@@ -216,17 +221,17 @@ pub contract FlovatarComponent: NonFungibleToken {
         }
 
     //This method can only be called from another contract in the same account. In FlovatarComponent case it is called from the Admin that is used to administer the components
-    access(account) fun createComponent(typeId: UInt64) : @FlovatarComponent.NFT {
+    access(account) fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
 
         pre {
-            let componentType: FlovatarComponentType.ComponentTypeData = FlovatarComponentType.getComponentType(self.typeId)!
-            let totalMintedComponents: UInt64 = FlovatarComponentType.getTotalMintedComponents(id: typeId)!
-            totalMintedComponents < componentType.maxMintableComponents : "Reached maximum mintable components for this type"
+            let componentTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
+            let totalMintedComponents: UInt64 = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)!
+            totalMintedComponents < componentTemplate.maxMintableComponents : "Reached maximum mintable components for this type"
         }
         
 
-        var newNFT <- create NFT(typeId: typeId)
-        emit Created(id: newNFT.id, typeId: typeId)
+        var newNFT <- create NFT(templateId: templateId)
+        emit Created(id: newNFT.id, templateId: templateId)
 
         return <- newNFT
     }

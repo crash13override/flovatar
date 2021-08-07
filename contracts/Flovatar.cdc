@@ -6,7 +6,7 @@ import FungibleToken from "./FungibleToken.cdc"
  The contract that defines the Flovatar NFT and a Collection to manage them
 
 Base components that will be used to generate the unique combination of the Flovatar
-'head', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
+'body', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
 
 Extra components that can be added in a second moment
 'hat', eyeglass', 'accessory'
@@ -28,7 +28,6 @@ pub contract Flovatar: NonFungibleToken {
     pub event Created(id: UInt64, metadata: Metadata)
 
 
-    //content is embedded in the NFT both as content and as URL pointing to an IPFS
     pub struct Metadata {
         pub let name: String
         pub let mint: UInt64
@@ -66,15 +65,17 @@ pub contract Flovatar: NonFungibleToken {
         pub let description: String
         pub let schema: String?
 
-        pub fun getAdditionalComponents(): {String: UInt64}
+        pub fun getAdditionalComponents(): {UInt64: String}
         pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64}
+
+        pub fun getSvg(): String
 
     }
 
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
         pub let metadata: Metadata
-        access(contract) let additionalComponents: {String: UInt64}
+        access(contract) let additionalComponents: {UInt64: String}
 
         pub let name: String
         pub let description: String
@@ -104,12 +105,30 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getAdditionalComponents(): {String: UInt64} {
             return self.additionalComponents
         }
+        
         pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64} {
             //TODO check limitations for each type
-            let componentType = component.getType()
-            self.additionalComponents.insert(key: componentType.type, component.typeId)
-            //TODO burn the additional component NFT
+            //TODO check if already added the same templateId
+
+            self.additionalComponents.insert(key: component.templateId, component.getCategory())
+
+            destroy component
             return self.additionalComponents
+        }
+
+        pub fun getSvg(): String {
+            let svg: String = "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'>"
+
+            svg.concat(self.metadata.svg)
+
+            for templateId in self.getAdditionalComponents() {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(templateId) {
+                    svg.concat(template.svg!)
+                }
+            }
+
+            svg.concat("</svg>")
+
         }
     }
 
@@ -241,13 +260,6 @@ pub contract Flovatar: NonFungibleToken {
         return Flovatar.mintedNames
     }
 
-    pub fun checkMintedCombination(combination: String) : Bool {
-        return Flovatar.mintedCombinations.contains(combination)
-    }
-    pub fun checkMintedName(name: String) : [String] {
-        return Flovatar.mintedNames.contains(name)
-    }
-
     access(account) fun addMintedCombination(combination: String) {
         Flovatar.mintedCombinations.append(combination)
     }
@@ -256,7 +268,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
     pub fun getCombinationString(
-        head: UInt64,
+        body: UInt64,
         hair: UInt64,
         facialHair: UInt64?,
         eyes: UInt64,
@@ -264,11 +276,11 @@ pub contract Flovatar: NonFungibleToken {
         mouth: UInt64,
         clothing: UInt64
     ) : String {
-        return String("Head").concat(String(head)).concat("-Hair").concat(String(hair)).concat("-FacialHair").concat(String(facialHair ?? "x")).concat("-Eyes").concat(String(eyes)).concat("-Nose").concat(String(nose)).concat("-Mouth").concat(String(mouth)).concat("-Clothing").concat(String(clothing))
+        return String("B").concat(String(body)).concat("H").concat(String(hair)).concat("F").concat(String(facialHair ?? "x")).concat("E").concat(String(eyes)).concat("N").concat(String(nose)).concat("M").concat(String(mouth)).concat("C").concat(String(clothing))
     }
 
     pub fun checkCombinationAvailable(
-        head: UInt64,
+        body: UInt64,
         hair: UInt64,
         facialHair: UInt64?,
         eyes: UInt64,
@@ -277,7 +289,7 @@ pub contract Flovatar: NonFungibleToken {
         clothing: UInt64
     ) : Bool {
         let combinationString = Flovatar.getCombinationString(
-            head: head,
+            body: body,
             hair: hair,
             facialHair: facialHair,
             eyes: eyes,
@@ -285,58 +297,88 @@ pub contract Flovatar: NonFungibleToken {
             mouth: mouth,
             clothing: clothing
         )
-        return Flovatar.checkMintedCombination(combinationString)
+        return ! Flovatar.mintedCombinations.contains(combinationString)
     }
 
-    //'head', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
+    pub fun checkNameAvailable(name: String) : Bool {
+        return ! Flovatar.mintedNames.contains(name)
+    }
+
     pub fun createFlovatar(
         name: String,
-        head: @FlovatarComponent.NFT,
+        body: @FlovatarComponent.NFT,
         hair: @FlovatarComponent.NFT,
         facialHair: @FlovatarComponent.NFT?,
         eyes: @FlovatarComponent.NFT,
         nose: @FlovatarComponent.NFT,
         mouth: @FlovatarComponent.NFT,
-        clothing: @FlovatarComponent.NFT
+        clothing: @FlovatarComponent.NFT,
+        address: Address
     ) : @Flovatar.NFT {
 
 
         pre {
+
+            name.length > 2 : "The name is too short"
+            name.length < 20 : "The name is too long" 
+
+            body.getCategory() == "body" : "The body component belongs to the wrong category"
+            hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
+            if(facialHair != nil){
+                facialHair.getCategory() == "facialHair" : "The facial hair component belongs to the wrong category"
+            }
+            eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
+            nose.getCategory() == "nose" : "The nose component belongs to the wrong category"
+            mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
+            clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
+
+            Flovatar.checkNameAvailable(combinationString) == false : "This name has already been taken"
+
             let combinationString = Flovatar.getCombinationString(
-                head: head.typeId, 
-                hair: hair.typeId, 
-                facialHair: facialHair ? facialHair.typeId : nil, 
-                eyes: eyes.typeId, 
-                nose: nose.typeId, 
-                mouth: mouth.typeId, 
-                clothing: clothing.typeId)
+                head: head.templateId, 
+                hair: hair.templateId, 
+                facialHair: facialHair ? facialHair.templateId : nil, 
+                eyes: eyes.templateId, 
+                nose: nose.templateId, 
+                mouth: mouth.templateId, 
+                clothing: clothing.templateId)
 
-                Flovatar.checkMintedCombination(combinationString) == false : "This combination has already been minted"
+            Flovatar.mintedCombinations.contains(combinationString) == false : "This combination has already been taken"
 
-                Flovatar.checkMintedName(combinationString) == false : "This name has already been minted"
+
         }
+
+        let svg = body.getSvg().concat(facialHair.getSvg()).concat(eyes.getSvg()).concat(nose.getSvg()).concat(mouth.getSvg()).concat(clothing.getSvg()).concat(hair.getSvg())
 
         let metadata = Metadata(
             name: name,
             mint: Flovatar.totalSupply + UInt64(1),
-            svg: "" //TODO implement createSVG function
+            svg: svg
             combination: combinationString,
-            creatorAddress: self.account.address //TODO check and implement via parameter?
+            creatorAddress: address
             components: {
-                "head": head.typeId, 
-                "hair": hair.typeId, 
-                "facialHair": facialHair ? facialHair.typeId : nil, 
-                "eyes": eyes.typeId, 
-                "nose": nose.typeId, 
-                "mouth": mouth.typeId, 
-                "clothing": clothing.typeId
+                "body": body.templateId, 
+                "hair": hair.templateId, 
+                "facialHair": facialHair ? facialHair.templateId : nil, 
+                "eyes": eyes.templateId, 
+                "nose": nose.templateId, 
+                "mouth": mouth.templateId, 
+                "clothing": clothing.templateId
             }
         )
 
         var newNFT <- create NFT(metadata: metadata)
         emit Created(id: Flovatar.totalSupply, metadata: metadata)
 
-        //TODO burn all the components
+        destroy body
+        destroy hair
+        if(facialHair){
+            destroy facialHair
+        }
+        destroy eyes
+        destroy nose
+        destroy mouth
+        destroy clothing
 
         return <- newNFT
     }
