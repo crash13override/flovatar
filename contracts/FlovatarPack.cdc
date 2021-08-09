@@ -1,285 +1,278 @@
-import NonFungibleToken from "./NonFungibleToken.cdc"
-import FungibleToken from "./FungibleToken.cdc"
-//import FlowToken from "./FlowToken.cdc"
-//import FUSD from "./FUSD.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import FlovatarComponent from "./FlovatarComponent.cdc"
 
 /*
 
- The contract that defines the Website NFT and a Collection to manage them
-
- This contract based on the following git repo
-
- - The Versus Auction contract created by Bjartek and Alchemist
- https://github.com/versus-flow/auction-flow-contract
-
- Each Website defines the name, URL, drop frequency, minting number for all the webshots created from it
+ The contract that defines the Flovatar Packs and a Collection to manage them
 
  */
 
-pub contract FlovatarPack: NonFungibleToken {
+pub contract FlovatarPack {
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
 
     pub var totalSupply: UInt64
-    access(contract) let totalMintedWebshots: { UInt64: UInt64 }
-    access(contract) let lastWebshotMintedAt: { UInt64: UFix64 }
 
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, name: String, url: String)
+    pub event Created(id: UInt64)
+    pub event Opened(id: UInt64)
 
     pub resource interface Public {
         pub let id: UInt64
-        pub let name: String
-        pub let url: String
-        pub let ownerName: String
-        pub let ownerAddress: Address
-        pub let description: String
-        pub let webshotMinInterval: UInt64
-        pub let isRecurring: Bool
+        access(account) let components: @{String: FlovatarComponent.NFT}
+        pub fun openPack(recipientCap: Capability<&{FlovatarComponent.CollectionPublic}>)
     }
 
-    pub resource NFT: NonFungibleToken.INFT, Public {
+    pub resource Pack: Public {
         pub let id: UInt64
-        pub let name: String
-        pub let url: String
-        pub let ownerName: String
-        pub let ownerAddress: Address
-        pub let description: String
-        pub let webshotMinInterval: UInt64
-        pub let isRecurring: Bool
+        access(account) let components: @{String: FlovatarComponent.NFT}
 
         init(
-            name: String,
-            url: String,
-            ownerName: String,
-            ownerAddress: Address,
-            description: String,
-            webshotMinInterval: UInt64,
-            isRecurring: Bool
+            body: @FlovatarComponent.NFT,
+            hair: @FlovatarComponent.NFT,
+            facialHair: @FlovatarComponent.NFT?,
+            eyes: @FlovatarComponent.NFT,
+            nose: @FlovatarComponent.NFT,
+            mouth: @FlovatarComponent.NFT,
+            clothing: @FlovatarComponent.NFT,
+            hat: @FlovatarComponent.NFT?,
+            eyeglasses: @FlovatarComponent.NFT?,
+            accessory: @FlovatarComponent.NFT?
         ) {
 
-            Website.totalSupply = Website.totalSupply + UInt64(1)
-            self.id = Website.totalSupply
-            self.name = name
-            self.url = url
-            self.ownerName = ownerName
-            self.ownerAddress = ownerAddress
-            self.description = description
-            self.webshotMinInterval = webshotMinInterval
-            self.isRecurring = isRecurring
+            pre {
+                body.getCategory() == "body" : "The body component belongs to the wrong category"
+                hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
+                eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
+                nose.getCategory() == "nose" : "The nose component belongs to the wrong category"
+                mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
+                clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
+            }
+
+            if(facialHair != nil) {
+                if(facialHair?.getCategory() != "facialHair"){
+                    panic("The facial hair component belongs to the wrong category")
+                }
+            }
+            
+            if(hat != nil){
+                if(hat?.getCategory() == "hat") {
+                    panic("The hat component belongs to the wrong category")
+                }
+            }
+            if(eyeglasses != nil){
+                if(eyeglasses?.getCategory() == "eyeglasses"){
+                    panic("The eyeglasses component belongs to the wrong category")
+                }
+            }
+            if(accessory != nil){
+                if(accessory?.getCategory() == "accessory"){
+                    panic("The accessory component belongs to the wrong category")
+                }
+            }
+
+            FlovatarPack.totalSupply = FlovatarPack.totalSupply + UInt64(1)
+            self.id = FlovatarPack.totalSupply
+
+            self.components <- {}
+
+            let oldBody <- self.components["body"] <- body
+            destroy oldBody
+
+            let oldHair <- self.components["hair"] <- hair
+            destroy oldHair
+
+            if(facialHair != nil) {
+                let oldFacialHair <-self.components["facialHair"] <- facialHair
+                destroy oldFacialHair
+            } else {
+                destroy facialHair
+            }
+
+            let oldEyes <- self.components["eyes"] <- eyes
+            destroy oldEyes
+
+            let oldNose <- self.components["nose"] <- nose
+            destroy oldNose
+
+            let oldMouth <- self.components["mouth"] <- mouth
+            destroy oldMouth
+
+            let oldClothing <- self.components["clothing"] <- clothing
+            destroy oldClothing
+
+            if(hat != nil){
+                let oldHat <- self.components["hat"] <- hat
+                destroy oldHat
+            } else {
+                destroy hat
+            }
+            
+            if(eyeglasses != nil){
+                let oldEyeglasses <- self.components["eyeglasses"] <- eyeglasses
+                destroy oldEyeglasses
+            } else {
+                destroy eyeglasses
+            }
+
+            if(accessory != nil){
+                let oldAccessory <- self.components["accessory"] <- accessory
+                destroy oldAccessory
+            } else {
+                destroy accessory
+            }
+        }
+
+        pub fun openPack(recipientCap: Capability<&{FlovatarComponent.CollectionPublic}>) {
+            let recipient=recipientCap.borrow()!
+
+            let newBody <-self.components.remove(key: "body") ?? panic("Missing body")
+            recipient.deposit(token: <-newBody)
+
+            let newHair <-self.components.remove(key: "hair") ?? panic("Missing hair")
+            recipient.deposit(token: <-newHair)
+
+            if(self.components.containsKey("facialHair")){
+                let newFacialHair <-self.components.remove(key: "facialHair") ?? panic("Missing facial hair")
+                recipient.deposit(token: <-newFacialHair)
+            }
+
+            let newEyes <-self.components.remove(key: "eyes") ?? panic("Missing eyes")
+            recipient.deposit(token: <-newEyes)
+
+            let newNose <-self.components.remove(key: "nose") ?? panic("Missing nose")
+            recipient.deposit(token: <-newNose)
+
+            let newMouth <-self.components.remove(key: "mouth") ?? panic("Missing mouth")
+            recipient.deposit(token: <-newMouth)
+
+            let newClothing <-self.components.remove(key: "clothing") ?? panic("Missing clothing")
+            recipient.deposit(token: <-newClothing)
+
+            if(self.components.containsKey("hat")){
+                let newHat <-self.components.remove(key: "hat") ?? panic("Missing hat")
+                recipient.deposit(token: <-newHat)
+            }
+
+            if(self.components.containsKey("eyeglasses")){
+                let newEyeglasses <-self.components.remove(key: "eyeglasses") ?? panic("Missing eyeglasses")
+                recipient.deposit(token: <-newEyeglasses)
+            }
+
+            if(self.components.containsKey("accessory")){
+                let newAccessory <-self.components.remove(key: "accessory") ?? panic("Missing accessory")
+                recipient.deposit(token: <-newAccessory)
+            }
+        }
+
+        destroy() {
+            destroy self.components
+        }
+
+    }
+
+    //Standard Pack CollectionPublic interface that can also borrowPack
+    pub resource interface CollectionPublic {
+        pub fun getIDs(): [UInt64]
+        pub fun deposit(token: @FlovatarPack.Pack)
+        pub fun withdraw(withdrawID: UInt64): @FlovatarPack.Pack {
+            post {
+                result.id == withdrawID: "The ID of the withdrawn token must be the same as the requested ID"
+            }
         }
     }
 
-    //Standard NFT CollectionPublic interface that can also borrowWebsite as the correct type
-    pub resource interface CollectionPublic {
-        pub fun deposit(token: @NonFungibleToken.NFT)
-        pub fun getIDs(): [UInt64]
-        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowWebsite(id: UInt64): &{Website.Public}?
-    }
-
-    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
-        // dictionary of NFT conforming tokens
-        // NFT is a resource type with an `UInt64` ID field
-        pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+    pub resource Collection: CollectionPublic {
+        pub var ownedPacks: @{UInt64: FlovatarPack.Pack}
 
         init () {
-            self.ownedNFTs <- {}
+            self.ownedPacks <- {}
         }
 
-        // withdraw removes an NFT from the collection and moves it to the caller
-        pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
-            let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
-
-            emit Withdraw(id: token.id, from: self.owner?.address)
-
-            return <-token
+        // getIDs returns an array of the IDs that are in the collection
+        pub fun getIDs(): [UInt64] {
+            return self.ownedPacks.keys
         }
 
-        // deposit takes a NFT and adds it to the collections dictionary
+        // deposit takes a Pack and adds it to the collections dictionary
         // and adds the ID to the id array
-        pub fun deposit(token: @NonFungibleToken.NFT) {
-            let token <- token as! @Website.NFT
-
+        pub fun deposit(token: @FlovatarPack.Pack) {
             let id: UInt64 = token.id
 
             // add the new token to the dictionary which removes the old one
-            let oldToken <- self.ownedNFTs[id] <- token
+            let oldToken <- self.ownedPacks[id] <- token
 
             emit Deposit(id: id, to: self.owner?.address)
 
             destroy oldToken
         }
 
-        // getIDs returns an array of the IDs that are in the collection
-        pub fun getIDs(): [UInt64] {
-            return self.ownedNFTs.keys
-        }
+        // withdraw removes a Pack from the collection and moves it to the caller
+        pub fun withdraw(withdrawID: UInt64): @FlovatarPack.Pack {
+            let token <- self.ownedPacks.remove(key: withdrawID) ?? panic("Missing Pack")
 
-        // borrowNFT gets a reference to an NFT in the collection
-        // so that the caller can read its metadata and call its methods
-        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
-            return &self.ownedNFTs[id] as &NonFungibleToken.NFT
-        }
+            emit Withdraw(id: token.id, from: self.owner?.address)
 
-        // borrowWebsite returns a borrowed reference to a Website
-        // so that the caller can read data and call methods from it.
-        //
-        // Parameters: id: The ID of the NFT to get the reference for
-        //
-        // Returns: A reference to the NFT
-        pub fun borrowWebsite(id: UInt64): &{Website.Public}? {
-            if self.ownedNFTs[id] != nil {
-                let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
-                return ref as! &Website.NFT
-            } else {
-                return nil
-            }
+            return <-token
         }
 
         destroy() {
-            destroy self.ownedNFTs
+            destroy self.ownedPacks
         }
     }
 
     // public function that anyone can call to create a new empty collection
-    pub fun createEmptyCollection(): @NonFungibleToken.Collection {
+    pub fun createEmptyCollection(): @FlovatarPack.Collection {
         return <- create Collection()
     }
 
-    pub struct WebsiteData {
-        pub let id: UInt64
-        pub let name: String
-        pub let url: String
-        pub let ownerName: String
-        pub let ownerAddress: Address
-        pub let description: String
-        pub let webshotMinInterval: UInt64
-        pub let isRecurring: Bool
-        pub let totalMintedWebshots: UInt64
-        pub let lastWebshotMintedAt: UFix64
-
-        init(
-            id: UInt64,
-            name: String,
-            url: String,
-            ownerName: String,
-            ownerAddress: Address,
-            description: String,
-            webshotMinInterval: UInt64,
-            isRecurring: Bool) {
-            self.id = id
-            self.name = name
-            self.url = url
-            self.ownerName = ownerName
-            self.ownerAddress = ownerAddress
-            self.description = description
-            self.webshotMinInterval = webshotMinInterval
-            self.isRecurring = isRecurring
-            self.totalMintedWebshots = Website.getTotalMintedWebshots(id: id)!
-            self.lastWebshotMintedAt = Website.getLastWebshotMintedAt(id: id)!
-        }
-    }
-
-    pub fun getWebsites(address: Address) : [WebsiteData] {
-        var websiteData: [WebsiteData] = []
-        let account = getAccount(address)
-
-        if let websiteCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Website.CollectionPublic}>()  {
-            for id in websiteCollection.getIDs() {
-                var website = websiteCollection.borrowWebsite(id: id)
-                websiteData.append(WebsiteData(
-                    id: id,
-                    name: website!.name,
-                    url: website!.url,
-                    ownerName: website!.ownerName,
-                    ownerAddress: website!.ownerAddress,
-                    description: website!.description,
-                    webshotMinInterval: website!.webshotMinInterval,
-                    isRecurring: website!.isRecurring
-                    ))
-            }
-        }
-        return websiteData
-    }
-
-    pub fun getWebsite(address: Address, id: UInt64) : WebsiteData? {
-        var websiteData: [WebsiteData] = []
-        let account = getAccount(address)
-
-        if let websiteCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Website.CollectionPublic}>()  {
-            if let website = websiteCollection.borrowWebsite(id: id) {
-                return WebsiteData(
-                    id: id,
-                    name: website.name,
-                    url: website.url,
-                    ownerName: website.ownerName,
-                    ownerAddress: website.ownerAddress,
-                    description: website.description,
-                    webshotMinInterval: website.webshotMinInterval,
-                    isRecurring: website.isRecurring
-                )
-            }
-        }
-        return nil
-    }
 
 
-    pub fun getTotalMintedWebshots(id: UInt64) : UInt64? {
-        return Website.totalMintedWebshots[id]
-    }
-    pub fun getLastWebshotMintedAt(id: UInt64) : UFix64? {
-        return Website.lastWebshotMintedAt[id]
-    }
+    //This method can only be called from another contract in the same account. 
+    access(account) fun createPack(
+            body: @FlovatarComponent.NFT,
+            hair: @FlovatarComponent.NFT,
+            facialHair: @FlovatarComponent.NFT?,
+            eyes: @FlovatarComponent.NFT,
+            nose: @FlovatarComponent.NFT,
+            mouth: @FlovatarComponent.NFT,
+            clothing: @FlovatarComponent.NFT,
+            hat: @FlovatarComponent.NFT?,
+            eyeglasses: @FlovatarComponent.NFT?,
+            accessory: @FlovatarComponent.NFT?
+        ) : @FlovatarPack.Pack {
 
-    access(account) fun setTotalMintedWebshots(id: UInt64, value: UInt64) {
-        Website.totalMintedWebshots[id] = value
-    }
-    access(account) fun setLastWebshotMintedAt(id: UInt64, value: UFix64) {
-        Website.lastWebshotMintedAt[id] = value
-    }
-
-    //This method can only be called from another contract in the same account. In Website case it is called from the AuctionAdmin that is used to administer the solution
-    access(account) fun createWebsite(
-        name: String,
-        url: String,
-        ownerName: String,
-        ownerAddress: Address,
-        description: String,
-        webshotMinInterval: UInt64,
-        isRecurring: Bool) : @Website.NFT {
-
-        var newNFT <- create NFT(
-            name: name,
-            url: url,
-            ownerName: ownerName,
-            ownerAddress: ownerAddress,
-            description: description,
-            webshotMinInterval: webshotMinInterval,
-            isRecurring: isRecurring
+        var newPack <- create Pack(
+            body: <-body,
+            hair: <-hair,
+            facialHair: <-facialHair,
+            eyes: <-eyes,
+            nose: <-nose,
+            mouth: <-mouth,
+            clothing: <-clothing,
+            hat: <-hat,
+            eyeglasses: <-eyeglasses,
+            accessory: <-accessory
         )
-        emit Created(id: newNFT.id, name: newNFT.name, url: newNFT.url)
 
-        Website.setTotalMintedWebshots(id: newNFT.id, value: UInt64(0))
-        Website.setLastWebshotMintedAt(id: newNFT.id, value: UFix64(0))
+        emit Created(id: newPack.id)
 
-        return <- newNFT
+        return <- newPack
     }
 
 	init() {
-        self.CollectionPublicPath=/public/WebsiteCollection
-        self.CollectionStoragePath=/storage/WebsiteCollection
+        //TODO: remove suffix before deploying to mainnet!!!
+        self.CollectionPublicPath=/public/FlovatarPackCollection001
+        self.CollectionStoragePath=/storage/FlovatarPackCollection001
 
         // Initialize the total supply
         self.totalSupply = 0
-        self.totalMintedWebshots = {}
-        self.lastWebshotMintedAt = {}
 
-        self.account.save<@NonFungibleToken.Collection>(<- Website.createEmptyCollection(), to: Website.CollectionStoragePath)
-        self.account.link<&{Website.CollectionPublic}>(Website.CollectionPublicPath, target: Website.CollectionStoragePath)
+        self.account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(), to: FlovatarPack.CollectionStoragePath)
+        self.account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
 
         emit ContractInitialized()
 	}

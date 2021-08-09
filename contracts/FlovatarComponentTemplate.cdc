@@ -80,7 +80,7 @@ pub contract FlovatarComponentTemplate {
             // add the new Component Template to the dictionary which removes the old one
             let oldComponentTemplate <- self.ownedComponentTemplates[id] <- componentTemplate
 
-            destroy oldToken
+            destroy oldComponentTemplate
         }
 
         // getIDs returns an array of the IDs that are in the collection
@@ -140,7 +140,7 @@ pub contract FlovatarComponentTemplate {
             self.svg = svg
             self.maxMintableComponents = maxMintableComponents
             self.totalMintedComponents = FlovatarComponentTemplate.getTotalMintedComponents(id: id)!
-            self.lastWebshotMintedAt = FlovatarComponentTemplate.getLastComponentMintedAt(id: id)!
+            self.lastComponentMintedAt = FlovatarComponentTemplate.getLastComponentMintedAt(id: id)!
         }
     }
 
@@ -224,7 +224,7 @@ pub contract FlovatarComponentTemplate {
     }
 
 	init() {
-        //TODO: remove before deploying to mainnet!!!
+        //TODO: remove suffix before deploying to mainnet!!!
         self.CollectionPublicPath=/public/FlovatarComponentTemplateCollection001
         self.CollectionStoragePath=/storage/FlovatarComponentTemplateCollection001
 

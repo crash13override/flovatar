@@ -6,10 +6,10 @@
     }
   },
   "contracts": {
-    "Website": "./contracts/Website.cdc",
-    "Webshot": "./contracts/Webshot.cdc",
-    "Marketplace": "./contracts/Marketplace.cdc",
-    "Drop": "./contracts/Drop.cdc",
+    "FlovatarComponentTemplate": "./contracts/FlovatarComponentTemplate.cdc",
+    "FlovatarComponent": "./contracts/FlovatarComponent.cdc",
+    "FlovatarPack": "./contracts/FlovatarPack.cdc",
+    "Flovatar": "./contracts/Flovatar.cdc",
     "FungibleToken": {
       "source": "./contracts/FungibleToken.cdc",
       "aliases": {
@@ -53,23 +53,26 @@
       "address": "0xf8d6e0586b0a20c7",
       "keys": "6aeadb5ccba5cb1c20e8228306115852e29a1d19a4b0013eee291147da493175"
     },
-    "testnet-account": {"fromFile": "./flow.testnet.json"}
+    "testnet-account": {
+      "address": "$FLOW_TESTNET_ADDRESS",
+      "key": "$FLOW_TESTNET_KEY"
+    }
   },
   "deployments": {
     "testnet": {
       "testnet-account": [
-        "Website",
-        "Webshot",
-        "Marketplace",
-        "Drop"
+        "FlovatarComponentTemplate",
+        "FlovatarComponent",
+        "FlovatarPack",
+        "Flovatar"
       ]
     },
     "emulator": {
       "emulator-account": [
-        "Website",
-        "Webshot",
-        "Marketplace",
-        "Drop",
+        "FlovatarComponentTemplate",
+        "FlovatarComponent",
+        "FlovatarPack",
+        "Flovatar",
         "NonFungibleToken",
         "FUSD"
       ]

@@ -1,5 +1,7 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import FungibleToken from "./FungibleToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import FlovatarComponent from "./FlovatarComponent.cdc"
 
 /*
 
@@ -9,7 +11,7 @@ Base components that will be used to generate the unique combination of the Flov
 'body', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
 
 Extra components that can be added in a second moment
-'hat', eyeglass', 'accessory'
+'accessory', 'hat', eyeglass'
 
  */
 
@@ -58,24 +60,35 @@ pub contract Flovatar: NonFungibleToken {
     pub resource interface Public {
         pub let id: UInt64
         pub let metadata: Metadata
-        access(contract) let additionalComponents: {String: UInt64}
+        access(self) var accessory: UInt64?
+        access(self) var hat: UInt64?
+        access(self) var eyeglasses: UInt64?
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
         pub let description: String
         pub let schema: String?
 
-        pub fun getAdditionalComponents(): {UInt64: String}
-        pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64}
+        pub fun getAccessory(): UInt64?
+        pub fun getHat(): UInt64?
+        pub fun getEyeglasses(): UInt64?
 
         pub fun getSvg(): String
+    }
 
+    //The private interface can update the Accessory, Hat and Eyeglasses for the Flovatar
+    pub resource interface Private {
+        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
+        pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
     }
 
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
         pub let metadata: Metadata
-        access(contract) let additionalComponents: {UInt64: String}
+        access(self) var accessory: UInt64?
+        access(self) var hat: UInt64?
+        access(self) var eyeglasses: UInt64?
 
         pub let name: String
         pub let description: String
@@ -102,18 +115,49 @@ pub contract Flovatar: NonFungibleToken {
             return self.metadata
         }
 
-        pub fun getAdditionalComponents(): {String: UInt64} {
-            return self.additionalComponents
+        pub fun getAccessory(): UInt64? {
+            return self.accessory
         }
         
-        pub fun appendAdditionalComponents(component: @FlovatarComponent.NFT): {String: UInt64} {
-            //TODO check limitations for each type
-            //TODO check if already added the same templateId
+        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64? {
+            pre {
+                component.getCategory() == "accessory" : "The component needs to be an accessory"
+            }
 
-            self.additionalComponents.insert(key: component.templateId, component.getCategory())
+            self.accessory = component.templateId
 
             destroy component
-            return self.additionalComponents
+            return self.accessory
+        }
+
+        pub fun getHat(): UInt64? {
+            return self.hat
+        }
+        
+        pub fun setHat(component: @FlovatarComponent.NFT): UInt64? {
+            pre {
+                component.getCategory() == "hat" : "The component needs to be a hat"
+            }
+
+            self.accessory = component.templateId
+
+            destroy component
+            return self.accessory
+        }
+
+        pub fun getEyeglasses(): UInt64? {
+            return self.eyeglasses
+        }
+        
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64? {
+            pre {
+                component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
+            }
+
+            self.accessory = component.templateId
+
+            destroy component
+            return self.eyeglasses
         }
 
         pub fun getSvg(): String {
@@ -121,8 +165,20 @@ pub contract Flovatar: NonFungibleToken {
 
             svg.concat(self.metadata.svg)
 
-            for templateId in self.getAdditionalComponents() {
-                if let template = FlovatarComponentTemplate.getComponentTemplate(templateId) {
+            if let eyeglasses = self.getEyeglasses() {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(eyeglasses) {
+                    svg.concat(template.svg!)
+                }
+            }
+
+            if let hat = self.getHat() {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(hat) {
+                    svg.concat(template.svg!)
+                }
+            }
+
+            if let accessory = self.getAccessory() {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(acessory) {
                     svg.concat(template.svg!)
                 }
             }
@@ -224,11 +280,11 @@ pub contract Flovatar: NonFungibleToken {
 
         let account = getAccount(address)
 
-        if let FlovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            if let Flovatar = FlovatarCollection.borrowFlovatar(id: FlovatarId) {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if let flovatar = flovatarCollection.borrowFlovatar(id: UInt64) {
                 return FlovatarData(
-                    id: FlovatarId,
-                    metadata: Flovatar!.metadata
+                    id: UInt64,
+                    metadata: flovatar!.metadata
                 )
             }
         }
@@ -333,19 +389,20 @@ pub contract Flovatar: NonFungibleToken {
             clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
 
             Flovatar.checkNameAvailable(combinationString) == false : "This name has already been taken"
-
-            let combinationString = Flovatar.getCombinationString(
-                head: head.templateId, 
-                hair: hair.templateId, 
-                facialHair: facialHair ? facialHair.templateId : nil, 
-                eyes: eyes.templateId, 
-                nose: nose.templateId, 
-                mouth: mouth.templateId, 
-                clothing: clothing.templateId)
-
-            Flovatar.mintedCombinations.contains(combinationString) == false : "This combination has already been taken"
+        }
 
 
+        let combinationString = Flovatar.getCombinationString(
+            head: head.templateId, 
+            hair: hair.templateId, 
+            facialHair: facialHair ? facialHair.templateId : nil, 
+            eyes: eyes.templateId, 
+            nose: nose.templateId, 
+            mouth: mouth.templateId, 
+            clothing: clothing.templateId)
+
+        if(Flovatar.mintedCombinations.contains(combinationString) == true) {
+            panic("This combination has already been taken")
         }
 
         let svg = body.getSvg().concat(facialHair.getSvg()).concat(eyes.getSvg()).concat(nose.getSvg()).concat(mouth.getSvg()).concat(clothing.getSvg()).concat(hair.getSvg())
@@ -353,9 +410,9 @@ pub contract Flovatar: NonFungibleToken {
         let metadata = Metadata(
             name: name,
             mint: Flovatar.totalSupply + UInt64(1),
-            svg: svg
+            svg: svg,
             combination: combinationString,
-            creatorAddress: address
+            creatorAddress: address,
             components: {
                 "body": body.templateId, 
                 "hair": hair.templateId, 
@@ -384,8 +441,9 @@ pub contract Flovatar: NonFungibleToken {
     }
 
 	init() {
-        self.CollectionPublicPath = /public/FlovatarCollection
-        self.CollectionStoragePath = /storage/FlovatarCollection
+        //TODO: remove suffix before deploying to mainnet!!!
+        self.CollectionPublicPath = /public/FlovatarCollection001
+        self.CollectionStoragePath = /storage/FlovatarCollection001
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

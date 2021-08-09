@@ -49,13 +49,14 @@ pub contract FlovatarComponent: NonFungibleToken {
 
             FlovatarComponent.totalSupply = FlovatarComponent.totalSupply + UInt64(1)
 
-            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
+            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(id: templateId)!
 
             self.id = FlovatarComponent.totalSupply
             self.templateId = templateId
             self.mint = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)! + UInt64(1)
             self.name = componentTemplate.name
             self.description = componentTemplate.description
+            self.schema = nil
 
             FlovatarComponentTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
             FlovatarComponentTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
@@ -66,11 +67,11 @@ pub contract FlovatarComponent: NonFungibleToken {
         }
 
         pub fun getTemplate(): FlovatarComponentTemplate.ComponentTemplateData {
-            return FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
+            return FlovatarComponentTemplate.getComponentTemplate(id: self.templateId)!
         }
 
         pub fun getSvg(): String {
-            return self.getTemplate().svg
+            return self.getTemplate().svg!
         }
 
         pub fun getCategory(): String {
@@ -162,7 +163,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub let mint: UInt64
         pub let name: String
         pub let description: String
-        pub let type: String
+        pub let category: String
         pub let color: String
         //pub let svg: String?
 
@@ -170,10 +171,10 @@ pub contract FlovatarComponent: NonFungibleToken {
             self.id = id
             self.templateId = templateId
             self.mint = mint
-            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(templateId)!
+            let componentTemplate = FlovatarComponentTemplate.getComponentTemplate(id: templateId)!
             self.name = componentTemplate.name
             self.description = componentTemplate.description
-            self.type = componentTemplate.type
+            self.category = componentTemplate.category
             self.color = componentTemplate.color
             //self.svg = componentTemplate.svg
         }
@@ -202,34 +203,34 @@ pub contract FlovatarComponent: NonFungibleToken {
     }
 
     // We cannot return the svg here since it will be too big to run in a script
-        pub fun getComponents(address: Address) : [ComponentData] {
+    pub fun getComponents(address: Address) : [ComponentData] {
 
-            var componentData: [ComponentData] = []
-            let account = getAccount(address)
+        var componentData: [ComponentData] = []
+        let account = getAccount(address)
 
-            if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
-                for id in componentCollection.getIDs() {
-                    var component = componentCollection.borrowComponent(id: id)
-                    componentData.append(ComponentData(
-                        id: id,
-                        templateId: component!.templateId,
-                        mint: component!.mint
-                        ))
-                }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
+            for id in componentCollection.getIDs() {
+                var component = componentCollection.borrowComponent(id: id)
+                componentData.append(ComponentData(
+                    id: id,
+                    templateId: component!.templateId,
+                    mint: component!.mint
+                    ))
             }
-            return componentData
         }
+        return componentData
+    }
 
     //This method can only be called from another contract in the same account. In FlovatarComponent case it is called from the Admin that is used to administer the components
     access(account) fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
 
-        pre {
-            let componentTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(self.templateId)!
-            let totalMintedComponents: UInt64 = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)!
-            totalMintedComponents < componentTemplate.maxMintableComponents : "Reached maximum mintable components for this type"
+        let componentTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: templateId)!
+        let totalMintedComponents: UInt64 = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)!
+
+        if(totalMintedComponents >= componentTemplate.maxMintableComponents) {
+            panic("Reached maximum mintable components for this type")
         }
         
-
         var newNFT <- create NFT(templateId: templateId)
         emit Created(id: newNFT.id, templateId: templateId)
 
@@ -237,7 +238,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     }
 
 	init() {
-        //TODO: remove before deploying to mainnet!!!
+        //TODO: remove suffix before deploying to mainnet!!!
         self.CollectionPublicPath = /public/FlovatarComponentCollection001
         self.CollectionStoragePath = /storage/FlovatarComponentCollection001
 
