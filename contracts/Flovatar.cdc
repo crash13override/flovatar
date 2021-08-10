@@ -45,7 +45,7 @@ pub contract Flovatar: NonFungibleToken {
             svg: String,
             combination: String,
             creatorAddress: Address,
-            components: {String: UInt64},
+            components: {String: UInt64}
         ) {
                 self.name = name
                 self.mint = mint
@@ -60,9 +60,6 @@ pub contract Flovatar: NonFungibleToken {
     pub resource interface Public {
         pub let id: UInt64
         pub let metadata: Metadata
-        access(self) var accessory: UInt64?
-        access(self) var hat: UInt64?
-        access(self) var eyeglasses: UInt64?
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -86,9 +83,9 @@ pub contract Flovatar: NonFungibleToken {
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
         pub let metadata: Metadata
-        access(self) var accessory: UInt64?
-        access(self) var hat: UInt64?
-        access(self) var eyeglasses: UInt64?
+        access(contract) var accessory: UInt64?
+        access(contract) var hat: UInt64?
+        access(contract) var eyeglasses: UInt64?
 
         pub let name: String
         pub let description: String
@@ -100,7 +97,9 @@ pub contract Flovatar: NonFungibleToken {
 
             self.id = Flovatar.totalSupply
             self.metadata = metadata
-            self.additionalComponents = {}
+            self.accessory = nil
+            self.hat = nil
+            self.eyeglasses = nil
 
             self.schema = nil
             self.name = metadata.name
@@ -166,24 +165,26 @@ pub contract Flovatar: NonFungibleToken {
             svg.concat(self.metadata.svg)
 
             if let eyeglasses = self.getEyeglasses() {
-                if let template = FlovatarComponentTemplate.getComponentTemplate(eyeglasses) {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(id: eyeglasses) {
                     svg.concat(template.svg!)
                 }
             }
 
             if let hat = self.getHat() {
-                if let template = FlovatarComponentTemplate.getComponentTemplate(hat) {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(id: hat) {
                     svg.concat(template.svg!)
                 }
             }
 
             if let accessory = self.getAccessory() {
-                if let template = FlovatarComponentTemplate.getComponentTemplate(acessory) {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(id: accessory) {
                     svg.concat(template.svg!)
                 }
             }
 
             svg.concat("</svg>")
+
+            return svg
 
         }
     }
@@ -276,14 +277,14 @@ pub contract Flovatar: NonFungibleToken {
     }
 
 
-    pub fun getFlovatar(address: Address, FlovatarId: UInt64) : FlovatarData? {
+    pub fun getFlovatar(address: Address, flovatarId: UInt64) : FlovatarData? {
 
         let account = getAccount(address)
 
         if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            if let flovatar = flovatarCollection.borrowFlovatar(id: UInt64) {
+            if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
-                    id: UInt64,
+                    id: flovatarId,
                     metadata: flovatar!.metadata
                 )
             }
@@ -293,19 +294,19 @@ pub contract Flovatar: NonFungibleToken {
 
     pub fun getFlovatars(address: Address) : [FlovatarData] {
 
-        var FlovatarData: [FlovatarData] = []
+        var flovatarData: [FlovatarData] = []
         let account = getAccount(address)
 
-        if let FlovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            for id in FlovatarCollection.getIDs() {
-                var Flovatar = FlovatarCollection.borrowFlovatar(id: id)
-                FlovatarData.append(FlovatarData(
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            for id in flovatarCollection.getIDs() {
+                var Flovatar = flovatarCollection.borrowFlovatar(id: id)
+                flovatarData.append(FlovatarData(
                     id: id,
                     metadata: Flovatar!.metadata
                     ))
             }
         }
-        return FlovatarData
+        return flovatarData
     }
 
 
@@ -332,7 +333,8 @@ pub contract Flovatar: NonFungibleToken {
         mouth: UInt64,
         clothing: UInt64
     ) : String {
-        return String("B").concat(String(body)).concat("H").concat(String(hair)).concat("F").concat(String(facialHair ?? "x")).concat("E").concat(String(eyes)).concat("N").concat(String(nose)).concat("M").concat(String(mouth)).concat("C").concat(String(clothing))
+        let facialHairString = (facialHair != nil) ? facialHair!.toString() : "x"
+        return "B".concat(body.toString()).concat("H").concat(hair.toString()).concat("F").concat(facialHairString).concat("E").concat(eyes.toString()).concat("N").concat(nose.toString()).concat("M").concat(mouth.toString()).concat("C").concat(clothing.toString())
     }
 
     pub fun checkCombinationAvailable(
@@ -380,32 +382,42 @@ pub contract Flovatar: NonFungibleToken {
 
             body.getCategory() == "body" : "The body component belongs to the wrong category"
             hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
-            if(facialHair != nil){
-                facialHair.getCategory() == "facialHair" : "The facial hair component belongs to the wrong category"
-            }
             eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
             nose.getCategory() == "nose" : "The nose component belongs to the wrong category"
             mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
             clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
 
-            Flovatar.checkNameAvailable(combinationString) == false : "This name has already been taken"
+        }
+        if(facialHair != nil){
+            if(facialHair?.getCategory() != "facialHair"){
+                panic("The facial hair component belongs to the wrong category")
+            }
         }
 
 
         let combinationString = Flovatar.getCombinationString(
-            head: head.templateId, 
+            body: body.templateId, 
             hair: hair.templateId, 
-            facialHair: facialHair ? facialHair.templateId : nil, 
+            facialHair: facialHair != nil ? facialHair?.templateId : nil, 
             eyes: eyes.templateId, 
             nose: nose.templateId, 
             mouth: mouth.templateId, 
             clothing: clothing.templateId)
 
+
+        if(Flovatar.checkNameAvailable(name: name) == false){
+            panic("This name has already been taken")
+        }
+
         if(Flovatar.mintedCombinations.contains(combinationString) == true) {
             panic("This combination has already been taken")
         }
 
-        let svg = body.getSvg().concat(facialHair.getSvg()).concat(eyes.getSvg()).concat(nose.getSvg()).concat(mouth.getSvg()).concat(clothing.getSvg()).concat(hair.getSvg())
+        let facialHairSvg:String  = facialHair != nil ? facialHair?.getSvg()! : ""
+        let svg = (body.getSvg()!).concat(facialHairSvg).concat(eyes.getSvg()!).concat(nose.getSvg()!).concat(mouth.getSvg()!).concat(clothing.getSvg()!).concat(hair.getSvg()!)
+
+        //TODO fix this with optional. No idea why it's expecting UInt64 instead of UInt64? even if it's defined in Metadata struct
+        let facialHairId: UInt64 = facialHair != nil ? facialHair?.templateId! : 0
 
         let metadata = Metadata(
             name: name,
@@ -416,7 +428,7 @@ pub contract Flovatar: NonFungibleToken {
             components: {
                 "body": body.templateId, 
                 "hair": hair.templateId, 
-                "facialHair": facialHair ? facialHair.templateId : nil, 
+                "facialHair": facialHairId, 
                 "eyes": eyes.templateId, 
                 "nose": nose.templateId, 
                 "mouth": mouth.templateId, 
@@ -429,9 +441,7 @@ pub contract Flovatar: NonFungibleToken {
 
         destroy body
         destroy hair
-        if(facialHair){
-            destroy facialHair
-        }
+        destroy facialHair
         destroy eyes
         destroy nose
         destroy mouth
