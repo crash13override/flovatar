@@ -23,7 +23,6 @@ pub contract FlovatarPack {
     pub resource interface Public {
         pub let id: UInt64
         access(account) let components: @{String: FlovatarComponent.NFT}
-        pub fun openPack(recipientCap: Capability<&{FlovatarComponent.CollectionPublic}>)
     }
 
     pub resource Pack: Public {
@@ -126,48 +125,6 @@ pub contract FlovatarPack {
             }
         }
 
-        pub fun openPack(recipientCap: Capability<&{FlovatarComponent.CollectionPublic}>) {
-            let recipient=recipientCap.borrow()!
-
-            let newBody <-self.components.remove(key: "body") ?? panic("Missing body")
-            recipient.deposit(token: <-newBody)
-
-            let newHair <-self.components.remove(key: "hair") ?? panic("Missing hair")
-            recipient.deposit(token: <-newHair)
-
-            if(self.components.containsKey("facialHair")){
-                let newFacialHair <-self.components.remove(key: "facialHair") ?? panic("Missing facial hair")
-                recipient.deposit(token: <-newFacialHair)
-            }
-
-            let newEyes <-self.components.remove(key: "eyes") ?? panic("Missing eyes")
-            recipient.deposit(token: <-newEyes)
-
-            let newNose <-self.components.remove(key: "nose") ?? panic("Missing nose")
-            recipient.deposit(token: <-newNose)
-
-            let newMouth <-self.components.remove(key: "mouth") ?? panic("Missing mouth")
-            recipient.deposit(token: <-newMouth)
-
-            let newClothing <-self.components.remove(key: "clothing") ?? panic("Missing clothing")
-            recipient.deposit(token: <-newClothing)
-
-            if(self.components.containsKey("hat")){
-                let newHat <-self.components.remove(key: "hat") ?? panic("Missing hat")
-                recipient.deposit(token: <-newHat)
-            }
-
-            if(self.components.containsKey("eyeglasses")){
-                let newEyeglasses <-self.components.remove(key: "eyeglasses") ?? panic("Missing eyeglasses")
-                recipient.deposit(token: <-newEyeglasses)
-            }
-
-            if(self.components.containsKey("accessory")){
-                let newAccessory <-self.components.remove(key: "accessory") ?? panic("Missing accessory")
-                recipient.deposit(token: <-newAccessory)
-            }
-        }
-
         destroy() {
             destroy self.components
         }
@@ -178,11 +135,6 @@ pub contract FlovatarPack {
     pub resource interface CollectionPublic {
         pub fun getIDs(): [UInt64]
         pub fun deposit(token: @FlovatarPack.Pack)
-        pub fun withdraw(withdrawID: UInt64): @FlovatarPack.Pack {
-            post {
-                result.id == withdrawID: "The ID of the withdrawn token must be the same as the requested ID"
-            }
-        }
     }
 
     pub resource Collection: CollectionPublic {
@@ -218,6 +170,54 @@ pub contract FlovatarPack {
 
             return <-token
         }
+
+        pub fun openPack(id: UInt64) {
+            let recipientCap = self.owner!.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
+            let recipient=recipientCap.borrow()!
+
+            let pack <- self.ownedPacks.remove(key: id) ?? panic("Missing Pack")
+
+            let newBody <-pack.components.remove(key: "body") ?? panic("Missing body")
+            recipient.deposit(token: <-newBody)
+
+            let newHair <-pack.components.remove(key: "hair") ?? panic("Missing hair")
+            recipient.deposit(token: <-newHair)
+
+            if(pack.components.containsKey("facialHair")){
+                let newFacialHair <-pack.components.remove(key: "facialHair") ?? panic("Missing facial hair")
+                recipient.deposit(token: <-newFacialHair)
+            }
+
+            let newEyes <-pack.components.remove(key: "eyes") ?? panic("Missing eyes")
+            recipient.deposit(token: <-newEyes)
+
+            let newNose <-pack.components.remove(key: "nose") ?? panic("Missing nose")
+            recipient.deposit(token: <-newNose)
+
+            let newMouth <-pack.components.remove(key: "mouth") ?? panic("Missing mouth")
+            recipient.deposit(token: <-newMouth)
+
+            let newClothing <-pack.components.remove(key: "clothing") ?? panic("Missing clothing")
+            recipient.deposit(token: <-newClothing)
+
+            if(pack.components.containsKey("hat")){
+                let newHat <-pack.components.remove(key: "hat") ?? panic("Missing hat")
+                recipient.deposit(token: <-newHat)
+            }
+
+            if(pack.components.containsKey("eyeglasses")){
+                let newEyeglasses <-pack.components.remove(key: "eyeglasses") ?? panic("Missing eyeglasses")
+                recipient.deposit(token: <-newEyeglasses)
+            }
+
+            if(pack.components.containsKey("accessory")){
+                let newAccessory <-pack.components.remove(key: "accessory") ?? panic("Missing accessory")
+                recipient.deposit(token: <-newAccessory)
+            }
+
+            destroy pack
+        }
+
 
         destroy() {
             destroy self.ownedPacks
