@@ -59,17 +59,17 @@ pub contract FlovatarPack {
             }
             
             if(hat != nil){
-                if(hat?.getCategory() == "hat") {
+                if(hat?.getCategory() != "hat") {
                     panic("The hat component belongs to the wrong category")
                 }
             }
             if(eyeglasses != nil){
-                if(eyeglasses?.getCategory() == "eyeglasses"){
+                if(eyeglasses?.getCategory() != "eyeglasses"){
                     panic("The eyeglasses component belongs to the wrong category")
                 }
             }
             if(accessory != nil){
-                if(accessory?.getCategory() == "accessory"){
+                if(accessory?.getCategory() != "accessory"){
                     panic("The accessory component belongs to the wrong category")
                 }
             }
@@ -110,7 +110,7 @@ pub contract FlovatarPack {
             } else {
                 destroy hat
             }
-            
+
             if(eyeglasses != nil){
                 let oldEyeglasses <- self.components["eyeglasses"] <- eyeglasses
                 destroy oldEyeglasses

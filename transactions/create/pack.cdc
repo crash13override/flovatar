@@ -46,7 +46,7 @@ transaction(
         self.flovatarAdmin = account.borrow<&Flovatar.Admin>(from: Flovatar.AdminStoragePath)!
 
         self.bodyNFT <- self.flovatarComponentCollection.withdraw(withdrawID: body) as! @FlovatarComponent.NFT
-        self.hairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: body) as! @FlovatarComponent.NFT
+        self.hairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: hair) as! @FlovatarComponent.NFT
         if(facialHair != nil){
             self.facialHairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: facialHair!) as! @FlovatarComponent.NFT
         } else {
