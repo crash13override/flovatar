@@ -1,7 +1,7 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
-import FungibleToken from "./FungibleToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
+import FlovatarPack from "./FlovatarPack.cdc"
 
 /*
 
@@ -19,6 +19,7 @@ pub contract Flovatar: NonFungibleToken {
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
+    pub let AdminStoragePath: StoragePath
 
     pub var totalSupply: UInt64
     access(contract) let mintedCombinations: [String]
@@ -450,10 +451,72 @@ pub contract Flovatar: NonFungibleToken {
         return <- newNFT
     }
 
+
+    pub resource Admin {
+
+        pub fun createComponentTemplate(
+            name: String,
+            category: String,
+            color: String,
+            description: String,
+            svg: String,
+            maxMintableComponents: UInt64
+        ) : @FlovatarComponentTemplate.ComponentTemplate {
+            return <- FlovatarComponentTemplate.createComponentTemplate(
+                name: name,
+                category: category,
+                color: color,
+                description: description,
+                svg: svg,
+                maxMintableComponents: maxMintableComponents
+            )
+        }
+
+        pub fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
+            return <- FlovatarComponent.createComponent(templateId: templateId)
+        }
+
+        pub fun createPack(
+            body: @FlovatarComponent.NFT,
+            hair: @FlovatarComponent.NFT,
+            facialHair: @FlovatarComponent.NFT?,
+            eyes: @FlovatarComponent.NFT,
+            nose: @FlovatarComponent.NFT,
+            mouth: @FlovatarComponent.NFT,
+            clothing: @FlovatarComponent.NFT,
+            hat: @FlovatarComponent.NFT?,
+            eyeglasses: @FlovatarComponent.NFT?,
+            accessory: @FlovatarComponent.NFT?
+        ) : @FlovatarPack.Pack {
+
+        return <- FlovatarPack.createPack(
+            body: <-body,
+            hair: <-hair,
+            facialHair: <-facialHair,
+            eyes: <-eyes,
+            nose: <-nose,
+            mouth: <-mouth,
+            clothing: <-clothing,
+            hat: <-hat,
+            eyeglasses: <-eyeglasses,
+            accessory: <-accessory
+        )
+    }
+
+        pub fun createNewAdmin(): @Admin {
+            return <-create Admin()
+        }
+    }
+
+
+
+
+
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
         self.CollectionPublicPath = /public/FlovatarCollection001
         self.CollectionStoragePath = /storage/FlovatarCollection001
+        self.AdminStoragePath = /storage/FlovatarAdmin001
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
@@ -461,6 +524,9 @@ pub contract Flovatar: NonFungibleToken {
         self.mintedNames = []
         self.account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
         self.account.link<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
+
+        // Put the Minter in storage
+        self.account.save<@Admin>(<- create Admin(), to: self.AdminStoragePath)
 
         emit ContractInitialized()
 	}

@@ -1,5 +1,4 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
-import FungibleToken from "./FungibleToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 
 /*

@@ -73,7 +73,7 @@ pub contract FlovatarComponentTemplate {
 
         // deposit takes a Component Template and adds it to the collections dictionary
         // and adds the ID to the id array
-        access(account) fun deposit(componentTemplate: @FlovatarComponentTemplate.ComponentTemplate) {
+        pub fun deposit(componentTemplate: @FlovatarComponentTemplate.ComponentTemplate) {
 
             let id: UInt64 = componentTemplate.id
 
