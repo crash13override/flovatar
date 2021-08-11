@@ -1,8 +1,8 @@
 
 //import FungibleToken from 0xee82856bf20e2aa6
-import FungibleToken from "../../contracts/FungibleToken.cdc"
-import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import FUSD from "../../contracts/FUSD.cdc"
+//import FungibleToken from "../../contracts/FungibleToken.cdc"
+//import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
+//import FUSD from "../../contracts/FUSD.cdc"
 import Flovatar from "../../contracts/Flovatar.cdc"
 import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
 import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
@@ -11,36 +11,63 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 
 transaction(
     name: String,
-    url: String,
-    ownerName: String,
-    ownerAddress: Address,
-    description: String,
-    webshotMinInterval: UInt64,
-    isRecurring: Bool) {
+    body: UInt64
+    hair: UInt64,
+    facialHair: UInt64?,
+    eyes: UInt64,
+    nose: UInt64,
+    mouth: UInt64,
+    clothing: UInt64
+    ) {
 
-    let client: &Drop.Admin
-    let ownerCollection: Capability<&{Website.CollectionPublic}>
-    let selfAddress: Address
+
+    let flovatarCollection: &Flovatar.Collection
+    let flovatarComponentCollection: &FlovatarComponent.Collection
+
+    let bodyNFT: @FlovatarComponent.NFT
+    let hairNFT: @FlovatarComponent.NFT
+    let facialHairNFT: @FlovatarComponent.NFT?
+    let eyesNFT: @FlovatarComponent.NFT
+    let noseNFT: @FlovatarComponent.NFT
+    let mouthNFT: @FlovatarComponent.NFT
+    let clothingNFT: @FlovatarComponent.NFT
+    let accountAddress: Address
 
     prepare(account: AuthAccount) {
-        self.client = account.borrow<&Drop.Admin>(from: Drop.WebshotAdminStoragePath) ?? panic("could not load webshot admin")
-        self.ownerCollection = getAccount(ownerAddress).getCapability<&{Website.CollectionPublic}>(Website.CollectionPublicPath)
-        self.selfAddress = account.address
+        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+
+        self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
+
+        self.bodyNFT <- self.flovatarComponentCollection.withdraw(withdrawID: body) as! @FlovatarComponent.NFT
+        self.hairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: hair) as! @FlovatarComponent.NFT
+        if(facialHair != nil){
+            self.facialHairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: facialHair!) as! @FlovatarComponent.NFT
+        } else {
+            self.facialHairNFT <- nil
+        }
+        self.eyesNFT <- self.flovatarComponentCollection.withdraw(withdrawID: eyes) as! @FlovatarComponent.NFT
+        self.noseNFT <- self.flovatarComponentCollection.withdraw(withdrawID: nose) as! @FlovatarComponent.NFT
+        self.mouthNFT <- self.flovatarComponentCollection.withdraw(withdrawID: mouth) as! @FlovatarComponent.NFT
+        self.clothingNFT <- self.flovatarComponentCollection.withdraw(withdrawID: clothing) as! @FlovatarComponent.NFT
+
+        self.accountAddress = account.address
     }
 
     execute {
-        let website <-  self.client.createWebsite(
+
+        let flovatar <- Flovatar.createFlovatar(
             name: name,
-            url: url,
-            ownerName: ownerName,
-            ownerAddress: ownerAddress,
-            description: description,
-            webshotMinInterval: webshotMinInterval,
-            isRecurring: isRecurring
-            )
+            body: <-self.bodyNFT,
+            hair: <-self.hairNFT,
+            facialHair: <-self.facialHairNFT,
+            eyes: <-self.eyesNFT,
+            nose: <-self.noseNFT,
+            mouth: <-self.mouthNFT,
+            clothing: <-self.clothingNFT,
+            address: self.accountAddress
+        )
 
-        self.ownerCollection.borrow()!.deposit(token: <- website)
-
+        self.flovatarCollection.deposit(token: <-flovatar)
     }
 
 }

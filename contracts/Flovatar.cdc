@@ -81,7 +81,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
     }
 
-    pub resource NFT: NonFungibleToken.INFT, Public {
+    pub resource NFT: NonFungibleToken.INFT, Public, Private {
         pub let id: UInt64
         pub let metadata: Metadata
         access(contract) var accessory: UInt64?
@@ -139,10 +139,10 @@ pub contract Flovatar: NonFungibleToken {
                 component.getCategory() == "hat" : "The component needs to be a hat"
             }
 
-            self.accessory = component.templateId
+            self.hat = component.templateId
 
             destroy component
-            return self.accessory
+            return self.hat
         }
 
         pub fun getEyeglasses(): UInt64? {
@@ -154,7 +154,7 @@ pub contract Flovatar: NonFungibleToken {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
             }
 
-            self.accessory = component.templateId
+            self.eyeglasses = component.templateId
 
             destroy component
             return self.eyeglasses
