@@ -9,9 +9,9 @@ import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 
 
-//this transaction will create a new Webshot and create and auction for it
+//this transaction will create a new Pack from a group of components
 transaction(
-    body: UInt64
+    body: UInt64,
     hair: UInt64,
     facialHair: UInt64?,
     eyes: UInt64,

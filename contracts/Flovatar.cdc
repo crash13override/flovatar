@@ -258,6 +258,15 @@ pub contract Flovatar: NonFungibleToken {
             }
         }
 
+        pub fun borrowFlovatarPrivate(id: UInt64): &{Flovatar.Private}? {
+            if self.ownedNFTs[id] != nil {
+                let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
+                return ref as! &Flovatar.NFT
+            } else {
+                return nil
+            }
+        }
+
         destroy() {
             destroy self.ownedNFTs
         }

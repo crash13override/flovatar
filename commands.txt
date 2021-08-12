@@ -62,15 +62,16 @@ FLOVATAR
 
 
 //CREATE A FLOVATAR
-
+flow transactions send ./transactions/create/flovatar.cdc --args-json '[{"type": "String","value": "Quirky"}, {"type": "UInt64","value": "12"},{"type": "UInt64","value": "13"},{"type": "UInt64","value": "14"},{"type": "UInt64","value": "15"},{"type": "UInt64","value": "16"},{"type": "UInt64","value": "17"},{"type": "UInt64","value": "18"}]'
 
 
 
 //ADDS AN ACCESSORY TO A FLOVATAR
+flow transactions send ./transactions/act/flovatar_add_accessory.cdc --args-json '[{"type": "UInt64","value": "1"},{"type": "UInt64","value": "21"}]'
 
 
-
-
+//GET ALL FLOVATARS FOR AN ADDRESS
+flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
 
 
 

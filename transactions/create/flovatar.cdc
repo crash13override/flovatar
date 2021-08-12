@@ -11,7 +11,7 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 
 transaction(
     name: String,
-    body: UInt64
+    body: UInt64,
     hair: UInt64,
     facialHair: UInt64?,
     eyes: UInt64,
