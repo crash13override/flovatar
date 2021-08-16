@@ -27,6 +27,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun getTemplate(): FlovatarComponentTemplate.ComponentTemplateData
         pub fun getSvg(): String
         pub fun getCategory(): String
+        pub fun getSeries(): UInt32
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -75,6 +76,10 @@ pub contract FlovatarComponent: NonFungibleToken {
 
         pub fun getCategory(): String {
             return self.getTemplate().category
+        }
+
+        pub fun getSeries(): UInt32 {
+            return self.getTemplate().series
         }
     }
 

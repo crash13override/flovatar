@@ -23,6 +23,7 @@ pub contract FlovatarComponentTemplate {
         pub let color: String
         pub let description: String
         pub let svg: String
+        pub let series: UInt32
         pub let maxMintableComponents: UInt64
     }
 
@@ -33,6 +34,7 @@ pub contract FlovatarComponentTemplate {
         pub let color: String
         pub let description: String
         pub let svg: String
+        pub let series: UInt32
         pub let maxMintableComponents: UInt64
 
         init(
@@ -41,6 +43,7 @@ pub contract FlovatarComponentTemplate {
             color: String,
             description: String,
             svg: String,
+            series: UInt32,
             maxMintableComponents: UInt64
         ) {
 
@@ -51,6 +54,7 @@ pub contract FlovatarComponentTemplate {
             self.color = color
             self.description = description
             self.svg = svg
+            self.series = series
             self.maxMintableComponents = maxMintableComponents
         }
     }
@@ -119,6 +123,7 @@ pub contract FlovatarComponentTemplate {
         pub let color: String
         pub let description: String
         pub let svg: String?
+        pub let series: UInt32
         pub let maxMintableComponents: UInt64
         pub let totalMintedComponents: UInt64
         pub let lastComponentMintedAt: UFix64
@@ -130,6 +135,7 @@ pub contract FlovatarComponentTemplate {
             color: String,
             description: String,
             svg: String?,
+            series: UInt32,
             maxMintableComponents: UInt64
         ) {
             self.id = id
@@ -138,6 +144,7 @@ pub contract FlovatarComponentTemplate {
             self.color = color
             self.description = description
             self.svg = svg
+            self.series = series
             self.maxMintableComponents = maxMintableComponents
             self.totalMintedComponents = FlovatarComponentTemplate.getTotalMintedComponents(id: id)!
             self.lastComponentMintedAt = FlovatarComponentTemplate.getLastComponentMintedAt(id: id)!
@@ -158,6 +165,7 @@ pub contract FlovatarComponentTemplate {
                     color: componentTemplate!.color,
                     description: componentTemplate!.description,
                     svg: nil,
+                    series: componentTemplate!.series,
                     maxMintableComponents: componentTemplate!.maxMintableComponents
                     ))
             }
@@ -176,6 +184,7 @@ pub contract FlovatarComponentTemplate {
                     color: componentTemplate!.color,
                     description: componentTemplate!.description,
                     svg: componentTemplate!.svg,
+                    series: componentTemplate!.series,
                     maxMintableComponents: componentTemplate!.maxMintableComponents
                     )
             }
@@ -204,6 +213,7 @@ pub contract FlovatarComponentTemplate {
         color: String,
         description: String,
         svg: String,
+        series: UInt32,
         maxMintableComponents: UInt64
     ) : @FlovatarComponentTemplate.ComponentTemplate {
 
@@ -213,6 +223,7 @@ pub contract FlovatarComponentTemplate {
             color: color,
             description: description,
             svg: svg,
+            series: series,
             maxMintableComponents: maxMintableComponents
         )
         emit Created(id: newComponentTemplate.id, name: newComponentTemplate.name, category: newComponentTemplate.category, color: newComponentTemplate.color, maxMintableComponents: newComponentTemplate.maxMintableComponents)

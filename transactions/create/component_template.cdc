@@ -16,6 +16,7 @@ transaction(
     color: String,
     description: String,
     svg: String,
+    series: UInt32,
     maxMintableComponents: UInt64) {
 
     let flovatarComponentTemplateCollection: &FlovatarComponentTemplate.Collection
@@ -34,6 +35,7 @@ transaction(
             color: color,
             description: description,
             svg: svg,
+            series: series,
             maxMintableComponents: maxMintableComponents
             ) as! @FlovatarComponentTemplate.ComponentTemplate
 

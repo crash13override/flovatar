@@ -381,6 +381,9 @@ pub contract Flovatar: NonFungibleToken {
         nose: @FlovatarComponent.NFT,
         mouth: @FlovatarComponent.NFT,
         clothing: @FlovatarComponent.NFT,
+        accessory: @FlovatarComponent.NFT?,
+        hat: @FlovatarComponent.NFT?,
+        eyeglasses: @FlovatarComponent.NFT?,
         address: Address
     ) : @Flovatar.NFT {
 
@@ -397,10 +400,46 @@ pub contract Flovatar: NonFungibleToken {
             mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
             clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
 
+            body.getSeries() == hair.getSeries() : "The hair doesn't belong to the same series like the body"
+            body.getSeries() == eyes.getSeries() : "The eyes doesn't belong to the same series like the body"
+            body.getSeries() == nose.getSeries() : "The nose doesn't belong to the same series like the body"
+            body.getSeries() == mouth.getSeries() : "The mouth doesn't belong to the same series like the body"
+            body.getSeries() == clothing.getSeries() : "The clothing doesn't belong to the same series like the body"
+
         }
         if(facialHair != nil){
             if(facialHair?.getCategory() != "facialHair"){
                 panic("The facial hair component belongs to the wrong category")
+            }
+            if(facialHair?.getSeries() != body.getSeries()){
+                panic("The facial hair doesn't belong to the same series like the body")
+            }
+        }
+
+        if(accessory != nil){
+            if(accessory?.getCategory() != "accessory"){
+                panic("The accessory component belongs to the wrong category")
+            }
+            if(accessory?.getSeries() != body.getSeries()){
+                panic("The accessory doesn't belong to the same series like the body")
+            }
+        }
+
+        if(hat != nil){
+            if(hat?.getCategory() != "hat"){
+                panic("The hat component belongs to the wrong category")
+            }
+            if(hat?.getSeries() != body.getSeries()){
+                panic("The hat doesn't belong to the same series like the body")
+            }
+        }
+
+        if(eyeglasses != nil){
+            if(eyeglasses?.getCategory() != "eyeglasses"){
+                panic("The facial hair component belongs to the wrong category")
+            }
+            if(eyeglasses?.getSeries() != body.getSeries()){
+                panic("The eyeglasses doesn't belong to the same series like the body")
             }
         }
 
@@ -447,6 +486,24 @@ pub contract Flovatar: NonFungibleToken {
         )
 
         var newNFT <- create NFT(metadata: metadata)
+
+
+        if(accessory != nil){
+            newNFT.setAccessory(component: <-accessory!)
+        } else {
+            destroy accessory
+        }
+        if(hat != nil){
+            newNFT.setHat(component: <-hat!)
+        } else {
+            destroy hat
+        }
+        if(eyeglasses != nil){
+            newNFT.setEyeglasses(component: <-eyeglasses!)
+        } else {
+            destroy eyeglasses
+        }
+
         emit Created(id: Flovatar.totalSupply, metadata: metadata)
 
         destroy body
@@ -469,6 +526,7 @@ pub contract Flovatar: NonFungibleToken {
             color: String,
             description: String,
             svg: String,
+            series: UInt32,
             maxMintableComponents: UInt64
         ) : @FlovatarComponentTemplate.ComponentTemplate {
             return <- FlovatarComponentTemplate.createComponentTemplate(
@@ -477,6 +535,7 @@ pub contract Flovatar: NonFungibleToken {
                 color: color,
                 description: description,
                 svg: svg,
+                series: series,
                 maxMintableComponents: maxMintableComponents
             )
         }

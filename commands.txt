@@ -21,7 +21,7 @@ FLOVATAR COMPONENT TEMPLATES
 -----------------------------------------------------------------
 
 //CREATE A NEW FLOVATAR COMPONENT TEMPLATE
-flow transactions send ./transactions/create/component_template.cdc --args-json '[{"type": "String","value": "Body"},{"type": "String","value": "body"},{"type": "String","value": "yellow"},{"type": "String","value": "Body Template"},{"type": "String","value": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M192 0L0 0C4.07917 49.2762 45.5018 88 96 88C146.498 88 187.921 49.2762 192 0Z\" fill=\"#121212\"/>"},{"type": "UInt64","value": "100000"}]'
+flow transactions send ./transactions/create/component_template.cdc --args-json '[{"type": "String","value": "Body"},{"type": "String","value": "body"},{"type": "String","value": "yellow"},{"type": "String","value": "Body Template"},{"type": "String","value": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M192 0L0 0C4.07917 49.2762 45.5018 88 96 88C146.498 88 187.921 49.2762 192 0Z\" fill=\"#121212\"/>"}, {"type": "UInt32","value": "1"}, {"type": "UInt64","value": "100000"}]'
 
 //GET ALL COMPONENT TEMPLATES
 flow scripts execute ./scripts/get_component_templates.cdc
@@ -62,7 +62,7 @@ FLOVATAR
 
 
 //CREATE A FLOVATAR
-flow transactions send ./transactions/create/flovatar.cdc --args-json '[{"type": "String","value": "Quirky"}, {"type": "UInt64","value": "12"},{"type": "UInt64","value": "13"},{"type": "UInt64","value": "14"},{"type": "UInt64","value": "15"},{"type": "UInt64","value": "16"},{"type": "UInt64","value": "17"},{"type": "UInt64","value": "18"}]'
+flow transactions send ./transactions/create/flovatar.cdc --args-json '[{"type": "String","value": "Quirky"}, {"type": "UInt64","value": "12"},{"type": "UInt64","value": "13"},{"type": "UInt64","value": "14"},{"type": "UInt64","value": "15"},{"type": "UInt64","value": "16"},{"type": "UInt64","value": "17"},{"type": "UInt64","value": "18"},{"type": "UInt64","value": "19"},{"type": "UInt64","value": "20"},{"type": "UInt64","value": "21"}]'
 
 
 
