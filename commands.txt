@@ -6,13 +6,17 @@ SETUP
 flow project deploy
 
 //SETUP FLOVATAR COMPONENT COLLECTION
-flow transactions send ./transactions/setup/flovatar_component_collection.cdc
+flow transactions send ./transactions/setup/component_collection.cdc
 
 //SETUP FLOVATAR PACK COLLECTION
-flow transactions send ./transactions/setup/flovatar_pack_collection.cdc
+flow transactions send ./transactions/setup/pack_collection.cdc
 
 //SETUP FLOVATAR COLLECTION
 flow transactions send ./transactions/setup/flovatar_collection.cdc
+
+
+//SETUP ACCOUNT FOR ALL COLLECTION
+flow transactions send ./transactions/setup/init_account.cdc
 
 
 
@@ -78,26 +82,67 @@ flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Addres
 
 
 
-WEBSHOT AND AUCTION
+SCRIPTS
 -----------------------------------------------------------------
 
-//CREATE A NEW WEBSHOT
-flow transactions send ./transactions/create/webshot.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "Dictionary","value": [{"key": {"type":"String", "value":"mobile"}, "value": {"type":"String", "value":"mobileImg.png"}}]},{"type": "String","value": "image content goes here"},{"type": "String","value": "https://d16qhp206h6o3o.cloudfront.net/28/a16z26-httpsa16zcom26-2021-04-14-15-00-11-desktop.png"}]'
+//CHECK ACCOUNT AND DEPLOYED CONTRACTS
+flow accounts get 0xf8d6e0586b0a20c7
 
-//CREATE A NEW AUCTION
-flow transactions send ./transactions/create/auction.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "60.0"},{"type": "UFix64", "value": "60.0"}]'
+//CHECK ACCOUNT IF IT'S INITIALIZED
+flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0x0b601b730796f30e"}]' -n testnet
+flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0x715eba9a0dd9d21a"}]' -n testnet
 
-//CREATE A NEW WEBSHOT AND START AN AUCTION FOR IT
-flow transactions send ./transactions/create/auction_webshot.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64","value": "1"},{"type": "Dictionary","value": [{"key": {"type":"String", "value":"mobile"}, "value": {"type":"String", "value":"mobileImg.png"}}]},{"type": "String","value": "image content goes here"},{"type": "String","value": "https://d16qhp206h6o3o.cloudfront.net/28/a16z26-httpsa16zcom26-2021-04-14-15-00-11-desktop.png"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "1.0"},{"type": "UFix64", "value": "60.0"},{"type": "UFix64", "value": "60.0"}]'
 
-//PLACES A BID FOR AN AUCTION
-flow transactions send ./transactions/buy/place_bid.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64", "value": "1"},{"type": "UFix64", "value": "10.0"}]'
 
-//PURCHASE A WEBSHOT FROM A DIRECT SALE LISTING
-flow transactions send ./transactions/buy/purchase_sale.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"},{"type": "UInt64", "value": "1"},{"type": "UFix64", "value": "1.0"}]'
 
-//SETTLE AN AUCTION ONCE TIME HAS EXPIRED
-flow transactions send ./transactions/buy/settle.cdc --args-json '[{"type": "UInt64", "value": "1"}]'
+
+
+EVENTS
+-----------------------------------------------------------------
+
+//GET FLOVATAR CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Flovatar.Created 0
+flow events get A.5a2dca94bdf30638.Flovatar.Created 0 --network testnet
+
+//GET WEBSHOT CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Webshot.Created 0
+flow events get A.5a2dca94bdf30638.Webshot.Created 0 --network testnet
+
+//GET SALE CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.ForSale 0
+
+//GET SALE COMPLETED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.WebshotPurchased 0
+
+//GET SALE PRICE CHANGED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.PriceChanged 0
+
+//GET SALE REMOVED EVENT
+flow events get A.f8d6e0586b0a20c7.Marketplace.SaleWithdrawn 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 SALE OFFER

@@ -18,6 +18,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64, templateId: UInt64)
+    pub event Destroyed(id: UInt64, templateId: UInt64)
 
     //The public interface can show metadata and the content for the Webshot
     pub resource interface Public {
@@ -80,6 +81,10 @@ pub contract FlovatarComponent: NonFungibleToken {
 
         pub fun getSeries(): UInt32 {
             return self.getTemplate().series
+        }
+
+        destroy() {
+            emit Destroyed(id: self.id, templateId: self.templateId)
         }
     }
 

@@ -215,6 +215,8 @@ pub contract FlovatarPack {
                 recipient.deposit(token: <-newAccessory)
             }
 
+            emit Opened(id: pack.id)
+
             destroy pack
         }
 

@@ -14,6 +14,6 @@ import FlovatarPack from "../contracts/FlovatarPack.cdc"
 
 pub fun main(address:Address) : [Flovatar.FlovatarData] {
 
-    return FlovatarComponent.getComponents(address: address)
+    return Flovatar.getFlovatars(address: address)
 
 }

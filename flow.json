@@ -10,6 +10,13 @@
     "FlovatarComponent": "./contracts/FlovatarComponent.cdc",
     "FlovatarPack": "./contracts/FlovatarPack.cdc",
     "Flovatar": "./contracts/Flovatar.cdc",
+    "NFTStorefront": "./contracts/NFTStorefront.cdc",
+    "Profile": {
+      "source": "./contracts/Profile.cdc",
+      "aliases": {
+        "testnet": "0x69915b410cca3c65"
+      }
+    },
     "FungibleToken": {
       "source": "./contracts/FungibleToken.cdc",
       "aliases": {
@@ -33,8 +40,7 @@
     "FUSD": {
       "source": "./contracts/FUSD.cdc",
       "aliases": {
-        "testnet": "0xe223d8a629e49c68",
-        "emulator": "0x0ae53cb6e3f42a79"
+        "testnet": "0xe223d8a629e49c68"
       }
     }
   },
@@ -64,7 +70,8 @@
         "FlovatarComponentTemplate",
         "FlovatarComponent",
         "FlovatarPack",
-        "Flovatar"
+        "Flovatar",
+        "NFTStorefront"
       ]
     },
     "emulator": {
@@ -73,6 +80,8 @@
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
+        "NFTStorefront",
+        "Profile",
         "NonFungibleToken",
         "FUSD"
       ]

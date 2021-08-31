@@ -29,11 +29,13 @@ pub contract Flovatar: NonFungibleToken {
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64, metadata: Metadata)
+    pub event Updated(id: UInt64)
 
 
     pub struct Metadata {
         pub let name: String
         pub let mint: UInt64
+        pub let series: UInt32
         pub let svg: String
         pub let combination: String
         pub let creatorAddress: Address
@@ -42,7 +44,8 @@ pub contract Flovatar: NonFungibleToken {
 
         init(
             name: String,
-            mint: UInt64
+            mint: UInt64,
+            series: UInt32,
             svg: String,
             combination: String,
             creatorAddress: Address,
@@ -50,6 +53,7 @@ pub contract Flovatar: NonFungibleToken {
         ) {
                 self.name = name
                 self.mint = mint
+                self.series = series
                 self.svg = svg
                 self.combination = combination
                 self.creatorAddress = creatorAddress
@@ -122,9 +126,12 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "accessory" : "The component needs to be an accessory"
+                component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
             }
 
             self.accessory = component.templateId
+
+            emit Updated(id: self.id)
 
             destroy component
             return self.accessory
@@ -137,9 +144,12 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setHat(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "hat" : "The component needs to be a hat"
+                component.getSeries() == self.metadata.series : "The hat belongs to a different series"
             }
 
             self.hat = component.templateId
+
+            emit Updated(id: self.id)
 
             destroy component
             return self.hat
@@ -152,9 +162,12 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
+                component.getSeries() == self.metadata.series : "The eyeglasses belongs to a different series"
             }
 
             self.eyeglasses = component.templateId
+
+            emit Updated(id: self.id)
 
             destroy component
             return self.eyeglasses
@@ -471,6 +484,7 @@ pub contract Flovatar: NonFungibleToken {
         let metadata = Metadata(
             name: name,
             mint: Flovatar.totalSupply + UInt64(1),
+            series: body.getSeries(),
             svg: svg,
             combination: combinationString,
             creatorAddress: address,
@@ -504,7 +518,7 @@ pub contract Flovatar: NonFungibleToken {
             destroy eyeglasses
         }
 
-        emit Created(id: Flovatar.totalSupply, metadata: metadata)
+        emit Created(id: newNFT.id, metadata: metadata)
 
         destroy body
         destroy hair
