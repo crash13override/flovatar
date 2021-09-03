@@ -10,10 +10,10 @@ import FlovatarPack from "../contracts/FlovatarPack.cdc"
 
 
 
-// This script returns the available webshots
+// This script returns the available components
 
-pub fun main(address:Address, flovatarId: UInt64) : Flovatar.FlovatarData? {
+pub fun main(address:Address, componentId: UInt64) : FlovatarComponent.ComponentData? {
 
-    return Flovatar.getFlovatar(address: address, flovatarId: flovatarId)
+    return FlovatarComponent.getComponent(address: address, componentId: componentId)
 
 }
