@@ -37,6 +37,12 @@ transaction {
         account.link<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
     }
 
+    let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
+    if(!flovatarPackCap.check()) {
+        account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(), to: FlovatarPack.CollectionStoragePath)
+        account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
+    }
+
     if account.borrow<&NFTStorefront.Storefront>(from: NFTStorefront.StorefrontStoragePath) == nil {
           let storefront <- NFTStorefront.createStorefront() as! @NFTStorefront.Storefront
           account.save(<-storefront, to: NFTStorefront.StorefrontStoragePath)

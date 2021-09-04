@@ -232,6 +232,18 @@ pub contract FlovatarPack {
     }
 
 
+    // We cannot return the svg here since it will be too big to run in a script
+    pub fun getPacks(address: Address) : [UInt64]? {
+
+        let account = getAccount(address)
+
+        if let packCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarPack.CollectionPublic}>()  {
+            return packCollection.getIDs();
+        }
+        return nil
+    }
+
+
 
     //This method can only be called from another contract in the same account. 
     access(account) fun createPack(

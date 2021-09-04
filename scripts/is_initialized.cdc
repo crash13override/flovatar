@@ -14,11 +14,12 @@ pub fun main(address: Address): Bool {
   let flovatarCap = account.getCapability<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
   let flovatarComponentCap = account.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
   let nftStorefrontCap = account.getCapability<&{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath)
+  let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
 
   var hasFusd = false
   if let fusdVault = account.getCapability(/public/fusdBalance).borrow<&FUSD.Vault{FungibleToken.Balance}>(){
     hasFusd = true
   }
 
-  return (flovatarCap.check() && flovatarComponentCap.check() && nftStorefrontCap.check() && hasFusd)
+  return (flovatarCap.check() && flovatarComponentCap.check() && nftStorefrontCap.check() && flovatarPackCap.check() && hasFusd)
 }
