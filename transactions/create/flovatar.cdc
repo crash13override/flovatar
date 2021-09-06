@@ -17,7 +17,10 @@ transaction(
     eyes: UInt64,
     nose: UInt64,
     mouth: UInt64,
-    clothing: UInt64
+    clothing: UInt64,
+    accessory: UInt64?,
+    hat: UInt64?,
+    eyeglasses: UInt64?
     ) {
 
 
@@ -31,6 +34,9 @@ transaction(
     let noseNFT: @FlovatarComponent.NFT
     let mouthNFT: @FlovatarComponent.NFT
     let clothingNFT: @FlovatarComponent.NFT
+    let accessoryNFT: @FlovatarComponent.NFT?
+    let hatNFT: @FlovatarComponent.NFT?
+    let eyeglassesNFT: @FlovatarComponent.NFT?
     let accountAddress: Address
 
     prepare(account: AuthAccount) {
@@ -50,6 +56,25 @@ transaction(
         self.mouthNFT <- self.flovatarComponentCollection.withdraw(withdrawID: mouth) as! @FlovatarComponent.NFT
         self.clothingNFT <- self.flovatarComponentCollection.withdraw(withdrawID: clothing) as! @FlovatarComponent.NFT
 
+
+        if(accessory != nil){
+            self.accessoryNFT <- self.flovatarComponentCollection.withdraw(withdrawID: accessory!) as! @FlovatarComponent.NFT
+        } else {
+            self.accessoryNFT <- nil
+        }
+
+        if(hat != nil){
+            self.hatNFT <- self.flovatarComponentCollection.withdraw(withdrawID: hat!) as! @FlovatarComponent.NFT
+        } else {
+            self.hatNFT <- nil
+        }
+
+        if(eyeglasses != nil){
+            self.eyeglassesNFT <- self.flovatarComponentCollection.withdraw(withdrawID: eyeglasses!) as! @FlovatarComponent.NFT
+        } else {
+            self.eyeglassesNFT <- nil
+        }
+
         self.accountAddress = account.address
     }
 
@@ -64,6 +89,9 @@ transaction(
             nose: <-self.noseNFT,
             mouth: <-self.mouthNFT,
             clothing: <-self.clothingNFT,
+            accessory: <-self.accessoryNFT,
+            hat: <-self.hatNFT,
+            eyeglasses: <-self.eyeglassesNFT,
             address: self.accountAddress
         )
 

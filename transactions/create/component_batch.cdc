@@ -9,7 +9,7 @@ import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 
 
-transaction(templateId: UInt64) {
+transaction(templateId: UInt64, quantity: UInt64) {
 
     let flovatarComponentCollection: &FlovatarComponent.Collection
     let flovatarAdmin: &Flovatar.Admin
@@ -21,9 +21,13 @@ transaction(templateId: UInt64) {
     }
 
     execute {
-        let flovatarComponent <- self.flovatarAdmin.createComponent(templateId: templateId) as! @FlovatarComponent.NFT
+        let collection <- self.flovatarAdmin.batchCreateComponents(templateId: templateId, quantity: quantity) as! @FlovatarComponent.Collection
 
-        self.flovatarComponentCollection.deposit(token: <-flovatarComponent)
+        for id in collection.getIDs() {
+            self.flovatarComponentCollection.deposit(token: <- collection.withdraw(withdrawID: id))
+        }
+
+        destroy collection
 
     }
 }

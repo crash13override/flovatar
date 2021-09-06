@@ -246,10 +246,22 @@ pub contract FlovatarComponent: NonFungibleToken {
         return <- newNFT
     }
 
+    access(account) fun batchCreateComponents(templateId: UInt64, quantity: UInt64): @Collection {
+            let newCollection <- create Collection()
+
+            var i: UInt64 = 0
+            while i < quantity {
+                newCollection.deposit(token: <-self.createComponent(templateId: templateId))
+                i = i + UInt64(1)
+            }
+
+            return <-newCollection
+        }
+
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarComponentCollection001
-        self.CollectionStoragePath = /storage/FlovatarComponentCollection001
+        self.CollectionPublicPath = /public/FlovatarComponentCollection003
+        self.CollectionStoragePath = /storage/FlovatarComponentCollection003
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

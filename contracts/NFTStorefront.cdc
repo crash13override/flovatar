@@ -487,8 +487,9 @@ pub contract NFTStorefront {
     }
 
     init () {
-        self.StorefrontStoragePath = /storage/NFTStorefront
-        self.StorefrontPublicPath = /public/NFTStorefront
+        //TODO: Remove before going to mainnet!!!
+        self.StorefrontStoragePath = /storage/NFTStorefront003
+        self.StorefrontPublicPath = /public/NFTStorefront003
 
         emit NFTStorefrontInitialized()
     }

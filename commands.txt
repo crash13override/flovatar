@@ -58,6 +58,9 @@ flow transactions send ./transactions/create/pack.cdc --args-json '[{"type": "UI
 flow transactions send ./transactions/act/pack_open.cdc --args-json '[{"type": "UInt64","value": "1"}]'
 
 
+//OPEN A PACK
+flow transactions send ./transactions/act/pack_send.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+flow transactions send ./transactions/act/pack_send.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "Address","value": "0x386f6e408b6bd6aa"}]' --network testnet --signer testnet-account
 
 
 
@@ -67,6 +70,7 @@ FLOVATAR
 
 //CREATE A FLOVATAR
 flow transactions send ./transactions/create/flovatar.cdc --args-json '[{"type": "String","value": "Quirky"}, {"type": "UInt64","value": "12"},{"type": "UInt64","value": "13"},{"type": "UInt64","value": "14"},{"type": "UInt64","value": "15"},{"type": "UInt64","value": "16"},{"type": "UInt64","value": "17"},{"type": "UInt64","value": "18"},{"type": "UInt64","value": "19"},{"type": "UInt64","value": "20"},{"type": "UInt64","value": "21"}]'
+flow transactions send ./transactions/create/flovatar.cdc --args-json '[{"type": "String","value": "Quirky"}, {"type": "UInt64","value": "1"},{"type": "UInt64","value": "3"},{"type": "UInt64","value": "27"},{"type": "UInt64","value": "33"},{"type": "UInt64","value": "32"},{"type": "UInt64","value": "7"},{"type": "UInt64","value": "6"},{"type": "UInt64","value": "23"},{"type": "UInt64","value": "26"},{"type": "UInt64","value": "29"}]' --network testnet --signer testnet-account
 
 
 
@@ -90,11 +94,15 @@ flow accounts get 0xf8d6e0586b0a20c7
 
 //CHECK ACCOUNT IF IT'S INITIALIZED
 flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
-flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0x0b601b730796f30e"}]' -n testnet
-flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0x715eba9a0dd9d21a"}]' -n testnet
+flow scripts execute ./scripts/is_initialized.cdc --args-json '[{"type": "Address","value": "0x386f6e408b6bd6aa"}]' -n testnet
 
+//GET COLLECTIONS FROM AN ADDRESS
+flow scripts execute ./scripts/get_collections.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
+flow scripts execute ./scripts/get_collections.cdc --args-json '[{"type": "Address","value": "0x386f6e408b6bd6aa"}]' -n testnet
+flow scripts execute ./scripts/get_collections.cdc --args-json '[{"type": "Address","value": "0x5a2dca94bdf30638"}]' -n testnet
 
-
+//CHECK FLOVATAR COMBINATION AVAILABILITY
+flow scripts execute ./scripts/check_availability.cdc test 35 34 19 13 8 31 30 --network testnet
 
 
 
@@ -105,9 +113,22 @@ EVENTS
 flow events get A.f8d6e0586b0a20c7.Flovatar.Created 0
 flow events get A.5a2dca94bdf30638.Flovatar.Created 0 --network testnet
 
-//GET WEBSHOT CREATED EVENT
-flow events get A.f8d6e0586b0a20c7.Webshot.Created 0
-flow events get A.5a2dca94bdf30638.Webshot.Created 0 --network testnet
+//GET FLOVATAR COMPONENT CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.FlovatarComponent.Created 0
+flow events get A.5a2dca94bdf30638.FlovatarComponent.Created 0 --network testnet
+
+//GET FLOVATAR TEMPLATE CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.FlovatarTemplate.Created 0
+flow events get A.5a2dca94bdf30638.FlovatarTemplate.Created 0 --network testnet
+
+//GET FLOVATAR PACK CREATED EVENT
+flow events get A.f8d6e0586b0a20c7.FlovatarPack.Created 0
+flow events get A.5a2dca94bdf30638.FlovatarPack.Created 0 --network testnet
+
+//GET FLOVATAR DEPOSIT EVENT
+flow events get A.f8d6e0586b0a20c7.Flovatar.Deposit 0
+flow events get A.5a2dca94bdf30638.Flovatar.Deposit 0 --network testnet
+
 
 //GET SALE CREATED EVENT
 flow events get A.f8d6e0586b0a20c7.Marketplace.ForSale 0

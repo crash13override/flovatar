@@ -293,9 +293,21 @@ pub contract Flovatar: NonFungibleToken {
     pub struct FlovatarData {
         pub let id: UInt64
         pub let metadata: Flovatar.Metadata
-        init(id: UInt64, metadata: Flovatar.Metadata) {
+        pub let accessoryId: UInt64?
+        pub let hatId: UInt64?
+        pub let eyeglassesId: UInt64?
+        init(
+            id: UInt64, 
+            metadata: Flovatar.Metadata,
+            accessoryId: UInt64?,
+            hatId: UInt64?,
+            eyeglassesId: UInt64?
+            ) {
             self.id = id
             self.metadata = metadata
+            self.accessoryId = accessoryId
+            self.hatId = hatId
+            self.eyeglassesId = eyeglassesId
         }
     }
 
@@ -308,7 +320,10 @@ pub contract Flovatar: NonFungibleToken {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
-                    metadata: flovatar!.metadata
+                    metadata: flovatar!.metadata,
+                    accessoryId: flovatar!.getAccessory(),
+                    hatId: flovatar!.getHat(),
+                    eyeglassesId: flovatar!.getEyeglasses()
                 )
             }
         }
@@ -322,10 +337,13 @@ pub contract Flovatar: NonFungibleToken {
 
         if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
             for id in flovatarCollection.getIDs() {
-                var Flovatar = flovatarCollection.borrowFlovatar(id: id)
+                var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 flovatarData.append(FlovatarData(
                     id: id,
-                    metadata: Flovatar!.metadata
+                    metadata: flovatar!.metadata,
+                    accessoryId: flovatar!.getAccessory(),
+                    hatId: flovatar!.getHat(),
+                    eyeglassesId: flovatar!.getEyeglasses()
                     ))
             }
         }
@@ -382,7 +400,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
     pub fun checkNameAvailable(name: String) : Bool {
-        return ! Flovatar.mintedNames.contains(name)
+        return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.contains(name)
     }
 
     pub fun createFlovatar(
@@ -404,7 +422,7 @@ pub contract Flovatar: NonFungibleToken {
         pre {
 
             name.length > 2 : "The name is too short"
-            name.length < 20 : "The name is too long" 
+            name.length < 32 : "The name is too long" 
 
             body.getCategory() == "body" : "The body component belongs to the wrong category"
             hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
@@ -557,6 +575,9 @@ pub contract Flovatar: NonFungibleToken {
         pub fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
             return <- FlovatarComponent.createComponent(templateId: templateId)
         }
+        pub fun batchCreateComponents(templateId: UInt64, quantity: UInt64) : @FlovatarComponent.Collection {
+            return <- FlovatarComponent.batchCreateComponents(templateId: templateId, quantity: quantity)
+        }
 
         pub fun createPack(
             body: @FlovatarComponent.NFT,
@@ -596,9 +617,9 @@ pub contract Flovatar: NonFungibleToken {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection001
-        self.CollectionStoragePath = /storage/FlovatarCollection001
-        self.AdminStoragePath = /storage/FlovatarAdmin001
+        self.CollectionPublicPath = /public/FlovatarCollection003
+        self.CollectionStoragePath = /storage/FlovatarCollection003
+        self.AdminStoragePath = /storage/FlovatarAdmin003
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

@@ -279,8 +279,8 @@ pub contract FlovatarPack {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection001
-        self.CollectionStoragePath=/storage/FlovatarPackCollection001
+        self.CollectionPublicPath=/public/FlovatarPackCollection003
+        self.CollectionStoragePath=/storage/FlovatarPackCollection003
 
         // Initialize the total supply
         self.totalSupply = 0
