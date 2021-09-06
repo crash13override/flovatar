@@ -2,6 +2,10 @@
 SETUP
 -----------------------------------------------------------------
 
+
+//SETUP FUSD WALLET
+flow transactions send ./transactions/setup/fusd_vault.cdc
+
 //DEPLOY THE PROJECT WITH ALL THE CONTRACTS
 flow project deploy
 
@@ -43,22 +47,26 @@ FLOVATAR COMPONENT
 //CREATE A NEW COMPONENT FROM A TEMPLATE
 flow transactions send ./transactions/create/component.cdc --args-json '[{"type": "UInt64","value": "1"}]'
 
+//CREATE NEW COMPONENTS FROM A TEMPLATE IN BATCH
+flow transactions send ./transactions/create/component_batch.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "UInt64","value": "5"}]'
+flow transactions send ./transactions/create/component_batch.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "UInt64","value": "5"}]' --network testnet --signer testnet-account
+
 //GET ALL COMPONENTS FOR AN ADDRESS
 flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
-
+flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Address","value": "0x386f6e408b6bd6aa"}]' --network testnet
 
 
 FLOVATAR PACK
 -----------------------------------------------------------------
 
 //CREATE A NEW PACK
-flow transactions send ./transactions/create/pack.cdc --args-json '[{"type": "UInt64","value": "1"},{"type": "UInt64","value": "2"},{"type": "UInt64","value": "4"},{"type": "UInt64","value": "3"},{"type": "UInt64","value": "6"},{"type": "UInt64","value": "5"},{"type": "UInt64","value": "7"},{"type": "UInt64","value": "8"},{"type": "UInt64","value": "9"},{"type": "UInt64","value": "10"}]'
+flow transactions send ./transactions/create/pack.cdc --args-json '[{"type": "UInt64","value": "1"},{"type": "UInt64","value": "2"},{"type": "UInt64","value": "4"},{"type": "UInt64","value": "3"},{"type": "UInt64","value": "6"},{"type": "UInt64","value": "5"},{"type": "UInt64","value": "7"},{"type": "UInt64","value": "8"},{"type": "UInt64","value": "9"},{"type": "UInt64","value": "10"},{"type": "String","value": "SomeSecretKeyHere"}]'
 
 //OPEN A PACK
 flow transactions send ./transactions/act/pack_open.cdc --args-json '[{"type": "UInt64","value": "1"}]'
 
 
-//OPEN A PACK
+//SEND A PACK
 flow transactions send ./transactions/act/pack_send.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
 flow transactions send ./transactions/act/pack_send.cdc --args-json '[{"type": "UInt64","value": "1"}, {"type": "Address","value": "0x386f6e408b6bd6aa"}]' --network testnet --signer testnet-account
 

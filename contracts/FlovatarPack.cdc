@@ -1,3 +1,6 @@
+import FungibleToken from "./FungibleToken.cdc"
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FUSD from "./FUSD.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
 
@@ -19,15 +22,18 @@ pub contract FlovatarPack {
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64)
     pub event Opened(id: UInt64)
+    pub event Purchased(id: UInt64)
 
     pub resource interface Public {
         pub let id: UInt64
-        access(account) let components: @{String: FlovatarComponent.NFT}
+        pub let price: UFix64
     }
 
     pub resource Pack: Public {
         pub let id: UInt64
+        pub let price: UFix64
         access(account) let components: @{String: FlovatarComponent.NFT}
+        access(account) var secret: String
 
         init(
             body: @FlovatarComponent.NFT,
@@ -39,7 +45,9 @@ pub contract FlovatarPack {
             clothing: @FlovatarComponent.NFT,
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?
+            accessory: @FlovatarComponent.NFT?,
+            secret: String,
+            price: UFix64
         ) {
 
             pre {
@@ -123,10 +131,21 @@ pub contract FlovatarPack {
             } else {
                 destroy accessory
             }
+
+            self.secret = secret
+            self.price = price
         }
 
         destroy() {
             destroy self.components
+        }
+
+        access(contract) fun getSecret(): String {
+            return self.secret
+        }
+
+        access(contract) fun setSecret(secret: String) {
+            self.secret = secret
         }
 
     }
@@ -135,13 +154,16 @@ pub contract FlovatarPack {
     pub resource interface CollectionPublic {
         pub fun getIDs(): [UInt64]
         pub fun deposit(token: @FlovatarPack.Pack)
+        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, secret: String)
     }
 
     pub resource Collection: CollectionPublic {
-        pub var ownedPacks: @{UInt64: FlovatarPack.Pack}
+        access(account) let ownedPacks: @{UInt64: FlovatarPack.Pack}
+        access(account) let ownerVault: Capability<&AnyResource{FungibleToken.Receiver}>
 
-        init () {
+        init (ownerVault: Capability<&{FungibleToken.Receiver}>) {
             self.ownedPacks <- {}
+            self.ownerVault = ownerVault
         }
 
         // getIDs returns an array of the IDs that are in the collection
@@ -220,6 +242,43 @@ pub contract FlovatarPack {
             destroy pack
         }
 
+        access(account) fun getPrice(id: UInt64): UFix64 {
+            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            return pack.price
+        }
+
+        access(account) fun getSecret(id: UInt64): String {
+            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            return pack.getSecret()
+        }
+
+        access(account) fun setSecret(id: UInt64, secret: String) {
+            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            pack.setSecret(secret: secret)
+        }
+
+
+        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, secret: String) {
+            pre {
+                self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
+                self.getPrice(id: tokenId) > buyTokens.balance : "Not enough tokens to buy the Pack!"
+            }
+
+            let recipient=recipientCap.borrow()!
+            let pack <- self.withdraw(withdrawID: tokenId)
+
+
+            let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner pack vault")
+            vaultRef.deposit(from: <-buyTokens)
+
+
+            let packId: UInt64 = pack.id
+            pack.setSecret(secret: unsafeRandom().toString())
+            recipient.deposit(token: <- pack)
+
+            emit Purchased(id: packId)
+
+        }
 
         destroy() {
             destroy self.ownedPacks
@@ -227,12 +286,11 @@ pub contract FlovatarPack {
     }
 
     // public function that anyone can call to create a new empty collection
-    pub fun createEmptyCollection(): @FlovatarPack.Collection {
-        return <- create Collection()
+    pub fun createEmptyCollection(ownerVault: Capability<&{FungibleToken.Receiver}>): @FlovatarPack.Collection {
+        return <- create Collection(ownerVault: ownerVault)
     }
 
 
-    // We cannot return the svg here since it will be too big to run in a script
     pub fun getPacks(address: Address) : [UInt64]? {
 
         let account = getAccount(address)
@@ -256,7 +314,9 @@ pub contract FlovatarPack {
             clothing: @FlovatarComponent.NFT,
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?
+            accessory: @FlovatarComponent.NFT?,
+            secret: String,
+            price: UFix64
         ) : @FlovatarPack.Pack {
 
         var newPack <- create Pack(
@@ -269,7 +329,9 @@ pub contract FlovatarPack {
             clothing: <-clothing,
             hat: <-hat,
             eyeglasses: <-eyeglasses,
-            accessory: <-accessory
+            accessory: <-accessory,
+            secret: secret,
+            price: price
         )
 
         emit Created(id: newPack.id)
@@ -278,14 +340,21 @@ pub contract FlovatarPack {
     }
 
 	init() {
+        if(self.account.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {
+          self.account.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)
+          self.account.link<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver, target: /storage/fusdVault)
+          self.account.link<&FUSD.Vault{FungibleToken.Balance}>(/public/fusdBalance, target: /storage/fusdVault)
+        }
+        let wallet =  self.account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection003
-        self.CollectionStoragePath=/storage/FlovatarPackCollection003
+        self.CollectionPublicPath=/public/FlovatarPackCollection004
+        self.CollectionStoragePath=/storage/FlovatarPackCollection004
 
         // Initialize the total supply
         self.totalSupply = 0
 
-        self.account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(), to: FlovatarPack.CollectionStoragePath)
+        self.account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
         self.account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
 
         emit ContractInitialized()

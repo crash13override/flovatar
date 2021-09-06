@@ -5,7 +5,7 @@ import Flovatar from "../../contracts/Flovatar.cdc"
 import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
 import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
-import NFTStorefront from "../../contracts/NFTStorefront.cdc"
+import Marketplace from "../../contracts/Marketplace.cdc"
 
 transaction {
   // We want the account's address for later so we can verify if the account was initialized properly
@@ -39,15 +39,22 @@ transaction {
 
     let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
     if(!flovatarPackCap.check()) {
-        account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(), to: FlovatarPack.CollectionStoragePath)
+        let wallet =  account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+        account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
         account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
     }
 
-    if account.borrow<&NFTStorefront.Storefront>(from: NFTStorefront.StorefrontStoragePath) == nil {
-          let storefront <- NFTStorefront.createStorefront() as! @NFTStorefront.Storefront
-          account.save(<-storefront, to: NFTStorefront.StorefrontStoragePath)
-          account.link<&NFTStorefront.Storefront{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath, target: NFTStorefront.StorefrontStoragePath)
+    let marketplaceCap = account.getCapability<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath)
+    if(!marketplaceCap.check()) {
+        let wallet =  account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+
+        // store an empty Sale Collection in account storage
+        account.save<@Marketplace.SaleCollection>(<- Marketplace.createSaleCollection(ownerVault: wallet), to:Marketplace.CollectionStoragePath)
+
+        // publish a capability to the Collection in storage
+        account.link<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath, target: Marketplace.CollectionStoragePath)
     }
+
   }
 
 }

@@ -12,7 +12,8 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 transaction() {
     prepare(account: AuthAccount) {
         if(account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath) == nil) {
-            account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(), to: FlovatarPack.CollectionStoragePath)
+            let wallet =  account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+            account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
             account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
         }
     }

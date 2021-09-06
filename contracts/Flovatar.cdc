@@ -21,6 +21,9 @@ pub contract Flovatar: NonFungibleToken {
     pub let CollectionPublicPath: PublicPath
     pub let AdminStoragePath: StoragePath
 
+    access(account) var royaltyCut: UFix64
+    access(account) var marketplaceCut: UFix64
+
     pub var totalSupply: UInt64
     access(contract) let mintedCombinations: [String]
     access(contract) let mintedNames: [String]
@@ -519,6 +522,9 @@ pub contract Flovatar: NonFungibleToken {
 
         var newNFT <- create NFT(metadata: metadata)
 
+        Flovatar.addMintedCombination(combination: combinationString)
+        Flovatar.addMintedName(name: name)
+
 
         if(accessory != nil){
             newNFT.setAccessory(component: <-accessory!)
@@ -548,6 +554,24 @@ pub contract Flovatar: NonFungibleToken {
 
         return <- newNFT
     }
+
+
+
+
+    pub fun getRoyaltyCut(): UFix64{
+        return self.royaltyCut
+    }
+    pub fun getMarketplaceCut(): UFix64{
+        return self.marketplaceCut
+    }
+    access(account) fun setRoyaltyCut(value: UFix64){
+        self.royaltyCut = value
+    }
+    access(account) fun setMarketplaceCut(value: UFix64){
+        self.marketplaceCut = value
+    }
+
+    
 
 
     pub resource Admin {
@@ -589,25 +613,38 @@ pub contract Flovatar: NonFungibleToken {
             clothing: @FlovatarComponent.NFT,
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?
+            accessory: @FlovatarComponent.NFT?,
+            secret: String,
+            price: UFix64
         ) : @FlovatarPack.Pack {
 
-        return <- FlovatarPack.createPack(
-            body: <-body,
-            hair: <-hair,
-            facialHair: <-facialHair,
-            eyes: <-eyes,
-            nose: <-nose,
-            mouth: <-mouth,
-            clothing: <-clothing,
-            hat: <-hat,
-            eyeglasses: <-eyeglasses,
-            accessory: <-accessory
-        )
-    }
+            return <- FlovatarPack.createPack(
+                body: <-body,
+                hair: <-hair,
+                facialHair: <-facialHair,
+                eyes: <-eyes,
+                nose: <-nose,
+                mouth: <-mouth,
+                clothing: <-clothing,
+                hat: <-hat,
+                eyeglasses: <-eyeglasses,
+                accessory: <-accessory,
+                secret: secret,
+                price: price
+            )
+        }
 
         pub fun createNewAdmin(): @Admin {
             return <-create Admin()
+        }
+
+
+        pub fun setRoyaltyCut(value: UFix64) {
+            Flovatar.setRoyaltyCut(value: value)
+        }
+
+        pub fun setMarketplaceCut(value: UFix64) {
+            Flovatar.setMarketplaceCut(value: value)
         }
     }
 
@@ -617,14 +654,18 @@ pub contract Flovatar: NonFungibleToken {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection003
-        self.CollectionStoragePath = /storage/FlovatarCollection003
-        self.AdminStoragePath = /storage/FlovatarAdmin003
+        self.CollectionPublicPath = /public/FlovatarCollection004
+        self.CollectionStoragePath = /storage/FlovatarCollection004
+        self.AdminStoragePath = /storage/FlovatarAdmin004
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
         self.mintedCombinations = []
         self.mintedNames = []
+
+        self.royaltyCut = 0.01
+        self.marketplaceCut = 0.03
+
         self.account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
         self.account.link<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
 

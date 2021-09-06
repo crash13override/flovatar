@@ -10,7 +10,7 @@
     "FlovatarComponent": "./contracts/FlovatarComponent.cdc",
     "FlovatarPack": "./contracts/FlovatarPack.cdc",
     "Flovatar": "./contracts/Flovatar.cdc",
-    "NFTStorefront": "./contracts/NFTStorefront.cdc",
+    "Marketplace": "./contracts/Marketplace.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {
@@ -71,7 +71,7 @@
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
-        "NFTStorefront"
+        "Marketplace"
       ]
     },
     "emulator": {
@@ -80,7 +80,7 @@
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
-        "NFTStorefront",
+        "Marketplace",
         "Profile",
         "NonFungibleToken",
         "FUSD"

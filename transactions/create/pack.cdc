@@ -20,7 +20,8 @@ transaction(
     clothing: UInt64,
     hat: UInt64?,
     eyeglasses: UInt64?,
-    accessory: UInt64?
+    accessory: UInt64?,
+    secret: String
     ) {
 
     let flovatarComponentCollection: &FlovatarComponent.Collection
@@ -84,7 +85,8 @@ transaction(
             clothing: <-self.clothingNFT,
             hat: <-self.hatNFT,
             eyeglasses: <-self.eyeglassesNFT,
-            accessory: <-self.accessoryNFT
+            accessory: <-self.accessoryNFT,
+            secret: secret
         ) as! @FlovatarPack.Pack
 
         self.flovatarPackCollection.deposit(token: <-flovatarPack)
