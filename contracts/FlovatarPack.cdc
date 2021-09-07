@@ -261,7 +261,7 @@ pub contract FlovatarPack {
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, secret: String) {
             pre {
                 self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
-                self.getPrice(id: tokenId) > buyTokens.balance : "Not enough tokens to buy the Pack!"
+                self.getPrice(id: tokenId) <= buyTokens.balance : "Not enough tokens to buy the Pack!"
                 self.getSecret(id: tokenId) == secret : "The secret provided is not matching!"
             }
 
