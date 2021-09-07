@@ -20,7 +20,7 @@ pub contract FlovatarPack {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64)
+    pub event Created(id: UInt64, prefix: String)
     pub event Opened(id: UInt64)
     pub event Purchased(id: UInt64)
 
@@ -335,7 +335,7 @@ pub contract FlovatarPack {
             price: price
         )
 
-        emit Created(id: newPack.id)
+        emit Created(id: newPack.id, prefix: secret.slice(from: 0, upTo: 4))
 
         return <- newPack
     }
