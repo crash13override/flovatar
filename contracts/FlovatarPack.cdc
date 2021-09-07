@@ -262,6 +262,7 @@ pub contract FlovatarPack {
             pre {
                 self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
                 self.getPrice(id: tokenId) > buyTokens.balance : "Not enough tokens to buy the Pack!"
+                self.getSecret(id: tokenId) == secret : "The secret provided is not matching!"
             }
 
             let recipient=recipientCap.borrow()!
