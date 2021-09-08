@@ -8,25 +8,29 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 import Marketplace from "../../contracts/Marketplace.cdc"
 
 
-transaction(templateId: UInt64, quantity: UInt64) {
+//this transaction will add a new pair of Eyeglasses to an existing Flovatar
+transaction(
+    flovatarId: UInt64,
+    eyeglasses: UInt64
+    ) {
 
+    let flovatarCollection: &Flovatar.Collection
     let flovatarComponentCollection: &FlovatarComponent.Collection
-    let flovatarAdmin: &Flovatar.Admin
+
+    let eyeglassesNFT: @FlovatarComponent.NFT
 
     prepare(account: AuthAccount) {
+        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+
         self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
-        self.flovatarAdmin = account.borrow<&Flovatar.Admin>(from: Flovatar.AdminStoragePath)!
+        self.eyeglassesNFT <- self.flovatarComponentCollection.withdraw(withdrawID: eyeglasses) as! @FlovatarComponent.NFT
     }
 
     execute {
-        let collection <- self.flovatarAdmin.batchCreateComponents(templateId: templateId, quantity: quantity) as! @FlovatarComponent.Collection
 
-        for id in collection.getIDs() {
-            self.flovatarComponentCollection.deposit(token: <- collection.withdraw(withdrawID: id))
-        }
+        let flovatar: &{Flovatar.Private} = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
-        destroy collection
-
+        flovatar.setEyeglasses(component: <-self.eyeglassesNFT)
     }
 }

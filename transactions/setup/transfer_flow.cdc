@@ -1,9 +1,11 @@
-
-//import FungibleToken from 0xee82856bf20e2aa6
-//import FungibleToken from "../../contracts/FungibleToken.cdc"
-//import FlowToken from "../../contracts/FlowToken.cdc"
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
+import FungibleToken from "../../contracts/FungibleToken.cdc"
+import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
+import FUSD from "../../contracts/FUSD.cdc"
+import Flovatar from "../../contracts/Flovatar.cdc"
+import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
+import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
+import FlovatarPack from "../../contracts/FlovatarPack.cdc"
+import Marketplace from "../../contracts/Marketplace.cdc"
 
 //This transactions transfers flow on testnet from one account to another
 transaction(

@@ -1,22 +1,18 @@
-
-//import FungibleToken from 0xee82856bf20e2aa6
 import FungibleToken from "../../contracts/FungibleToken.cdc"
-import FlowToken from "../../contracts/FlowToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
-import Website from "../../contracts/Website.cdc"
-import Webshot from "../../contracts/Webshot.cdc"
+import Flovatar from "../../contracts/Flovatar.cdc"
+import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
+import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
+import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 import Marketplace from "../../contracts/Marketplace.cdc"
-import Drop from "../../contracts/Drop.cdc"
 
-
-//this transaction will remove the sale and return the Webshot to the collection
 
 transaction(
-    webshotId: UInt64,
-    price: UFix64
+    componentId: UInt64
     ) {
 
+    let componentCollection: &FlovatarComponent.Collection
     let marketplace: &Marketplace.SaleCollection
 
     prepare(account: AuthAccount) {
@@ -34,10 +30,12 @@ transaction(
             account.link<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath, target: Marketplace.CollectionStoragePath)
         }
 
-        self.marketplace=account.borrow<&Marketplace.SaleCollection>(from: Marketplace.CollectionStoragePath)!
+        self.marketplace = account.borrow<&Marketplace.SaleCollection>(from: Marketplace.CollectionStoragePath)!
+        self.componentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
     }
 
     execute {
-        self.marketplace.changePrice(tokenId: webshotId, newPrice: price)
+        let component <- self.marketplace.withdrawFlovatarComponent(tokenId: componentId)
+        self.componentCollection.deposit(token: <- component);
     }
 }

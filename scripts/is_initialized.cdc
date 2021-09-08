@@ -1,25 +1,24 @@
-import FungibleToken from "../contracts/FungibleToken.cdc"
-import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
-import FUSD from "../contracts/FUSD.cdc"
-import Flovatar from "../contracts/Flovatar.cdc"
-import FlovatarComponent from "../contracts/FlovatarComponent.cdc"
-import FlovatarComponentTemplate from "../contracts/FlovatarComponentTemplate.cdc"
-import FlovatarPack from "../contracts/FlovatarPack.cdc"
-import NFTStorefront from "../contracts/NFTStorefront.cdc"
+import FungibleToken from "../../contracts/FungibleToken.cdc"
+import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
+import FUSD from "../../contracts/FUSD.cdc"
+import Flovatar from "../../contracts/Flovatar.cdc"
+import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
+import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
+import FlovatarPack from "../../contracts/FlovatarPack.cdc"
+import Marketplace from "../../contracts/Marketplace.cdc"
+
+//This script checks if an address has been fully initialized
 
 pub fun main(address: Address): Bool {
-
   let account = getAccount(address)
-
-  let flovatarCap = account.getCapability<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
-  let flovatarComponentCap = account.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
-  let nftStorefrontCap = account.getCapability<&{NFTStorefront.StorefrontPublic}>(NFTStorefront.StorefrontPublicPath)
-  let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
-
+  let marketplaceCap = account.getCapability<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath)
+  let webshotCap = account.getCapability<&{Webshot.CollectionPublic}>(Webshot.CollectionPublicPath)
+  let websiteCap = account.getCapability<&{Website.CollectionPublic}>(Website.CollectionPublicPath)
   var hasFusd = false
   if let fusdVault = account.getCapability(/public/fusdBalance).borrow<&FUSD.Vault{FungibleToken.Balance}>(){
     hasFusd = true
   }
 
-  return (flovatarCap.check() && flovatarComponentCap.check() && nftStorefrontCap.check() && flovatarPackCap.check() && hasFusd)
+
+  return (marketplaceCap.check() && webshotCap.check() && Profile.check(address) && websiteCap.check() && hasFusd)
 }
