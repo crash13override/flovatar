@@ -1,1 +1,1 @@
-# webshot-contract
+# flovatar-contract
