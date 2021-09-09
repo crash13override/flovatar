@@ -281,12 +281,12 @@ pub contract Marketplace {
     pub struct FlovatarSaleData {
         pub let id: UInt64
         pub let price: UFix64
-        pub let metadata: Flovatar.Metadata
+        pub let metadata: Flovatar.FlovatarData
 
         init(
             id: UInt64,
             price: UFix64,
-            metadata: Flovatar.Metadata){
+            metadata: Flovatar.FlovatarData){
 
             self.id = id
             self.price = price
@@ -320,7 +320,13 @@ pub contract Marketplace {
                 saleData.append(FlovatarSaleData(
                     id: id,
                     price: price!,
-                    metadata: flovatar!.metadata
+                    metadata: Flovatar.FlovatarData(
+                        id: id,
+                        metadata: flovatar!.metadata,
+                        accessoryId: flovatar!.getAccessory(),
+                        hatId: flovatar!.getHat(),
+                        eyeglassesId: flovatar!.getEyeglasses()
+                        )
                     ))
             }
         }
@@ -359,7 +365,13 @@ pub contract Marketplace {
                 return FlovatarSaleData(
                            id: id,
                             price: price!,
-                            metadata: flovatar.metadata
+                            metadata: Flovatar.FlovatarData(
+                                id: id,
+                                metadata: flovatar.metadata,
+                                accessoryId: flovatar.getAccessory(),
+                                hatId: flovatar.getHat(),
+                                eyeglassesId: flovatar.getEyeglasses()
+                                )
                            )
             }
         }
