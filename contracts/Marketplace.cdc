@@ -281,16 +281,26 @@ pub contract Marketplace {
     pub struct FlovatarSaleData {
         pub let id: UInt64
         pub let price: UFix64
-        pub let metadata: Flovatar.FlovatarData
+        pub let metadata: Flovatar.Metadata
+        pub let accessoryId: UInt64?
+        pub let hatId: UInt64?
+        pub let eyeglassesId: UInt64?
 
         init(
             id: UInt64,
             price: UFix64,
-            metadata: Flovatar.FlovatarData){
+            metadata: Flovatar.Metadata,
+            accessoryId: UInt64?,
+            hatId: UInt64?,
+            eyeglassesId: UInt64?
+            ){
 
             self.id = id
             self.price = price
             self.metadata = metadata
+            self.accessoryId = accessoryId
+            self.hatId = hatId
+            self.eyeglassesId = eyeglassesId
         }
     }
     pub struct FlovatarComponentSaleData {
@@ -320,13 +330,10 @@ pub contract Marketplace {
                 saleData.append(FlovatarSaleData(
                     id: id,
                     price: price!,
-                    metadata: Flovatar.FlovatarData(
-                        id: id,
-                        metadata: flovatar!.metadata,
-                        accessoryId: flovatar!.getAccessory(),
-                        hatId: flovatar!.getHat(),
-                        eyeglassesId: flovatar!.getEyeglasses()
-                        )
+                    metadata: flovatar!.metadata,
+                    accessoryId: flovatar!.getAccessory(),
+                    hatId: flovatar!.getHat(),
+                    eyeglassesId: flovatar!.getEyeglasses()
                     ))
             }
         }
@@ -365,13 +372,10 @@ pub contract Marketplace {
                 return FlovatarSaleData(
                            id: id,
                             price: price!,
-                            metadata: Flovatar.FlovatarData(
-                                id: id,
-                                metadata: flovatar.metadata,
-                                accessoryId: flovatar.getAccessory(),
-                                hatId: flovatar.getHat(),
-                                eyeglassesId: flovatar.getEyeglasses()
-                                )
+                            metadata: flovatar.metadata,
+                            accessoryId: flovatar.getAccessory(),
+                            hatId: flovatar.getHat(),
+                            eyeglassesId: flovatar.getEyeglasses()
                            )
             }
         }
