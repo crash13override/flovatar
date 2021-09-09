@@ -55,6 +55,10 @@ flow transactions send ./transactions/create/component_batch.cdc --args-json '[{
 flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}]'
 flow scripts execute ./scripts/get_components.cdc --args-json '[{"type": "Address","value": "0x386f6e408b6bd6aa"}]' --network testnet
 
+//GET A COMPONENT SALE FOR AN ADDRESS
+flow scripts execute ./scripts/get_components_sale.cdc --args-json '[{"type": "Address","value": "0xf8d6e0586b0a20c7"}, {"type": "UInt64","value": "1"}]'
+flow scripts execute ./scripts/get_component_sale.cdc --args-json '[{"type": "Address","value": "0x715eba9a0dd9d21a"}, {"type": "UInt64","value": "260"}]' --network testnet
+
 
 FLOVATAR PACK
 -----------------------------------------------------------------

@@ -136,7 +136,7 @@ pub contract Marketplace {
 
             let vaultRef = self.ownerVault.borrow()
                 ?? panic("Could not borrow reference to owner token vault")
-            emit FlovatarForSale(id: id, price: price, address: vaultRef.owner!.address)
+            emit FlovatarComponentForSale(id: id, price: price, address: vaultRef.owner!.address)
         }
 
         // changePrice changes the price of a token that is currently for sale
