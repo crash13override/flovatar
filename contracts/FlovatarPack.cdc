@@ -283,7 +283,7 @@ pub contract FlovatarPack {
             keyList.add(
                 PublicKey(
                     publicKey: accountKey.publicKey,
-                    signatureAlgorithm: accountKey.signatureAlgorithm
+                    signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
                 ),
                 hashAlgorithm: HashAlgorithm.SHA3_256,
                 weight: 1.0
