@@ -11,7 +11,7 @@ Base components that will be used to generate the unique combination of the Flov
 'body', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
 
 Extra components that can be added in a second moment
-'accessory', 'hat', eyeglass'
+'accessory', 'hat', eyeglass', 'background'
 
  */
 
@@ -77,6 +77,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getAccessory(): UInt64?
         pub fun getHat(): UInt64?
         pub fun getEyeglasses(): UInt64?
+        pub fun getBackground(): UInt64?
 
         pub fun getSvg(): String
     }
@@ -86,6 +87,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
         pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
+        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64?
     }
 
     pub resource NFT: NonFungibleToken.INFT, Public, Private {
@@ -94,6 +96,7 @@ pub contract Flovatar: NonFungibleToken {
         access(contract) var accessory: UInt64?
         access(contract) var hat: UInt64?
         access(contract) var eyeglasses: UInt64?
+        access(contract) var background: UInt64?
 
         pub let name: String
         pub let description: String
@@ -108,6 +111,7 @@ pub contract Flovatar: NonFungibleToken {
             self.accessory = nil
             self.hat = nil
             self.eyeglasses = nil
+            self.background = nil
 
             self.schema = nil
             self.name = metadata.name
@@ -176,8 +180,32 @@ pub contract Flovatar: NonFungibleToken {
             return self.eyeglasses
         }
 
+        pub fun getBackground(): UInt64? {
+            return self.background
+        }
+        
+        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64? {
+            pre {
+                component.getCategory() == "background" : "The component needs to be a background"
+                component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
+            }
+
+            self.background = component.templateId
+
+            emit Updated(id: self.id)
+
+            destroy component
+            return self.background
+        }
+
         pub fun getSvg(): String {
             let svg: String = "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'>"
+
+            if let background = self.getBackground() {
+                if let template = FlovatarComponentTemplate.getComponentTemplate(id: background) {
+                    svg.concat(template.svg!)
+                }
+            }
 
             svg.concat(self.metadata.svg)
 
@@ -299,18 +327,21 @@ pub contract Flovatar: NonFungibleToken {
         pub let accessoryId: UInt64?
         pub let hatId: UInt64?
         pub let eyeglassesId: UInt64?
+        pub let backgroundId: UInt64?
         init(
             id: UInt64, 
             metadata: Flovatar.Metadata,
             accessoryId: UInt64?,
             hatId: UInt64?,
-            eyeglassesId: UInt64?
+            eyeglassesId: UInt64?,
+            backgroundId: UInt64?
             ) {
             self.id = id
             self.metadata = metadata
             self.accessoryId = accessoryId
             self.hatId = hatId
             self.eyeglassesId = eyeglassesId
+            self.backgroundId = backgroundId
         }
     }
 
@@ -326,7 +357,8 @@ pub contract Flovatar: NonFungibleToken {
                     metadata: flovatar!.metadata,
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
-                    eyeglassesId: flovatar!.getEyeglasses()
+                    eyeglassesId: flovatar!.getEyeglasses(),
+                    backgroundId: flovatar!.getBackground()
                 )
             }
         }
@@ -346,7 +378,8 @@ pub contract Flovatar: NonFungibleToken {
                     metadata: flovatar!.metadata,
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
-                    eyeglassesId: flovatar!.getEyeglasses()
+                    eyeglassesId: flovatar!.getEyeglasses(),
+                    backgroundId: flovatar!.getBackground()
                     ))
             }
         }
@@ -418,12 +451,14 @@ pub contract Flovatar: NonFungibleToken {
         accessory: @FlovatarComponent.NFT?,
         hat: @FlovatarComponent.NFT?,
         eyeglasses: @FlovatarComponent.NFT?,
+        background: @FlovatarComponent.NFT?,
         address: Address
     ) : @Flovatar.NFT {
 
 
         pre {
 
+            //TODO: Make sure that the text is sanitized and that bad words are not accepted
             name.length > 2 : "The name is too short"
             name.length < 32 : "The name is too long" 
 
@@ -470,10 +505,19 @@ pub contract Flovatar: NonFungibleToken {
 
         if(eyeglasses != nil){
             if(eyeglasses?.getCategory() != "eyeglasses"){
-                panic("The facial hair component belongs to the wrong category")
+                panic("The eyeglasses component belongs to the wrong category")
             }
             if(eyeglasses?.getSeries() != body.getSeries()){
                 panic("The eyeglasses doesn't belong to the same series like the body")
+            }
+        }
+
+        if(background != nil){
+            if(background?.getCategory() != "background"){
+                panic("The background component belongs to the wrong category")
+            }
+            if(background?.getSeries() != body.getSeries()){
+                panic("The background doesn't belong to the same series like the body")
             }
         }
 
@@ -540,6 +584,11 @@ pub contract Flovatar: NonFungibleToken {
             newNFT.setEyeglasses(component: <-eyeglasses!)
         } else {
             destroy eyeglasses
+        }
+        if(background != nil){
+            newNFT.setBackground(component: <-background!)
+        } else {
+            destroy background
         }
 
         emit Created(id: newNFT.id, metadata: metadata)
@@ -614,6 +663,7 @@ pub contract Flovatar: NonFungibleToken {
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
+            background: @FlovatarComponent.NFT?,
             secret: String,
             price: UFix64
         ) : @FlovatarPack.Pack {
@@ -629,6 +679,7 @@ pub contract Flovatar: NonFungibleToken {
                 hat: <-hat,
                 eyeglasses: <-eyeglasses,
                 accessory: <-accessory,
+                background: <-background,
                 secret: secret,
                 price: price
             )
@@ -654,9 +705,9 @@ pub contract Flovatar: NonFungibleToken {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection004
-        self.CollectionStoragePath = /storage/FlovatarCollection004
-        self.AdminStoragePath = /storage/FlovatarAdmin004
+        self.CollectionPublicPath = /public/FlovatarCollection005
+        self.CollectionStoragePath = /storage/FlovatarCollection005
+        self.AdminStoragePath = /storage/FlovatarAdmin005
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

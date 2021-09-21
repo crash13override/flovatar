@@ -285,6 +285,7 @@ pub contract Marketplace {
         pub let accessoryId: UInt64?
         pub let hatId: UInt64?
         pub let eyeglassesId: UInt64?
+        pub let backgroundId: UInt64?
 
         init(
             id: UInt64,
@@ -292,7 +293,8 @@ pub contract Marketplace {
             metadata: Flovatar.Metadata,
             accessoryId: UInt64?,
             hatId: UInt64?,
-            eyeglassesId: UInt64?
+            eyeglassesId: UInt64?,
+            backgroundId: UInt64?
             ){
 
             self.id = id
@@ -301,6 +303,7 @@ pub contract Marketplace {
             self.accessoryId = accessoryId
             self.hatId = hatId
             self.eyeglassesId = eyeglassesId
+            self.backgroundId = backgroundId
         }
     }
     pub struct FlovatarComponentSaleData {
@@ -333,7 +336,8 @@ pub contract Marketplace {
                     metadata: flovatar!.metadata,
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
-                    eyeglassesId: flovatar!.getEyeglasses()
+                    eyeglassesId: flovatar!.getEyeglasses(),
+                    backgroundId: flovatar!.getBackground()
                     ))
             }
         }
@@ -375,7 +379,8 @@ pub contract Marketplace {
                             metadata: flovatar.metadata,
                             accessoryId: flovatar.getAccessory(),
                             hatId: flovatar.getHat(),
-                            eyeglassesId: flovatar.getEyeglasses()
+                            eyeglassesId: flovatar.getEyeglasses(),
+                            backgroundId: flovatar!.getBackground()
                            )
             }
         }
@@ -412,8 +417,8 @@ pub contract Marketplace {
 
     pub init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath= /public/FlovatarMarketplace004
-        self.CollectionStoragePath= /storage/FlovatarMarketplace004
+        self.CollectionPublicPath= /public/FlovatarMarketplace005
+        self.CollectionStoragePath= /storage/FlovatarMarketplace005
 
 
         if(self.account.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {

@@ -3,6 +3,7 @@ import NonFungibleToken from "./NonFungibleToken.cdc"
 import FUSD from "./FUSD.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
+import Crypto
 
 /*
 
@@ -46,6 +47,7 @@ pub contract FlovatarPack {
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
+            background: @FlovatarComponent.NFT?,
             secret: String,
             price: UFix64
         ) {
@@ -78,6 +80,11 @@ pub contract FlovatarPack {
             if(accessory != nil){
                 if(accessory?.getCategory() != "accessory"){
                     panic("The accessory component belongs to the wrong category")
+                }
+            }
+            if(background != nil){
+                if(background?.getCategory() != "background"){
+                    panic("The background component belongs to the wrong category")
                 }
             }
 
@@ -117,19 +124,23 @@ pub contract FlovatarPack {
             } else {
                 destroy hat
             }
-
             if(eyeglasses != nil){
                 let oldEyeglasses <- self.components["eyeglasses"] <- eyeglasses
                 destroy oldEyeglasses
             } else {
                 destroy eyeglasses
             }
-
             if(accessory != nil){
                 let oldAccessory <- self.components["accessory"] <- accessory
                 destroy oldAccessory
             } else {
                 destroy accessory
+            }
+            if(background != nil){
+                let oldBackground <- self.components["background"] <- background
+                destroy oldBackground
+            } else {
+                destroy background
             }
 
             self.secret = secret
@@ -154,7 +165,7 @@ pub contract FlovatarPack {
     pub resource interface CollectionPublic {
         pub fun getIDs(): [UInt64]
         pub fun deposit(token: @FlovatarPack.Pack)
-        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, secret: String)
+        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String)
     }
 
     pub resource Collection: CollectionPublic {
@@ -226,15 +237,17 @@ pub contract FlovatarPack {
                 let newHat <-pack.components.remove(key: "hat") ?? panic("Missing hat")
                 recipient.deposit(token: <-newHat)
             }
-
             if(pack.components.containsKey("eyeglasses")){
                 let newEyeglasses <-pack.components.remove(key: "eyeglasses") ?? panic("Missing eyeglasses")
                 recipient.deposit(token: <-newEyeglasses)
             }
-
             if(pack.components.containsKey("accessory")){
                 let newAccessory <-pack.components.remove(key: "accessory") ?? panic("Missing accessory")
                 recipient.deposit(token: <-newAccessory)
+            }
+            if(pack.components.containsKey("background")){
+                let newBackground <-pack.components.remove(key: "background") ?? panic("Missing background")
+                recipient.deposit(token: <-newBackground)
             }
 
             emit Opened(id: pack.id)
@@ -258,12 +271,36 @@ pub contract FlovatarPack {
         }
 
 
-        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, secret: String) {
+        pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String) {
             pre {
                 self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
                 self.getPrice(id: tokenId) <= buyTokens.balance : "Not enough tokens to buy the Pack!"
-                self.getSecret(id: tokenId) == secret : "The secret provided is not matching!"
             }
+
+            let keyList = Crypto.KeyList()
+            let accountKey = self.owner!.keys.get(keyIndex: 0)!.publicKey
+
+            keyList.add(
+                PublicKey(
+                    publicKey: accountKey.publicKey,
+                    signatureAlgorithm: accountKey.signatureAlgorithm
+                ),
+                hashAlgorithm: HashAlgorithm.SHA3_256,
+                weight: 1.0
+            )
+
+            let signatureSet: [Crypto.KeyListSignature] = []
+            signatureSet.append(
+                Crypto.KeyListSignature(
+                    keyIndex: 0,
+                    signature: signature.decodeHex()
+                )
+            )
+
+            if(!keyList.verify(signatureSet: signatureSet, signedData: self.getSecret(id: tokenId).utf8)){
+                panic("Unable to validate the signature for the pack!")
+            }
+
 
             let recipient=recipientCap.borrow()!
             let pack <- self.withdraw(withdrawID: tokenId)
@@ -316,6 +353,7 @@ pub contract FlovatarPack {
             hat: @FlovatarComponent.NFT?,
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
+            background: @FlovatarComponent.NFT?,
             secret: String,
             price: UFix64
         ) : @FlovatarPack.Pack {
@@ -331,6 +369,7 @@ pub contract FlovatarPack {
             hat: <-hat,
             eyeglasses: <-eyeglasses,
             accessory: <-accessory,
+            background: <-background,
             secret: secret,
             price: price
         )
@@ -349,8 +388,8 @@ pub contract FlovatarPack {
         let wallet =  self.account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
 
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection004
-        self.CollectionStoragePath=/storage/FlovatarPackCollection004
+        self.CollectionPublicPath=/public/FlovatarPackCollection005
+        self.CollectionStoragePath=/storage/FlovatarPackCollection005
 
         // Initialize the total supply
         self.totalSupply = 0

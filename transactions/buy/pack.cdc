@@ -8,8 +8,8 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 import Marketplace from "../../contracts/Marketplace.cdc"
 
 
-//this transaction buys a Pack by providing the secret key to allow it
-transaction(saleAddress: Address, tokenId: UInt64, amount: UFix64, secret: String) {
+//this transaction buys a Pack by providing the signature to allow it
+transaction(saleAddress: Address, tokenId: UInt64, amount: UFix64, signature: String) {
 
     // reference to the buyer's NFT collection where they
     // will store the bought NFT
@@ -53,7 +53,7 @@ transaction(saleAddress: Address, tokenId: UInt64, amount: UFix64, secret: Strin
         let packmarket = seller.getCapability(FlovatarPack.CollectionPublicPath).borrow<&{FlovatarPack.CollectionPublic}>()
                          ?? panic("Could not borrow seller's sale reference")
 
-        packmarket.purchase(tokenId: tokenId, recipientCap: self.collectionCap, buyTokens: <- self.temporaryVault, secret: secret)
+        packmarket.purchase(tokenId: tokenId, recipientCap: self.collectionCap, buyTokens: <- self.temporaryVault, signature: signature)
     }
 
 }
