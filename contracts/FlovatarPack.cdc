@@ -283,7 +283,7 @@ pub contract FlovatarPack {
             keyList.add(
                 PublicKey(
                     publicKey: accountKey.publicKey,
-                    signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
+                    signatureAlgorithm: accountKey.signatureAlgorithm
                 ),
                 hashAlgorithm: HashAlgorithm.SHA3_256,
                 weight: 1.0
@@ -302,7 +302,7 @@ pub contract FlovatarPack {
             }
 
 
-            let recipient=recipientCap.borrow()!
+            let recipient = recipientCap.borrow()!
             let pack <- self.withdraw(withdrawID: tokenId)
 
 
