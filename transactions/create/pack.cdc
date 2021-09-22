@@ -20,6 +20,7 @@ transaction(
     hat: UInt64?,
     eyeglasses: UInt64?,
     accessory: UInt64?,
+    background: UInt64?,
     secret: String,
     price: UFix64
     ) {
@@ -38,6 +39,7 @@ transaction(
     let hatNFT: @FlovatarComponent.NFT?
     let eyeglassesNFT: @FlovatarComponent.NFT?
     let accessoryNFT: @FlovatarComponent.NFT?
+    let backgroundNFT: @FlovatarComponent.NFT?
 
     prepare(account: AuthAccount) {
         self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
@@ -72,6 +74,11 @@ transaction(
         } else {
             self.accessoryNFT <- nil
         }
+        if(background != nil){
+            self.backgroundNFT <- self.flovatarComponentCollection.withdraw(withdrawID: background!) as! @FlovatarComponent.NFT
+        } else {
+            self.backgroundNFT <- nil
+        }
     }
 
     execute {
@@ -86,6 +93,7 @@ transaction(
             hat: <-self.hatNFT,
             eyeglasses: <-self.eyeglassesNFT,
             accessory: <-self.accessoryNFT,
+            background: <-self.backgroundNFT,
             secret: secret,
             price: price
         ) as! @FlovatarPack.Pack
