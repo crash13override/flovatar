@@ -1,6 +1,18 @@
 /*
 
- The contract that defines the Flovatar Component Templates and a Collection to manage them
+ This contract defines the Flovatar Component Templates and the Collection to manage them.
+ While Components are the building blocks (lego bricks) of the final Flovatar, 
+ Templates are the blueprint where all the details and characteristics of each component are defined.
+ The main part is the SVG (stored on-chain as a String) and the category that can be one of the following: 
+ body, hair, facialHair, eyes, nose, mouth, clothing, accessory, hat, eyeglasses, background.
+
+ Templates are NOT using the NFT standard and will be always linked only to the contract's owner account.
+
+ Each templates will also declare in advance the maximum amount of mintable components, so that 
+ the scarcity can be enforced by the smart contract itself and so that different rarities can be guaranteed.
+
+ Finally, Templates are organizes in Series, so that in the future it will be possible to create new editions
+ with different characters and styles.
 
  */
 
@@ -9,13 +21,20 @@ pub contract FlovatarComponentTemplate {
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
 
+
+    // Counter for all the Templates ever minted
     pub var totalSupply: UInt64
+    //These counters will keep track of how many Components were minted for each Template
     access(contract) let totalMintedComponents: { UInt64: UInt64 }
     access(contract) let lastComponentMintedAt: { UInt64: UFix64 }
 
+    // Event to notify about the Template creation
     pub event ContractInitialized()
     pub event Created(id: UInt64, name: String, category: String, color: String, maxMintableComponents: UInt64)
 
+    // The public interface providing the SVG and all the other 
+    // metadata like name, category, color, series, description and 
+    // the maximum mintable Components
     pub resource interface Public {
         pub let id: UInt64
         pub let name: String
@@ -27,6 +46,7 @@ pub contract FlovatarComponentTemplate {
         pub let maxMintableComponents: UInt64
     }
 
+    // The Component resource implementing the public interface as well
     pub resource ComponentTemplate: Public {
         pub let id: UInt64
         pub let name: String
@@ -37,6 +57,7 @@ pub contract FlovatarComponentTemplate {
         pub let series: UInt32
         pub let maxMintableComponents: UInt64
 
+        // Initialize a Template with all the necessary data
         init(
             name: String,
             category: String,
@@ -46,7 +67,7 @@ pub contract FlovatarComponentTemplate {
             series: UInt32,
             maxMintableComponents: UInt64
         ) {
-
+            // increments the counter and stores it as the ID
             FlovatarComponentTemplate.totalSupply = FlovatarComponentTemplate.totalSupply + UInt64(1)
             self.id = FlovatarComponentTemplate.totalSupply
             self.name = name
@@ -59,14 +80,15 @@ pub contract FlovatarComponentTemplate {
         }
     }
 
-    //Standard CollectionPublic interface that can also borrow Component Templates
+    // Standard CollectionPublic interface that can also borrow Component Templates
     pub resource interface CollectionPublic {
         pub fun getIDs(): [UInt64]
         pub fun borrowComponentTemplate(id: UInt64): &{FlovatarComponentTemplate.Public}?
     }
 
+    // The main Collection that manages the Templates and that implements also the Public interface
     pub resource Collection: CollectionPublic {
-        // dictionary of Component Templates
+        // Dictionary of Component Templates
         pub var ownedComponentTemplates: @{UInt64: FlovatarComponentTemplate.ComponentTemplate}
 
         init () {
@@ -94,10 +116,6 @@ pub contract FlovatarComponentTemplate {
 
         // borrowComponentTemplate returns a borrowed reference to a Component Template
         // so that the caller can read data and call methods from it.
-        //
-        // Parameters: id: The ID of the Component Template to get the reference for
-        //
-        // Returns: A reference to the Component Template
         pub fun borrowComponentTemplate(id: UInt64): &{FlovatarComponentTemplate.Public}? {
             if self.ownedComponentTemplates[id] != nil {
                 let ref = &self.ownedComponentTemplates[id] as auth &FlovatarComponentTemplate.ComponentTemplate
@@ -112,10 +130,14 @@ pub contract FlovatarComponentTemplate {
         }
     }
 
+    // This function can only be called by the account owner to create an empty Collection
     access(account) fun createEmptyCollection(): @FlovatarComponentTemplate.Collection {
         return <- create Collection()
     }
 
+
+    // This struct is used to send a data representation of the Templates 
+    // when retrieved using the contract helper methods outside the collection.
     pub struct ComponentTemplateData {
         pub let id: UInt64
         pub let name: String
@@ -151,7 +173,8 @@ pub contract FlovatarComponentTemplate {
         }
     }
 
-    // Get all the Component Templates from the account. We hide the SVG field because it might be too big to execute in a script
+    // Get all the Component Templates from the account. 
+    // We hide the SVG field because it might be too big to execute in a script
     pub fun getComponentTemplates() : [ComponentTemplateData] {
         var componentTemplateData: [ComponentTemplateData] = []
 
@@ -173,8 +196,8 @@ pub contract FlovatarComponentTemplate {
         return componentTemplateData
     }
 
+    // Gets a specific Template from its ID
     pub fun getComponentTemplate(id: UInt64) : ComponentTemplateData? {
-
         if let componentTemplateCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponentTemplate.CollectionPublic}>()  {
             if let componentTemplate = componentTemplateCollection.borrowComponentTemplate(id: id) {
                 return ComponentTemplateData(
@@ -192,21 +215,27 @@ pub contract FlovatarComponentTemplate {
         return nil
     }
 
-
+    // Returns the amount of minted Components for a specific Template
     pub fun getTotalMintedComponents(id: UInt64) : UInt64? {
         return FlovatarComponentTemplate.totalMintedComponents[id]
     }
+    // Returns the timestamp of the last time a Component for a specific Template was minted
     pub fun getLastComponentMintedAt(id: UInt64) : UFix64? {
         return FlovatarComponentTemplate.lastComponentMintedAt[id]
     }
 
+    // This function is used within the contract to set the new counter for each Template
     access(account) fun setTotalMintedComponents(id: UInt64, value: UInt64) {
         FlovatarComponentTemplate.totalMintedComponents[id] = value
     }
+    // This function is used within the contract to set the timestamp 
+    // when a Component for a specific Template was minted
     access(account) fun setLastComponentMintedAt(id: UInt64, value: UFix64) {
         FlovatarComponentTemplate.lastComponentMintedAt[id] = value
     }
 
+    // It creates a new Template with the data provided.
+    // This is used from the Flovatar Admin resource
     access(account) fun createComponentTemplate(
         name: String,
         category: String,
@@ -226,8 +255,11 @@ pub contract FlovatarComponentTemplate {
             series: series,
             maxMintableComponents: maxMintableComponents
         )
+
+        // Emits the Created event to notify about the new Template
         emit Created(id: newComponentTemplate.id, name: newComponentTemplate.name, category: newComponentTemplate.category, color: newComponentTemplate.color, maxMintableComponents: newComponentTemplate.maxMintableComponents)
 
+        // Set the counter for the minted Components of this Template to 0
         FlovatarComponentTemplate.setTotalMintedComponents(id: newComponentTemplate.id, value: UInt64(0))
         FlovatarComponentTemplate.setLastComponentMintedAt(id: newComponentTemplate.id, value: UFix64(0))
 

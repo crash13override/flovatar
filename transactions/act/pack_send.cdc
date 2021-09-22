@@ -8,7 +8,7 @@ import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 import Marketplace from "../../contracts/Marketplace.cdc"
 
 
-//this transaction will open a Pack from the Collection
+//this transaction will send a Pack to an address
 transaction(packId: UInt64, address: Address) {
     
     let flovatarPackCollection: &FlovatarPack.Collection

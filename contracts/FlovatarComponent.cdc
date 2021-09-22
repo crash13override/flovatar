@@ -3,7 +3,9 @@ import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 
 /*
 
- The contract that defines the Flovatar Component NFT and a Collection to manage them
+ This contract defines the Flovatar Component NFT and the Collection to manage them.
+ Components are like the building blocks (lego bricks) of the final Flovatar (body, mouth, hair, eyes, etc.) and they can be traded as normal NFTs.
+ Components are linked to a specific Template that will ultimately contain the SVG and all the other metadata
 
  */
 
@@ -12,15 +14,18 @@ pub contract FlovatarComponent: NonFungibleToken {
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
 
+    // Counter for all the Components ever minted
     pub var totalSupply: UInt64
 
+    // Standard events that will be emitted
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64, templateId: UInt64)
     pub event Destroyed(id: UInt64, templateId: UInt64)
 
-    //The public interface can show metadata and the content for the Webshot
+    // The public interface provides all the basic informations about
+    // the Component and also the Template ID associated with it.
     pub resource interface Public {
         pub let id: UInt64
         pub let templateId: UInt64
@@ -37,7 +42,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     }
 
     
-
+    // The NFT resource that implements the Public interface as well
     pub resource NFT: NonFungibleToken.INFT, Public {
         pub let id: UInt64
         pub let templateId: UInt64
@@ -46,6 +51,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub let description: String
         pub let schema: String?
 
+        // Initiates the NFT from a Template ID.
         init(templateId: UInt64) {
 
             FlovatarComponent.totalSupply = FlovatarComponent.totalSupply + UInt64(1)
@@ -59,6 +65,7 @@ pub contract FlovatarComponent: NonFungibleToken {
             self.description = componentTemplate.description
             self.schema = nil
 
+            // Increments the counter and stores the timestamp
             FlovatarComponentTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
             FlovatarComponentTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
         }
@@ -67,28 +74,35 @@ pub contract FlovatarComponent: NonFungibleToken {
             return self.id
         }
 
+        // Returns the Template associated to the current Component
         pub fun getTemplate(): FlovatarComponentTemplate.ComponentTemplateData {
             return FlovatarComponentTemplate.getComponentTemplate(id: self.templateId)!
         }
 
+        // Gets the SVG from the parent Template
         pub fun getSvg(): String {
             return self.getTemplate().svg!
         }
 
+        // Gets the category from the parent Template
         pub fun getCategory(): String {
             return self.getTemplate().category
         }
 
+        // Gets the series number from the parent Template
         pub fun getSeries(): UInt32 {
             return self.getTemplate().series
         }
 
+        // Emit a Destroyed event when it will be burned to create a Flovatar
+        // This will help to keep track of how many Components are still
+        // available on the market.
         destroy() {
             emit Destroyed(id: self.id, templateId: self.templateId)
         }
     }
 
-    //Standard NFT collectionPublic interface that can also borrowComponent as the correct type
+    // Standard NFT collectionPublic interface that can also borrowComponent as the correct type
     pub resource interface CollectionPublic {
 
         pub fun deposit(token: @NonFungibleToken.NFT)
@@ -97,6 +111,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun borrowComponent(id: UInt64): &{FlovatarComponent.Public}?
     }
 
+    // Main Collection to manage all the Components NFT
     pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
@@ -143,10 +158,6 @@ pub contract FlovatarComponent: NonFungibleToken {
 
         // borrowComponent returns a borrowed reference to a FlovatarComponent
         // so that the caller can read data and call methods from it.
-        //
-        // Parameters: id: The ID of the NFT to get the reference for
-        //
-        // Returns: A reference to the NFT
         pub fun borrowComponent(id: UInt64): &{FlovatarComponent.Public}? {
             if self.ownedNFTs[id] != nil {
                 let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
@@ -166,6 +177,8 @@ pub contract FlovatarComponent: NonFungibleToken {
         return <- create Collection()
     }
 
+    // This struct is used to send a data representation of the Components 
+    // when retrieved using the contract helper methods outside the collection.
     pub struct ComponentData {
         pub let id: UInt64
         pub let templateId: UInt64
@@ -174,7 +187,6 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub let description: String
         pub let category: String
         pub let color: String
-        //pub let svg: String?
 
         init(id: UInt64, templateId: UInt64, mint: UInt64) {
             self.id = id
@@ -185,10 +197,10 @@ pub contract FlovatarComponent: NonFungibleToken {
             self.description = componentTemplate.description
             self.category = componentTemplate.category
             self.color = componentTemplate.color
-            //self.svg = componentTemplate.svg
         }
     }
 
+    // Get the SVG of a specific Component from an account and the ID
     pub fun getSvgForComponent(address: Address, componentId: UInt64) : String? {
         let account = getAccount(address)
         if let componentCollection= account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
@@ -197,6 +209,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         return nil
     }
 
+    // Get a specific Component from an account and the ID as ComponentData
     pub fun getComponent(address: Address, componentId: UInt64) : ComponentData? {
         let account = getAccount(address)
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
@@ -211,7 +224,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         return nil
     }
 
-    // We cannot return the svg here since it will be too big to run in a script
+    // Get an array of all the components in a specific account as ComponentData
     pub fun getComponents(address: Address) : [ComponentData] {
 
         var componentData: [ComponentData] = []
@@ -230,12 +243,16 @@ pub contract FlovatarComponent: NonFungibleToken {
         return componentData
     }
 
-    //This method can only be called from another contract in the same account. In FlovatarComponent case it is called from the Admin that is used to administer the components
+    // This method can only be called from another contract in the same account. 
+    // In FlovatarComponent case it is called from the Flovatar Admin that is used 
+    // to administer the components.
+    // The only parameter is the parent Template ID and it will return a Component NFT resource
     access(account) fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
 
         let componentTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: templateId)!
         let totalMintedComponents: UInt64 = FlovatarComponentTemplate.getTotalMintedComponents(id: templateId)!
 
+        // Makes sure that the original minting limit set for each Template has not been reached
         if(totalMintedComponents >= componentTemplate.maxMintableComponents) {
             panic("Reached maximum mintable components for this type")
         }
@@ -246,6 +263,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         return <- newNFT
     }
 
+    // This function will batch create multiple Components and pass them back as a Collection
     access(account) fun batchCreateComponents(templateId: UInt64, quantity: UInt64): @Collection {
             let newCollection <- create Collection()
 

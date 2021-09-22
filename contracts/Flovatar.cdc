@@ -13,6 +13,9 @@ Base components that will be used to generate the unique combination of the Flov
 Extra components that can be added in a second moment
 'accessory', 'hat', eyeglass', 'background'
 
+
+This contract contains also the Admin resource that can be used to manage and generate all the other ones (Components, Templates, Packs).
+
  */
 
 pub contract Flovatar: NonFungibleToken {
@@ -21,9 +24,13 @@ pub contract Flovatar: NonFungibleToken {
     pub let CollectionPublicPath: PublicPath
     pub let AdminStoragePath: StoragePath
 
+    // These will be used in the Marketplace to pay out 
+    // royalties to the creator and to the marketplace
     access(account) var royaltyCut: UFix64
     access(account) var marketplaceCut: UFix64
 
+    // Here we keep track of all the Flovatar unique combinations and names 
+    // that people will generate to make sure that there are no duplicates
     pub var totalSupply: UInt64
     access(contract) let mintedCombinations: [String]
     access(contract) let mintedNames: [String]
@@ -35,6 +42,7 @@ pub contract Flovatar: NonFungibleToken {
     pub event Updated(id: UInt64)
 
 
+    // This Metada struct contains all the most important informations about the Flovatar
     pub struct Metadata {
         pub let name: String
         pub let mint: UInt64
@@ -64,7 +72,9 @@ pub contract Flovatar: NonFungibleToken {
         }
     }
 
-    //The public interface can show metadata and the content for the Flovatar
+    // The public interface can show metadata and the content for the Flovatar. 
+    // In addition to it, it provides methods to access the additional optional 
+    // components (accessory, hat, eyeglasses, background) for everyone.
     pub resource interface Public {
         pub let id: UInt64
         pub let metadata: Metadata
@@ -82,7 +92,8 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getSvg(): String
     }
 
-    //The private interface can update the Accessory, Hat and Eyeglasses for the Flovatar
+    //The private interface can update the Accessory, Hat, Eyeglasses and Background 
+    //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
         pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
         pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
@@ -90,6 +101,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setBackground(component: @FlovatarComponent.NFT): UInt64?
     }
 
+    //The NFT resource that implements both Private and Public interfaces
     pub resource NFT: NonFungibleToken.INFT, Public, Private {
         pub let id: UInt64
         pub let metadata: Metadata
@@ -103,7 +115,6 @@ pub contract Flovatar: NonFungibleToken {
         pub let schema: String?
 
         init(metadata: Metadata) {
-
             Flovatar.totalSupply = Flovatar.totalSupply + UInt64(1)
 
             self.id = Flovatar.totalSupply
@@ -130,6 +141,10 @@ pub contract Flovatar: NonFungibleToken {
             return self.accessory
         }
         
+        // This will allow to change the Accessory of the Flovatar any time. 
+        // It checks for the right category and series before executing. 
+        // The Accessory component will be burned in the process and if a previous 
+        // one was set, it will be lost.
         pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "accessory" : "The component needs to be an accessory"
@@ -147,7 +162,11 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getHat(): UInt64? {
             return self.hat
         }
-        
+
+        // This will allow to change the Hat of the Flovatar any time. 
+        // It checks for the right category and series before executing. 
+        // The Hat component will be burned in the process and if a previous one 
+        // was set, it will be lost.
         pub fun setHat(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "hat" : "The component needs to be a hat"
@@ -166,6 +185,10 @@ pub contract Flovatar: NonFungibleToken {
             return self.eyeglasses
         }
         
+        // This will allow to change the Eyeglasses of the Flovatar any time. 
+        // It checks for the right category and series before executing. 
+        // The Eyeglasses component will be burned in the process and if a previous one 
+        // was set, it will be lost.
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
@@ -184,6 +207,10 @@ pub contract Flovatar: NonFungibleToken {
             return self.background
         }
         
+        // This will allow to change the Background of the Flovatar any time. 
+        // It checks for the right category and series before executing. 
+        // The Eyeglasses component will be burned in the process and if a previous one 
+        // was set, it will be lost.
         pub fun setBackground(component: @FlovatarComponent.NFT): UInt64? {
             pre {
                 component.getCategory() == "background" : "The component needs to be a background"
@@ -198,6 +225,10 @@ pub contract Flovatar: NonFungibleToken {
             return self.background
         }
 
+        // This function will return the full SVG of the Flovatar. It will take the 
+        // optional components (Accessory, Hat, Eyeglasses and Background) from their 
+        // original Template resources, while all the other unmutable components are 
+        // taken from the Metadata directly.
         pub fun getSvg(): String {
             let svg: String = "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'>"
 
@@ -234,15 +265,16 @@ pub contract Flovatar: NonFungibleToken {
         }
     }
 
-    //Standard NFT collectionPublic interface that can also borrowFlovatar as the correct type
-    pub resource interface CollectionPublic {
 
+    // Standard NFT collectionPublic interface that can also borrowFlovatar as the correct type
+    pub resource interface CollectionPublic {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
         pub fun borrowFlovatar(id: UInt64): &{Flovatar.Public}?
     }
 
+    // Main Collection to manage all the Flovatar NFT
     pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
@@ -289,10 +321,6 @@ pub contract Flovatar: NonFungibleToken {
 
         // borrowFlovatar returns a borrowed reference to a Flovatar
         // so that the caller can read data and call methods from it.
-        //
-        // Parameters: id: The ID of the NFT to get the reference for
-        //
-        // Returns: A reference to the NFT
         pub fun borrowFlovatar(id: UInt64): &{Flovatar.Public}? {
             if self.ownedNFTs[id] != nil {
                 let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
@@ -302,6 +330,8 @@ pub contract Flovatar: NonFungibleToken {
             }
         }
 
+        // borrowFlovatarPrivate returns a borrowed reference to a Flovatar using the Private interface
+        // so that the caller can read data and call methods from it, like setting the optional components.
         pub fun borrowFlovatarPrivate(id: UInt64): &{Flovatar.Private}? {
             if self.ownedNFTs[id] != nil {
                 let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
@@ -321,6 +351,8 @@ pub contract Flovatar: NonFungibleToken {
         return <- create Collection()
     }
 
+    // This struct is used to send a data representation of the Flovatars 
+    // when retrieved using the contract helper methods outside the collection.
     pub struct FlovatarData {
         pub let id: UInt64
         pub let metadata: Flovatar.Metadata
@@ -346,6 +378,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
 
+    // This function will look for a specific Flovatar on a user account and return a FlovatarData if found
     pub fun getFlovatar(address: Address, flovatarId: UInt64) : FlovatarData? {
 
         let account = getAccount(address)
@@ -365,6 +398,7 @@ pub contract Flovatar: NonFungibleToken {
         return nil
     }
 
+    // This function will return all Flovatars on a user account and return an array of FlovatarData
     pub fun getFlovatars(address: Address) : [FlovatarData] {
 
         var flovatarData: [FlovatarData] = []
@@ -387,20 +421,27 @@ pub contract Flovatar: NonFungibleToken {
     }
 
 
+    // This returns all the previously minted combinations, so that duplicates won't be allowed
     pub fun getMintedCombinations() : [String] {
         return Flovatar.mintedCombinations
     }
+    // This returns all the previously minted names, so that duplicates won't be allowed
     pub fun getMintedNames() : [String] {
         return Flovatar.mintedNames
     }
 
+    // This function will add a minted combination to the array
     access(account) fun addMintedCombination(combination: String) {
         Flovatar.mintedCombinations.append(combination)
     }
+    // This function will add a new name to the array
     access(account) fun addMintedName(name: String) {
         Flovatar.mintedNames.append(name)
     }
 
+    // This helper function will generate a string from a list of components, 
+    // to be used as a sort of barcode to keep the inventory of the minted 
+    // Flovatars and to avoid duplicates
     pub fun getCombinationString(
         body: UInt64,
         hair: UInt64,
@@ -414,6 +455,8 @@ pub contract Flovatar: NonFungibleToken {
         return "B".concat(body.toString()).concat("H").concat(hair.toString()).concat("F").concat(facialHairString).concat("E").concat(eyes.toString()).concat("N").concat(nose.toString()).concat("M").concat(mouth.toString()).concat("C").concat(clothing.toString())
     }
 
+    // This function will get a list of component IDs and will check if the 
+    // generated string is unique or if someone already used it before.
     pub fun checkCombinationAvailable(
         body: UInt64,
         hair: UInt64,
@@ -435,10 +478,17 @@ pub contract Flovatar: NonFungibleToken {
         return ! Flovatar.mintedCombinations.contains(combinationString)
     }
 
+    // This will check if a specific Name has already been taken 
+    // and assigned to some Flovatar
     pub fun checkNameAvailable(name: String) : Bool {
         return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.contains(name)
     }
 
+
+    // This is a public function that anyone can call to generate a new Flovatar
+    // A list of components resources needs to be passed to executed.
+    // It will check first for uniqueness of the combination + name and will then 
+    // generate the Flovatar and burn all the passed components.
     pub fun createFlovatar(
         name: String,
         body: @FlovatarComponent.NFT,
@@ -458,10 +508,12 @@ pub contract Flovatar: NonFungibleToken {
 
         pre {
 
-            //TODO: Make sure that the text is sanitized and that bad words are not accepted
+            // TODO: Make sure that the text of the name is sanitized 
+            //and that bad words are not accepted?
             name.length > 2 : "The name is too short"
             name.length < 32 : "The name is too long" 
 
+            // Make sure that all components belong to the correct category
             body.getCategory() == "body" : "The body component belongs to the wrong category"
             hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
             eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
@@ -469,6 +521,7 @@ pub contract Flovatar: NonFungibleToken {
             mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
             clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
 
+            // Make sure that all the components belong to the same series like the body
             body.getSeries() == hair.getSeries() : "The hair doesn't belong to the same series like the body"
             body.getSeries() == eyes.getSeries() : "The eyes doesn't belong to the same series like the body"
             body.getSeries() == nose.getSeries() : "The nose doesn't belong to the same series like the body"
@@ -476,6 +529,8 @@ pub contract Flovatar: NonFungibleToken {
             body.getSeries() == clothing.getSeries() : "The clothing doesn't belong to the same series like the body"
 
         }
+
+        // Make more checks for the additional components to check for the right category and uniqueness
         if(facialHair != nil){
             if(facialHair?.getCategory() != "facialHair"){
                 panic("The facial hair component belongs to the wrong category")
@@ -522,6 +577,9 @@ pub contract Flovatar: NonFungibleToken {
         }
 
 
+        // Generates the combination string to check for uniqueness. 
+        // This is like a barcode that defines exactly which components were used
+        // to create the Flovatar
         let combinationString = Flovatar.getCombinationString(
             body: body.templateId, 
             hair: hair.templateId, 
@@ -532,10 +590,12 @@ pub contract Flovatar: NonFungibleToken {
             clothing: clothing.templateId)
 
 
+        // Makes sure that the name is available and not taken already
         if(Flovatar.checkNameAvailable(name: name) == false){
             panic("This name has already been taken")
         }
 
+        // Makes sure that the combination is available and not taken already
         if(Flovatar.mintedCombinations.contains(combinationString) == true) {
             panic("This combination has already been taken")
         }
@@ -543,9 +603,11 @@ pub contract Flovatar: NonFungibleToken {
         let facialHairSvg:String  = facialHair != nil ? facialHair?.getSvg()! : ""
         let svg = (body.getSvg()!).concat(facialHairSvg).concat(eyes.getSvg()!).concat(nose.getSvg()!).concat(mouth.getSvg()!).concat(clothing.getSvg()!).concat(hair.getSvg()!)
 
-        //TODO fix this with optional. No idea why it's expecting UInt64 instead of UInt64? even if it's defined in Metadata struct
+        // TODO fix this with optional if possible. If I define it as UInt64? 
+        // instead of UInt64 it's throwing an error even if it's defined in Metadata struct
         let facialHairId: UInt64 = facialHair != nil ? facialHair?.templateId! : 0
 
+        // Creates the metadata for the new Flovatar
         let metadata = Metadata(
             name: name,
             mint: Flovatar.totalSupply + UInt64(1),
@@ -564,12 +626,16 @@ pub contract Flovatar: NonFungibleToken {
             }
         )
 
+        // Mint the new Flovatar NFT by passing the metadata to it
         var newNFT <- create NFT(metadata: metadata)
 
+        // Adds the combination and name to the arrays to remember them
         Flovatar.addMintedCombination(combination: combinationString)
         Flovatar.addMintedName(name: name)
 
 
+        // Checks for any additional optional component (accessory, hat, 
+        // eyeglasses, background) and assigns it to the Flovatar if present.
         if(accessory != nil){
             newNFT.setAccessory(component: <-accessory!)
         } else {
@@ -591,8 +657,10 @@ pub contract Flovatar: NonFungibleToken {
             destroy background
         }
 
+        // Emits the Created event to notify about its existence
         emit Created(id: newNFT.id, metadata: metadata)
 
+        // Destroy all the main components since they are not needed anymore.
         destroy body
         destroy hair
         destroy facialHair
@@ -606,13 +674,16 @@ pub contract Flovatar: NonFungibleToken {
 
 
 
-
+    // These functions will return the current Royalty cuts for 
+    // both the Creator and the Marketplace.
     pub fun getRoyaltyCut(): UFix64{
         return self.royaltyCut
     }
     pub fun getMarketplaceCut(): UFix64{
         return self.marketplaceCut
     }
+    // Only Admins will be able to call the set functions to 
+    // manage Royalties and Marketplace cuts.
     access(account) fun setRoyaltyCut(value: UFix64){
         self.royaltyCut = value
     }
@@ -623,8 +694,14 @@ pub contract Flovatar: NonFungibleToken {
     
 
 
+    // This is the main Admin resource that will allow the owner 
+    // to generate new Templates, Components and Packs
     pub resource Admin {
 
+        //This will create a new FlovatarComponentTemplate that 
+        // contains all the SVG and basic informations to represent 
+        // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
+        // More info in the FlovatarComponentTemplate.cdc file
         pub fun createComponentTemplate(
             name: String,
             category: String,
@@ -645,13 +722,19 @@ pub contract Flovatar: NonFungibleToken {
             )
         }
 
+        // This will mint a new Component based from a selected Template
         pub fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
             return <- FlovatarComponent.createComponent(templateId: templateId)
         }
+        // This will mint Components in batch and return a Collection instead of the single NFT
         pub fun batchCreateComponents(templateId: UInt64, quantity: UInt64) : @FlovatarComponent.Collection {
             return <- FlovatarComponent.batchCreateComponents(templateId: templateId, quantity: quantity)
         }
 
+        // This function will generate a new Pack containing a set of components.
+        // A secret random string is passed to manage permissions for the 
+        // purchase of it (more info on FlovatarPack.cdc).
+        // Finally the sale price is set as well.
         pub fun createPack(
             body: @FlovatarComponent.NFT,
             hair: @FlovatarComponent.NFT,
@@ -685,15 +768,18 @@ pub contract Flovatar: NonFungibleToken {
             )
         }
 
+        // With this function you can generate a new Admin resource 
+        // and pass it to another user if needed
         pub fun createNewAdmin(): @Admin {
             return <-create Admin()
         }
 
-
+        // Helper functions to update the Royalty cut
         pub fun setRoyaltyCut(value: UFix64) {
             Flovatar.setRoyaltyCut(value: value)
         }
 
+        // Helper functions to update the Marketplace cut
         pub fun setMarketplaceCut(value: UFix64) {
             Flovatar.setMarketplaceCut(value: value)
         }
@@ -704,7 +790,7 @@ pub contract Flovatar: NonFungibleToken {
 
 
 	init() {
-        //TODO: remove suffix before deploying to mainnet!!!
+        // TODO: remove suffix before deploying to mainnet!!!
         self.CollectionPublicPath = /public/FlovatarCollection005
         self.CollectionStoragePath = /storage/FlovatarCollection005
         self.AdminStoragePath = /storage/FlovatarAdmin005
@@ -714,13 +800,14 @@ pub contract Flovatar: NonFungibleToken {
         self.mintedCombinations = []
         self.mintedNames = []
 
+        // Set the default Royalty and Marketplace cuts
         self.royaltyCut = 0.01
         self.marketplaceCut = 0.03
 
         self.account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
         self.account.link<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
 
-        // Put the Minter in storage
+        // Put the Admin resource in storage
         self.account.save<@Admin>(<- create Admin(), to: self.AdminStoragePath)
 
         emit ContractInitialized()

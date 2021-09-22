@@ -19,7 +19,8 @@ transaction(
     clothing: UInt64,
     accessory: UInt64?,
     hat: UInt64?,
-    eyeglasses: UInt64?
+    eyeglasses: UInt64?,
+    background: UInt64?
     ) {
 
 
@@ -36,6 +37,7 @@ transaction(
     let accessoryNFT: @FlovatarComponent.NFT?
     let hatNFT: @FlovatarComponent.NFT?
     let eyeglassesNFT: @FlovatarComponent.NFT?
+    let backgroundNFT: @FlovatarComponent.NFT?
     let accountAddress: Address
 
     prepare(account: AuthAccount) {
@@ -74,6 +76,12 @@ transaction(
             self.eyeglassesNFT <- nil
         }
 
+        if(background != nil){
+            self.backgroundNFT <- self.flovatarComponentCollection.withdraw(withdrawID: background!) as! @FlovatarComponent.NFT
+        } else {
+            self.backgroundNFT <- nil
+        }
+
         self.accountAddress = account.address
     }
 
@@ -91,6 +99,7 @@ transaction(
             accessory: <-self.accessoryNFT,
             hat: <-self.hatNFT,
             eyeglasses: <-self.eyeglassesNFT,
+            background: <-self.backgroundNFT,
             address: self.accountAddress
         )
 
