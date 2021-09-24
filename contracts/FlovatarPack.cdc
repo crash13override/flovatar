@@ -361,7 +361,10 @@ pub contract FlovatarPack {
             }
 
 
-            // Borrows the recipient's capability and withdraws the Pack from the collection
+            // Borrows the recipient's capability and withdraws the Pack from the collection.
+            // If this fails the transaction will revert but the signature will be exposed.
+            // For this reason in case it happens, the secret will be reset when the purchase
+            // reservation timeout expires by the web server back-end.
             let recipient = recipientCap.borrow()!
             let pack <- self.withdraw(withdrawID: tokenId)
 

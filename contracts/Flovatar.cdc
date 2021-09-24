@@ -32,8 +32,8 @@ pub contract Flovatar: NonFungibleToken {
     // Here we keep track of all the Flovatar unique combinations and names 
     // that people will generate to make sure that there are no duplicates
     pub var totalSupply: UInt64
-    access(contract) let mintedCombinations: [String]
-    access(contract) let mintedNames: [String]
+    access(contract) let mintedCombinations: {String: Bool}
+    access(contract) let mintedNames: {String: Bool}
 
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
@@ -77,7 +77,7 @@ pub contract Flovatar: NonFungibleToken {
     // components (accessory, hat, eyeglasses, background) for everyone.
     pub resource interface Public {
         pub let id: UInt64
-        pub let metadata: Metadata
+        access(contract) let metadata: Metadata
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -90,6 +90,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getBackground(): UInt64?
 
         pub fun getSvg(): String
+        pub fun getMetadata(): Metadata
     }
 
     //The private interface can update the Accessory, Hat, Eyeglasses and Background 
@@ -104,7 +105,7 @@ pub contract Flovatar: NonFungibleToken {
     //The NFT resource that implements both Private and Public interfaces
     pub resource NFT: NonFungibleToken.INFT, Public, Private {
         pub let id: UInt64
-        pub let metadata: Metadata
+        access(contract) let metadata: Metadata
         access(contract) var accessory: UInt64?
         access(contract) var hat: UInt64?
         access(contract) var eyeglasses: UInt64?
@@ -271,7 +272,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowFlovatar(id: UInt64): &{Flovatar.Public}?
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT?
     }
 
     // Main Collection to manage all the Flovatar NFT
@@ -321,7 +322,7 @@ pub contract Flovatar: NonFungibleToken {
 
         // borrowFlovatar returns a borrowed reference to a Flovatar
         // so that the caller can read data and call methods from it.
-        pub fun borrowFlovatar(id: UInt64): &{Flovatar.Public}? {
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
             if self.ownedNFTs[id] != nil {
                 let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
                 return ref as! &Flovatar.NFT
@@ -387,7 +388,7 @@ pub contract Flovatar: NonFungibleToken {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
-                    metadata: flovatar!.metadata,
+                    metadata: flovatar!.getMetadata(),
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
@@ -409,7 +410,7 @@ pub contract Flovatar: NonFungibleToken {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 flovatarData.append(FlovatarData(
                     id: id,
-                    metadata: flovatar!.metadata,
+                    metadata: flovatar!.getMetadata(),
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
@@ -423,20 +424,20 @@ pub contract Flovatar: NonFungibleToken {
 
     // This returns all the previously minted combinations, so that duplicates won't be allowed
     pub fun getMintedCombinations() : [String] {
-        return Flovatar.mintedCombinations
+        return Flovatar.mintedCombinations.keys
     }
     // This returns all the previously minted names, so that duplicates won't be allowed
     pub fun getMintedNames() : [String] {
-        return Flovatar.mintedNames
+        return Flovatar.mintedNames.keys
     }
 
     // This function will add a minted combination to the array
     access(account) fun addMintedCombination(combination: String) {
-        Flovatar.mintedCombinations.append(combination)
+        Flovatar.mintedCombinations.insert(key: combination, true)
     }
     // This function will add a new name to the array
     access(account) fun addMintedName(name: String) {
-        Flovatar.mintedNames.append(name)
+        Flovatar.mintedNames.insert(key: name, true)
     }
 
     // This helper function will generate a string from a list of components, 
@@ -475,13 +476,13 @@ pub contract Flovatar: NonFungibleToken {
             mouth: mouth,
             clothing: clothing
         )
-        return ! Flovatar.mintedCombinations.contains(combinationString)
+        return ! Flovatar.mintedCombinations.containsKey(combinationString)
     }
 
     // This will check if a specific Name has already been taken 
     // and assigned to some Flovatar
     pub fun checkNameAvailable(name: String) : Bool {
-        return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.contains(name)
+        return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.containsKey(name)
     }
 
 
@@ -596,7 +597,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         // Makes sure that the combination is available and not taken already
-        if(Flovatar.mintedCombinations.contains(combinationString) == true) {
+        if(Flovatar.mintedCombinations.containsKey(combinationString) == true) {
             panic("This combination has already been taken")
         }
 
@@ -797,8 +798,8 @@ pub contract Flovatar: NonFungibleToken {
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
-        self.mintedCombinations = []
-        self.mintedNames = []
+        self.mintedCombinations = {}
+        self.mintedNames = {}
 
         // Set the default Royalty and Marketplace cuts
         self.royaltyCut = 0.01

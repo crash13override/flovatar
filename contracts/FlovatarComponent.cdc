@@ -108,7 +108,14 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowComponent(id: UInt64): &{FlovatarComponent.Public}?
+        pub fun borrowComponent(id: UInt64): &FlovatarComponent.NFT? {
+            // If the result isn't nil, the id of the returned reference
+            // should be the same as the argument to the function
+            post {
+                (result == nil) || (result?.id == id):
+                    "Cannot borrow Component reference: The ID of the returned reference is incorrect"
+            }
+        }
     }
 
     // Main Collection to manage all the Components NFT
@@ -158,7 +165,7 @@ pub contract FlovatarComponent: NonFungibleToken {
 
         // borrowComponent returns a borrowed reference to a FlovatarComponent
         // so that the caller can read data and call methods from it.
-        pub fun borrowComponent(id: UInt64): &{FlovatarComponent.Public}? {
+        pub fun borrowComponent(id: UInt64): &FlovatarComponent.NFT? {
             if self.ownedNFTs[id] != nil {
                 let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
                 return ref as! &FlovatarComponent.NFT

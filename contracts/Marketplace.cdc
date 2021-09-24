@@ -172,7 +172,7 @@ pub contract Marketplace {
 
             let token <-self.withdrawFlovatar(tokenId: tokenId)
 
-            let creatorAccount = getAccount(token.metadata.creatorAddress)
+            let creatorAccount = getAccount(token.getMetadata().creatorAddress)
             let creatorWallet = creatorAccount.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver).borrow()!
             let creatorAmount = price * Flovatar.getRoyaltyCut()
             let tempCreatorWallet <- buyTokens.withdraw(amount: creatorAmount)
@@ -335,7 +335,7 @@ pub contract Marketplace {
                 saleData.append(FlovatarSaleData(
                     id: id,
                     price: price!,
-                    metadata: flovatar!.metadata,
+                    metadata: flovatar!.getMetadata(),
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
@@ -379,7 +379,7 @@ pub contract Marketplace {
                 return FlovatarSaleData(
                            id: id,
                             price: price!,
-                            metadata: flovatar.metadata,
+                            metadata: flovatar.getMetadata(),
                             accessoryId: flovatar.getAccessory(),
                             hatId: flovatar.getHat(),
                             eyeglassesId: flovatar.getEyeglasses(),
