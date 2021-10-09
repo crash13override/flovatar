@@ -1,42 +1,33 @@
 import Crypto
-    
+
 pub fun main(
+  address: Address,
   message: String,
-  rawPublicKeys: [String],
-  weights: [UFix64],
-  signAlgos: [UInt],
-  signatures: [String],
+  signature: String
 ): Bool {
-  let keyList = Crypto.KeyList()
-  
-  var i = 0
-  for rawPublicKey in rawPublicKeys {
+
+
+    // Gets the Crypto.KeyList and the public key of the collection's owner
+    let keyList = Crypto.KeyList()
+    let accountKey = getAccount(address).keys.get(keyIndex: 0)!.publicKey
+
+    // Adds the public key to the keyList
     keyList.add(
-      PublicKey(
-        publicKey: rawPublicKey.decodeHex(),
-        signatureAlgorithm: signAlgos[i] == 2 ? SignatureAlgorithm.ECDSA_P256 : SignatureAlgorithm.ECDSA_secp256k1 
-      ),
-      hashAlgorithm: HashAlgorithm.SHA3_256,
-      weight: weights[i],
+        PublicKey(
+            publicKey: accountKey.publicKey,
+            signatureAlgorithm: accountKey.signatureAlgorithm
+        ),
+        hashAlgorithm: HashAlgorithm.SHA3_256,
+        weight: 1.0
     )
-    i = i + 1
-  }
-  let signatureSet: [Crypto.KeyListSignature] = []
-  var j = 0
-  for signature in signatures {
+
+    let signatureSet: [Crypto.KeyListSignature] = []
     signatureSet.append(
-      Crypto.KeyListSignature(
-        keyIndex: j,
-        signature: signature.decodeHex()
-      )
+        Crypto.KeyListSignature(
+            keyIndex: 0,
+            signature: signature.decodeHex()
+        )
     )
-    j = j + 1
-  }
-    
-  let signedData = message.decodeHex()
-  
-  return keyList.verify(
-    signatureSet: signatureSet,
-    signedData: signedData
-  )
+
+    return keyList.verify(signatureSet: signatureSet, signedData: message.utf8)
 }

@@ -272,7 +272,14 @@ pub contract Flovatar: NonFungibleToken {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT?
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
+            // If the result isn't nil, the id of the returned reference
+            // should be the same as the argument to the function
+            post {
+                (result == nil) || (result?.id == id):
+                    "Cannot borrow Flovatar reference: The ID of the returned reference is incorrect"
+            }
+        }
     }
 
     // Main Collection to manage all the Flovatar NFT
