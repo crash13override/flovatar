@@ -48,10 +48,10 @@ pub contract FlovatarPack {
         pub let id: UInt64
         pub let price: UFix64
         access(account) let components: @{String: FlovatarComponent.NFT}
-        access(account) var secret: String
+        access(account) var randomString: String
 
         // Initializes the Pack with all the required and optional Components.
-        // It receives also the price and a secret String that will signed by 
+        // It receives also the price and a random String that will signed by 
         // the account owner to validate the purchase process.
         init(
             body: @FlovatarComponent.NFT,
@@ -65,7 +65,7 @@ pub contract FlovatarPack {
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
             background: @FlovatarComponent.NFT?,
-            secret: String,
+            randomString: String,
             price: UFix64
         ) {
 
@@ -165,8 +165,8 @@ pub contract FlovatarPack {
                 destroy background
             }
 
-            // Sets the secret text and the price
-            self.secret = secret
+            // Sets the randomString text and the price
+            self.randomString = randomString
             self.price = price
         }
 
@@ -174,16 +174,16 @@ pub contract FlovatarPack {
             destroy self.components
         }
 
-        // This function is used to retrieve the secret string to match it 
+        // This function is used to retrieve the random string to match it 
         // against the signature passed during the purchase process
-        access(contract) fun getSecret(): String {
-            return self.secret
+        access(contract) fun getRandomString(): String {
+            return self.randomString
         }
 
-        // This function reset the secret so that after the purchase nobody
+        // This function reset the randomString so that after the purchase nobody
         // will be able to re-use the verified signature
-        access(contract) fun setSecret(secret: String) {
-            self.secret = secret
+        access(contract) fun setRandomString(randomString: String) {
+            self.randomString = randomString
         }
 
     }
@@ -303,16 +303,16 @@ pub contract FlovatarPack {
             return pack.price
         }
 
-        // Gets the secret String for a specific Pack 
-        access(account) fun getSecret(id: UInt64): String {
+        // Gets the random String for a specific Pack 
+        access(account) fun getRandomString(id: UInt64): String {
             let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
-            return pack.getSecret()
+            return pack.getRandomString()
         }
 
-        // Sets the secret String for a specific Pack
-        access(account) fun setSecret(id: UInt64, secret: String) {
+        // Sets the random String for a specific Pack
+        access(account) fun setRandomString(id: UInt64, randomString: String) {
             let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
-            pack.setSecret(secret: secret)
+            pack.setRandomString(randomString: randomString)
         }
 
 
@@ -320,7 +320,7 @@ pub contract FlovatarPack {
         // It receives as parameters the Pack ID, the Pack Collection Public capability to receive the pack, 
         // a vault containing the necessary FUSD, and finally a signature to validate the process.
         // The signature is generated off-chain by the smart contract's owner account using the Crypto library
-        // to generate a hash from the original secret String contained in each Pack.
+        // to generate a hash from the original random String contained in each Pack.
         // This will guarantee that the contract owner will be able to decide which user can buy a pack, by
         // providing them the correct signature. 
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String) {
@@ -356,14 +356,14 @@ pub contract FlovatarPack {
 
             // Verifies that the signature is valid and that it was generated from the
             // owner of the collection
-            if(!keyList.verify(signatureSet: signatureSet, signedData: self.getSecret(id: tokenId).utf8)){
+            if(!keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8)){
                 panic("Unable to validate the signature for the pack!")
             }
 
 
             // Borrows the recipient's capability and withdraws the Pack from the collection.
             // If this fails the transaction will revert but the signature will be exposed.
-            // For this reason in case it happens, the secret will be reset when the purchase
+            // For this reason in case it happens, the randomString will be reset when the purchase
             // reservation timeout expires by the web server back-end.
             let recipient = recipientCap.borrow()!
             let pack <- self.withdraw(withdrawID: tokenId)
@@ -373,9 +373,9 @@ pub contract FlovatarPack {
             vaultRef.deposit(from: <-buyTokens)
 
 
-            // Resets the secret so that the provided signature will become useless
+            // Resets the randomString so that the provided signature will become useless
             let packId: UInt64 = pack.id
-            pack.setSecret(secret: unsafeRandom().toString())
+            pack.setRandomString(randomString: unsafeRandom().toString())
 
             // Deposits the Pack to the recipient's collection
             recipient.deposit(token: <- pack)
@@ -409,7 +409,7 @@ pub contract FlovatarPack {
 
 
     // This method can only be called from another contract in the same account (The Flovatar Admin resource)
-    // It creates a new pack from a list of Components, the secret String and the price.
+    // It creates a new pack from a list of Components, the random String and the price.
     // Some Components are required and others are optional
     access(account) fun createPack(
             body: @FlovatarComponent.NFT,
@@ -423,7 +423,7 @@ pub contract FlovatarPack {
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
             background: @FlovatarComponent.NFT?,
-            secret: String,
+            randomString: String,
             price: UFix64
         ) : @FlovatarPack.Pack {
 
@@ -439,14 +439,14 @@ pub contract FlovatarPack {
             eyeglasses: <-eyeglasses,
             accessory: <-accessory,
             background: <-background,
-            secret: secret,
+            randomString: randomString,
             price: price
         )
 
         // Emits an event to notify that a Pack was created. 
-        // Sends the first 4 digits of the secret to be able to sync the ID with the off-chain DB
+        // Sends the first 4 digits of the randomString to be able to sync the ID with the off-chain DB
         // that will store also the signatures once they are generated
-        emit Created(id: newPack.id, prefix: secret.slice(from: 0, upTo: 4))
+        emit Created(id: newPack.id, prefix: randomString.slice(from: 0, upTo: 4))
 
         return <- newPack
     }
@@ -461,8 +461,8 @@ pub contract FlovatarPack {
         let wallet =  self.account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
 
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection005
-        self.CollectionStoragePath=/storage/FlovatarPackCollection005
+        self.CollectionPublicPath=/public/FlovatarPackCollection006
+        self.CollectionStoragePath=/storage/FlovatarPackCollection006
 
         // Initialize the total supply
         self.totalSupply = 0

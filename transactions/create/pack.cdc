@@ -21,7 +21,7 @@ transaction(
     eyeglasses: UInt64?,
     accessory: UInt64?,
     background: UInt64?,
-    secret: String,
+    randomString: String,
     price: UFix64
     ) {
 
@@ -94,7 +94,7 @@ transaction(
             eyeglasses: <-self.eyeglassesNFT,
             accessory: <-self.accessoryNFT,
             background: <-self.backgroundNFT,
-            secret: secret,
+            randomString: randomString,
             price: price
         ) as! @FlovatarPack.Pack
 

@@ -421,8 +421,8 @@ pub contract Marketplace {
 
     pub init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath= /public/FlovatarMarketplace005
-        self.CollectionStoragePath= /storage/FlovatarMarketplace005
+        self.CollectionPublicPath= /public/FlovatarMarketplace006
+        self.CollectionStoragePath= /storage/FlovatarMarketplace006
 
 
         if(self.account.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {

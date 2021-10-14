@@ -50,7 +50,7 @@ pub contract Flovatar: NonFungibleToken {
         pub let svg: String
         pub let combination: String
         pub let creatorAddress: Address
-        pub let components: {String: UInt64}
+        access(self) let components: {String: UInt64}
 
 
         init(
@@ -91,6 +91,7 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getSvg(): String
         pub fun getMetadata(): Metadata
+        pub fun getBio(): {String: String}
     }
 
     //The private interface can update the Accessory, Hat, Eyeglasses and Background 
@@ -114,6 +115,7 @@ pub contract Flovatar: NonFungibleToken {
         pub let name: String
         pub let description: String
         pub let schema: String?
+        access(self) let bio: {String: String}
 
         init(metadata: Metadata) {
             Flovatar.totalSupply = Flovatar.totalSupply + UInt64(1)
@@ -128,6 +130,7 @@ pub contract Flovatar: NonFungibleToken {
             self.schema = nil
             self.name = metadata.name
             self.description = metadata.name
+            self.bio = {}
         }
 
         pub fun getID(): UInt64 {
@@ -140,6 +143,10 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getAccessory(): UInt64? {
             return self.accessory
+        }
+
+        pub fun getBio(): {String: String} {
+            return self.bio
         }
         
         // This will allow to change the Accessory of the Flovatar any time. 
@@ -368,13 +375,15 @@ pub contract Flovatar: NonFungibleToken {
         pub let hatId: UInt64?
         pub let eyeglassesId: UInt64?
         pub let backgroundId: UInt64?
+        pub let bio: {String: String}
         init(
             id: UInt64, 
             metadata: Flovatar.Metadata,
             accessoryId: UInt64?,
             hatId: UInt64?,
             eyeglassesId: UInt64?,
-            backgroundId: UInt64?
+            backgroundId: UInt64?,
+            bio: {String: String}
             ) {
             self.id = id
             self.metadata = metadata
@@ -382,6 +391,7 @@ pub contract Flovatar: NonFungibleToken {
             self.hatId = hatId
             self.eyeglassesId = eyeglassesId
             self.backgroundId = backgroundId
+            self.bio = bio
         }
     }
 
@@ -399,7 +409,8 @@ pub contract Flovatar: NonFungibleToken {
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
-                    backgroundId: flovatar!.getBackground()
+                    backgroundId: flovatar!.getBackground(),
+                    bio: flovatar!.getBio()
                 )
             }
         }
@@ -421,7 +432,8 @@ pub contract Flovatar: NonFungibleToken {
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
-                    backgroundId: flovatar!.getBackground()
+                    backgroundId: flovatar!.getBackground(),
+                    bio: flovatar!.getBio()
                     ))
             }
         }
@@ -740,7 +752,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         // This function will generate a new Pack containing a set of components.
-        // A secret random string is passed to manage permissions for the 
+        // A random string is passed to manage permissions for the 
         // purchase of it (more info on FlovatarPack.cdc).
         // Finally the sale price is set as well.
         pub fun createPack(
@@ -755,7 +767,7 @@ pub contract Flovatar: NonFungibleToken {
             eyeglasses: @FlovatarComponent.NFT?,
             accessory: @FlovatarComponent.NFT?,
             background: @FlovatarComponent.NFT?,
-            secret: String,
+            randomString: String,
             price: UFix64
         ) : @FlovatarPack.Pack {
 
@@ -771,7 +783,7 @@ pub contract Flovatar: NonFungibleToken {
                 eyeglasses: <-eyeglasses,
                 accessory: <-accessory,
                 background: <-background,
-                secret: secret,
+                randomString: randomString,
                 price: price
             )
         }
@@ -799,9 +811,9 @@ pub contract Flovatar: NonFungibleToken {
 
 	init() {
         // TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection005
-        self.CollectionStoragePath = /storage/FlovatarCollection005
-        self.AdminStoragePath = /storage/FlovatarAdmin005
+        self.CollectionPublicPath = /public/FlovatarCollection006
+        self.CollectionStoragePath = /storage/FlovatarCollection006
+        self.AdminStoragePath = /storage/FlovatarAdmin006
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

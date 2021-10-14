@@ -285,8 +285,8 @@ pub contract FlovatarComponent: NonFungibleToken {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarComponentCollection005
-        self.CollectionStoragePath = /storage/FlovatarComponentCollection005
+        self.CollectionPublicPath = /public/FlovatarComponentCollection006
+        self.CollectionStoragePath = /storage/FlovatarComponentCollection006
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
