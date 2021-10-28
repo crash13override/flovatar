@@ -1,6 +1,6 @@
 import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
-import FUSD from "./FUSD.cdc"
+import FlowToken from "./FlowToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
 import Crypto
@@ -200,7 +200,7 @@ pub contract FlovatarPack {
     pub resource Collection: CollectionPublic {
         // Dictionary of all the Packs owned
         access(account) let ownedPacks: @{UInt64: FlovatarPack.Pack}
-        // Capability to send the FUSD to the owner's account
+        // Capability to send the FLOW tokens to the owner's account
         access(account) let ownerVault: Capability<&AnyResource{FungibleToken.Receiver}>
 
         // Initializes the Collection with the vault receiver capability
@@ -318,14 +318,14 @@ pub contract FlovatarPack {
 
         // This function provides the ability for anyone to purchase a Pack
         // It receives as parameters the Pack ID, the Pack Collection Public capability to receive the pack, 
-        // a vault containing the necessary FUSD, and finally a signature to validate the process.
+        // a vault containing the necessary FLOW token, and finally a signature to validate the process.
         // The signature is generated off-chain by the smart contract's owner account using the Crypto library
         // to generate a hash from the original random String contained in each Pack.
         // This will guarantee that the contract owner will be able to decide which user can buy a pack, by
         // providing them the correct signature. 
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String) {
 
-            // Checks that the pack is still available and that the FUSD are sufficient
+            // Checks that the pack is still available and that the FLOW tokens are sufficient
             pre {
                 self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
                 self.getPrice(id: tokenId) <= buyTokens.balance : "Not enough tokens to buy the Pack!"
@@ -368,7 +368,7 @@ pub contract FlovatarPack {
             let recipient = recipientCap.borrow()!
             let pack <- self.withdraw(withdrawID: tokenId)
 
-            // Borrows the owner's capability for the Vault and deposits the FUSD
+            // Borrows the owner's capability for the Vault and deposits the FLOW tokens
             let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner pack vault")
             vaultRef.deposit(from: <-buyTokens)
 
@@ -452,13 +452,7 @@ pub contract FlovatarPack {
     }
 
 	init() {
-        // Makes sure that the contract owner's account has the FUSD capability
-        if(self.account.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {
-          self.account.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)
-          self.account.link<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver, target: /storage/fusdVault)
-          self.account.link<&FUSD.Vault{FungibleToken.Balance}>(/public/fusdBalance, target: /storage/fusdVault)
-        }
-        let wallet =  self.account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+        let wallet =  self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
 
         //TODO: remove suffix before deploying to mainnet!!!
         self.CollectionPublicPath=/public/FlovatarPackCollection006

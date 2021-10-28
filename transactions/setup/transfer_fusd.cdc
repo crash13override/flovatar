@@ -1,13 +1,13 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import FUSD from "../../contracts/FUSD.cdc"
+import FlowToken from "../../contracts/FlowToken.cdc"
 import Flovatar from "../../contracts/Flovatar.cdc"
 import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
 import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
-import Marketplace from "../../contracts/Marketplace.cdc"
+import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 
-//This transactions transfers FUSD on testnet from one account to another
+//This transactions transfers Flow tokens from one account to another
 transaction(amount: UFix64, recipient: Address) {
 
   // The Vault resource that holds the tokens that are being transfered
@@ -15,7 +15,7 @@ transaction(amount: UFix64, recipient: Address) {
 
   prepare(signer: AuthAccount) {
     // Get a reference to the signer's stored vault
-    let vaultRef = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
+    let vaultRef = signer.borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)
       ?? panic("Could not borrow reference to the owner's Vault!")
 
     // Withdraw tokens from the signer's stored vault
@@ -27,7 +27,7 @@ transaction(amount: UFix64, recipient: Address) {
     let recipientAccount = getAccount(recipient)
 
     // Get a reference to the recipient's Receiver
-    let receiverRef = recipientAccount.getCapability(/public/fusdReceiver)!
+    let receiverRef = recipientAccount.getCapability(/public/flowTokenReceiver)!
       .borrow<&{FungibleToken.Receiver}>()
       ?? panic("Could not borrow receiver reference to the recipient's Vault")
 

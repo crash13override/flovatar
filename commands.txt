@@ -3,9 +3,6 @@ SETUP
 -----------------------------------------------------------------
 
 
-//SETUP FUSD WALLET
-flow transactions send ./transactions/setup/fusd_vault.cdc
-
 //DEPLOY THE PROJECT WITH ALL THE CONTRACTS
 flow project deploy
 
@@ -152,7 +149,7 @@ flow events get A.f8d6e0586b0a20c7.Marketplace.WebshotPurchased 0
 flow events get A.f8d6e0586b0a20c7.Marketplace.PriceChanged 0
 
 //GET SALE REMOVED EVENT
-flow events get A.f8d6e0586b0a20c7.Marketplace.SaleWithdrawn 0
+flow events get A.f8d6e0586b0a20c7.FlovatarMarketplace.SaleWithdrawn 0
 
 
 
@@ -236,7 +233,7 @@ flow events get A.f8d6e0586b0a20c7.Marketplace.WebshotPurchased 0
 flow events get A.f8d6e0586b0a20c7.Marketplace.PriceChanged 0
 
 //GET SALE REMOVED EVENT
-flow events get A.f8d6e0586b0a20c7.Marketplace.SaleWithdrawn 0
+flow events get A.f8d6e0586b0a20c7.FlovatarMarketplace.SaleWithdrawn 0
 
 
 

@@ -1,6 +1,6 @@
 import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
-import FUSD from "./FUSD.cdc"
+import FlowToken from "./FlowToken.cdc"
 import Flovatar from "./Flovatar.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
 
@@ -12,13 +12,13 @@ import FlovatarComponent from "./FlovatarComponent.cdc"
 
 */
 
-pub contract Marketplace {
+pub contract FlovatarMarketplace {
 
     pub let CollectionPublicPath: PublicPath
     pub let CollectionStoragePath: StoragePath
 
     // The Vault of the Marketplace where it will receive the cuts on each sale
-    pub let marketplaceWallet: Capability<&FUSD.Vault{FungibleToken.Receiver}>
+    pub let marketplaceWallet: Capability<&FlowToken.Vault{FungibleToken.Receiver}>
 
     // Event that is emitted when a new NFT is put up for sale
     pub event FlovatarForSale(id: UInt64, price: UFix64, address: Address)
@@ -173,13 +173,13 @@ pub contract Marketplace {
             let token <-self.withdrawFlovatar(tokenId: tokenId)
 
             let creatorAccount = getAccount(token.getMetadata().creatorAddress)
-            let creatorWallet = creatorAccount.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver).borrow()!
+            let creatorWallet = creatorAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver).borrow()!
             let creatorAmount = price * Flovatar.getRoyaltyCut()
             let tempCreatorWallet <- buyTokens.withdraw(amount: creatorAmount)
             creatorWallet.deposit(from: <-tempCreatorWallet)
             
 
-            let marketplaceWallet = Marketplace.marketplaceWallet.borrow()!
+            let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
             let marketplaceAmount = price * Flovatar.getMarketplaceCut()
             let tempMarketplaceWallet <- buyTokens.withdraw(amount: marketplaceAmount)
             marketplaceWallet.deposit(from: <-tempMarketplaceWallet)
@@ -214,7 +214,7 @@ pub contract Marketplace {
             let token <-self.withdrawFlovatarComponent(tokenId: tokenId)
 
 
-            let marketplaceWallet = Marketplace.marketplaceWallet.borrow()!
+            let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
             let marketplaceAmount = price * Flovatar.getMarketplaceCut()
             let tempMarketplaceWallet <- buyTokens.withdraw(amount: marketplaceAmount)
             marketplaceWallet.deposit(from: <-tempMarketplaceWallet)
@@ -328,7 +328,7 @@ pub contract Marketplace {
         var saleData: [FlovatarSaleData] = []
         let account = getAccount(address)
 
-        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Marketplace.SalePublic}>()  {
+        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             for id in saleCollection.getFlovatarIDs() {
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 let flovatar = saleCollection.getFlovatar(tokenId: id)
@@ -351,7 +351,7 @@ pub contract Marketplace {
         var saleData: [FlovatarComponentSaleData] = []
         let account = getAccount(address)
 
-        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Marketplace.SalePublic}>()  {
+        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             for id in saleCollection.getFlovatarComponentIDs() {
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id)
@@ -373,7 +373,7 @@ pub contract Marketplace {
     pub fun getFlovatarSale(address: Address, id: UInt64) : FlovatarSaleData? {
         let account = getAccount(address)
 
-        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Marketplace.SalePublic}>()  {
+        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             if let flovatar = saleCollection.getFlovatar(tokenId: id) {
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 return FlovatarSaleData(
@@ -395,7 +395,7 @@ pub contract Marketplace {
 
         let account = getAccount(address)
 
-        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Marketplace.SalePublic}>()  {
+        if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             if let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id) {
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 return FlovatarComponentSaleData(
@@ -425,13 +425,7 @@ pub contract Marketplace {
         self.CollectionStoragePath= /storage/FlovatarMarketplace006
 
 
-        if(self.account.borrow<&FUSD.Vault>(from: /storage/fusdVault) == nil) {
-          self.account.save(<-FUSD.createEmptyVault(), to: /storage/fusdVault)
-          self.account.link<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver, target: /storage/fusdVault)
-          self.account.link<&FUSD.Vault{FungibleToken.Balance}>(/public/fusdBalance, target: /storage/fusdVault)
-        }
-
-        self.marketplaceWallet = self.account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
+        self.marketplaceWallet = self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
 
     }
 }
