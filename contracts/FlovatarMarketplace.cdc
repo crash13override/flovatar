@@ -421,8 +421,8 @@ pub contract FlovatarMarketplace {
 
     pub init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath= /public/FlovatarMarketplace006
-        self.CollectionStoragePath= /storage/FlovatarMarketplace006
+        self.CollectionPublicPath= /public/FlovatarMarketplace007
+        self.CollectionStoragePath= /storage/FlovatarMarketplace007
 
 
         self.marketplaceWallet = self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
