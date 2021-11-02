@@ -1,4 +1,6 @@
+import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
 import FlovatarPack from "./FlovatarPack.cdc"
@@ -42,6 +44,33 @@ pub contract Flovatar: NonFungibleToken {
     pub event Updated(id: UInt64)
 
 
+    pub struct Royalties{
+        pub let royalty: [Royalty]
+        init(royalty: [Royalty]) {
+            self.royalty=royalty
+        }
+    }
+
+    pub enum RoyaltyType: UInt8{
+        pub case fixed
+        pub case percentage
+    }
+
+    pub struct Royalty{
+        pub let wallet:Capability<&{FungibleToken.Receiver}> 
+        pub let cut: UFix64
+
+        //can be percentage
+        pub let type: RoyaltyType
+
+        init(wallet:Capability<&{FungibleToken.Receiver}>, cut: UFix64, type: RoyaltyType ){
+            self.wallet=wallet
+            self.cut=cut
+            self.type=type
+        }
+    }
+
+
     // This Metada struct contains all the most important informations about the Flovatar
     pub struct Metadata {
         pub let name: String
@@ -78,9 +107,10 @@ pub contract Flovatar: NonFungibleToken {
     pub resource interface Public {
         pub let id: UInt64
         access(contract) let metadata: Metadata
+        access(contract) let royalties: Royalties
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
-        pub let name: String
+        access(contract) var name: String
         pub let description: String
         pub let schema: String?
 
@@ -91,12 +121,14 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getSvg(): String
         pub fun getMetadata(): Metadata
+        pub fun getRoyalties(): Royalties
         pub fun getBio(): {String: String}
     }
 
     //The private interface can update the Accessory, Hat, Eyeglasses and Background 
     //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
+        pub fun setName(name: String): String
         pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
         pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
@@ -107,21 +139,24 @@ pub contract Flovatar: NonFungibleToken {
     pub resource NFT: NonFungibleToken.INFT, Public, Private {
         pub let id: UInt64
         access(contract) let metadata: Metadata
+        access(contract) let royalties: Royalties
         access(contract) var accessory: UInt64?
         access(contract) var hat: UInt64?
         access(contract) var eyeglasses: UInt64?
         access(contract) var background: UInt64?
 
-        pub let name: String
+        access(contract) var name: String
         pub let description: String
         pub let schema: String?
         access(self) let bio: {String: String}
 
-        init(metadata: Metadata) {
+        init(metadata: Metadata,
+            royalties: Royalties) {
             Flovatar.totalSupply = Flovatar.totalSupply + UInt64(1)
 
             self.id = Flovatar.totalSupply
             self.metadata = metadata
+            self.royalties = royalties
             self.accessory = nil
             self.hat = nil
             self.eyeglasses = nil
@@ -141,12 +176,45 @@ pub contract Flovatar: NonFungibleToken {
             return self.metadata
         }
 
-        pub fun getAccessory(): UInt64? {
-            return self.accessory
+        pub fun getRoyalties(): Royalties {
+            return self.royalties
         }
 
         pub fun getBio(): {String: String} {
             return self.bio
+        }
+
+        pub fun getName(): String {
+            return self.name
+        }
+        
+        // This will allow to change the Name of the Flovatar only once. 
+        // It checks for the current name is empty, otherwise it will throw an error. 
+        pub fun setName(name: String): String {
+            pre {
+                // TODO: Make sure that the text of the name is sanitized 
+                //and that bad words are not accepted?
+                name.length > 2 : "The name is too short"
+                name.length < 32 : "The name is too long" 
+                self.name == "" : "The name has already been set"
+            }
+
+            // Makes sure that the name is available and not taken already
+            if(Flovatar.checkNameAvailable(name: name) == false){
+                panic("This name has already been taken")
+            }
+
+            self.name = name
+
+
+            // Adds the name to the array to remember it
+            Flovatar.addMintedName(name: name)
+
+            return self.name
+        }
+
+        pub fun getAccessory(): UInt64? {
+            return self.accessory
         }
         
         // This will allow to change the Accessory of the Flovatar any time. 
@@ -510,7 +578,6 @@ pub contract Flovatar: NonFungibleToken {
     // It will check first for uniqueness of the combination + name and will then 
     // generate the Flovatar and burn all the passed components.
     pub fun createFlovatar(
-        name: String,
         body: @FlovatarComponent.NFT,
         hair: @FlovatarComponent.NFT,
         facialHair: @FlovatarComponent.NFT?,
@@ -527,11 +594,6 @@ pub contract Flovatar: NonFungibleToken {
 
 
         pre {
-
-            // TODO: Make sure that the text of the name is sanitized 
-            //and that bad words are not accepted?
-            name.length > 2 : "The name is too short"
-            name.length < 32 : "The name is too long" 
 
             // Make sure that all components belong to the correct category
             body.getCategory() == "body" : "The body component belongs to the wrong category"
@@ -609,12 +671,6 @@ pub contract Flovatar: NonFungibleToken {
             mouth: mouth.templateId, 
             clothing: clothing.templateId)
 
-
-        // Makes sure that the name is available and not taken already
-        if(Flovatar.checkNameAvailable(name: name) == false){
-            panic("This name has already been taken")
-        }
-
         // Makes sure that the combination is available and not taken already
         if(Flovatar.mintedCombinations.containsKey(combinationString) == true) {
             panic("This combination has already been taken")
@@ -629,7 +685,7 @@ pub contract Flovatar: NonFungibleToken {
 
         // Creates the metadata for the new Flovatar
         let metadata = Metadata(
-            name: name,
+            name: "",
             mint: Flovatar.totalSupply + UInt64(1),
             series: body.getSeries(),
             svg: svg,
@@ -646,12 +702,26 @@ pub contract Flovatar: NonFungibleToken {
             }
         )
 
-        // Mint the new Flovatar NFT by passing the metadata to it
-        var newNFT <- create NFT(metadata: metadata)
+        let royalties: [Royalty] = []
 
-        // Adds the combination and name to the arrays to remember them
+        let creatorAccount = getAccount(address)
+        royalties.append(Royalty(
+            wallet: creatorAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver), 
+            cut: Flovatar.getRoyaltyCut(), 
+            type: RoyaltyType.percentage
+        ))
+
+        royalties.append(Royalty(
+            wallet: self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver), 
+            cut: Flovatar.getMarketplaceCut(), 
+            type: RoyaltyType.percentage
+        ))
+
+        // Mint the new Flovatar NFT by passing the metadata to it
+        var newNFT <- create NFT(metadata: metadata, royalties: Royalties(royalty: royalties))
+
+        // Adds the combination to the arrays to remember it
         Flovatar.addMintedCombination(combination: combinationString)
-        Flovatar.addMintedName(name: name)
 
 
         // Checks for any additional optional component (accessory, hat, 
