@@ -10,7 +10,7 @@
     "FlovatarComponent": "./contracts/FlovatarComponent.cdc",
     "FlovatarPack": "./contracts/FlovatarPack.cdc",
     "Flovatar": "./contracts/Flovatar.cdc",
-    "Marketplace": "./contracts/Marketplace.cdc",
+    "FlovatarMarketplace": "./contracts/FlovatarMarketplace.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {
@@ -35,12 +35,6 @@
       "aliases": {
           "testnet": "0x7e60df042a9c0868",
           "emulator": "0x0ae53cb6e3f42a79"
-      }
-    },
-    "FUSD": {
-      "source": "./contracts/FUSD.cdc",
-      "aliases": {
-        "testnet": "0xe223d8a629e49c68"
       }
     }
   },
@@ -71,7 +65,7 @@
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
-        "Marketplace"
+        "FlovatarMarketplace"
       ]
     },
     "emulator": {
@@ -80,9 +74,8 @@
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
-        "Marketplace",
-        "NonFungibleToken",
-        "FUSD"
+        "FlovatarMarketplace",
+        "NonFungibleToken"
       ]
     }
   }

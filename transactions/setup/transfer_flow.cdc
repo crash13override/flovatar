@@ -1,11 +1,11 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import FUSD from "../../contracts/FUSD.cdc"
+import FlowToken from "../../contracts/FlowToken.cdc"
 import Flovatar from "../../contracts/Flovatar.cdc"
 import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
 import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
-import Marketplace from "../../contracts/Marketplace.cdc"
+import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 
 //This transactions transfers flow on testnet from one account to another
 transaction(
@@ -15,7 +15,7 @@ transaction(
       let sentVault: @FungibleToken.Vault
 
       prepare(signer: AuthAccount) {
-        let vaultRef = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
+        let vaultRef = signer.borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)
           ?? panic("Could not borrow reference to the owner's Vault!")
 
         self.sentVault <- vaultRef.withdraw(amount: amount)

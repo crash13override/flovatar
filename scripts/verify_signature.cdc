@@ -4,17 +4,15 @@ pub fun main(
   address: Address,
   message: String,
   signature: String
+  keyIndex: UInt64
 ): Bool {
 
 
     // Gets the Crypto.KeyList and the public key of the collection's owner
     let keyList = Crypto.KeyList()
 
-    var i = 0;
-    var accountKey  = getAccount(address).keys.get(keyIndex: i)
-    while(accountKey != nil) {
-        //We have to skip the first signature with i!=0 because FCL is not using it to sign the message for some reason!
-        if(!accountKey!.isRevoked && i != 0){
+    iflet accountKey  = getAccount(address).keys.get(keyIndex: keyIndex) {
+        if(!accountKey!.isRevoked){
         keyList.add(
                 PublicKey(
                     publicKey: accountKey!.publicKey.publicKey,
@@ -24,8 +22,6 @@ pub fun main(
                 weight: accountKey!.weight
             )
         }
-        i = i + 1
-        accountKey = getAccount(address).keys.get(keyIndex: i)
     }
 
 

@@ -1,11 +1,11 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import FUSD from "../../contracts/FUSD.cdc"
+import FlowToken from "../../contracts/FlowToken.cdc"
 import Flovatar from "../../contracts/Flovatar.cdc"
 import FlovatarComponent from "../../contracts/FlovatarComponent.cdc"
 import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate.cdc"
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
-import Marketplace from "../../contracts/Marketplace.cdc"
+import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 
 
 transaction(
@@ -13,24 +13,24 @@ transaction(
     ) {
 
     let componentCollection: &FlovatarComponent.Collection
-    let marketplace: &Marketplace.SaleCollection
+    let marketplace: &FlovatarMarketplace.SaleCollection
 
     prepare(account: AuthAccount) {
 
-        let marketplaceCap = account.getCapability<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath)
+        let marketplaceCap = account.getCapability<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath)
         // if sale collection is not created yet we make it.
         if !marketplaceCap.check() {
-             let wallet =  account.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)
-             let sale <- Marketplace.createSaleCollection(ownerVault: wallet)
+             let wallet =  account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+             let sale <- FlovatarMarketplace.createSaleCollection(ownerVault: wallet)
 
             // store an empty NFT Collection in account storage
-            account.save<@Marketplace.SaleCollection>(<- sale, to:Marketplace.CollectionStoragePath)
+            account.save<@FlovatarMarketplace.SaleCollection>(<- sale, to:FlovatarMarketplace.CollectionStoragePath)
 
             // publish a capability to the Collection in storage
-            account.link<&{Marketplace.SalePublic}>(Marketplace.CollectionPublicPath, target: Marketplace.CollectionStoragePath)
+            account.link<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath, target: FlovatarMarketplace.CollectionStoragePath)
         }
 
-        self.marketplace = account.borrow<&Marketplace.SaleCollection>(from: Marketplace.CollectionStoragePath)!
+        self.marketplace = account.borrow<&FlovatarMarketplace.SaleCollection>(from: FlovatarMarketplace.CollectionStoragePath)!
         self.componentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
     }
 
