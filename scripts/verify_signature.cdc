@@ -11,7 +11,7 @@ pub fun main(
     // Gets the Crypto.KeyList and the public key of the collection's owner
     let keyList = Crypto.KeyList()
 
-    iflet accountKey  = getAccount(address).keys.get(keyIndex: keyIndex) {
+    if let accountKey  = getAccount(address).keys.get(keyIndex: Int(keyIndex)) {
         if(!accountKey!.isRevoked){
         keyList.add(
                 PublicKey(

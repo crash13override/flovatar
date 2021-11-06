@@ -9,7 +9,6 @@ import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 
 
 transaction(
-    name: String,
     body: UInt64,
     hair: UInt64,
     facialHair: UInt64?,
@@ -88,7 +87,6 @@ transaction(
     execute {
 
         let flovatar <- Flovatar.createFlovatar(
-            name: name,
             body: <-self.bodyNFT,
             hair: <-self.hairNFT,
             facialHair: <-self.facialHairNFT,
