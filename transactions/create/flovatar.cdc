@@ -9,6 +9,7 @@ import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 
 
 transaction(
+    spark: UInt64,
     body: UInt64,
     hair: UInt64,
     facialHair: UInt64?,
@@ -19,24 +20,23 @@ transaction(
     accessory: UInt64?,
     hat: UInt64?,
     eyeglasses: UInt64?,
-    background: UInt64?
+    background: UInt64?,
+    rareBoost: [UInt64],
+    epicBoost: [UInt64],
+    legendaryBoost: [UInt64]
     ) {
 
 
     let flovatarCollection: &Flovatar.Collection
     let flovatarComponentCollection: &FlovatarComponent.Collection
 
-    let bodyNFT: @FlovatarComponent.NFT
-    let hairNFT: @FlovatarComponent.NFT
-    let facialHairNFT: @FlovatarComponent.NFT?
-    let eyesNFT: @FlovatarComponent.NFT
-    let noseNFT: @FlovatarComponent.NFT
-    let mouthNFT: @FlovatarComponent.NFT
-    let clothingNFT: @FlovatarComponent.NFT
     let accessoryNFT: @FlovatarComponent.NFT?
     let hatNFT: @FlovatarComponent.NFT?
     let eyeglassesNFT: @FlovatarComponent.NFT?
     let backgroundNFT: @FlovatarComponent.NFT?
+    let rareBoostNFT: @[FlovatarComponent.NFT]
+    let epicBoostNFT: @[FlovatarComponent.NFT]
+    let legendaryBoostNFT: @[FlovatarComponent.NFT]
     let accountAddress: Address
 
     prepare(account: AuthAccount) {
@@ -44,17 +44,15 @@ transaction(
 
         self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
-        self.bodyNFT <- self.flovatarComponentCollection.withdraw(withdrawID: body) as! @FlovatarComponent.NFT
-        self.hairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: hair) as! @FlovatarComponent.NFT
-        if(facialHair != nil){
-            self.facialHairNFT <- self.flovatarComponentCollection.withdraw(withdrawID: facialHair!) as! @FlovatarComponent.NFT
-        } else {
-            self.facialHairNFT <- nil
+        for(componentId in rareBoost) {
+            self.rareBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
         }
-        self.eyesNFT <- self.flovatarComponentCollection.withdraw(withdrawID: eyes) as! @FlovatarComponent.NFT
-        self.noseNFT <- self.flovatarComponentCollection.withdraw(withdrawID: nose) as! @FlovatarComponent.NFT
-        self.mouthNFT <- self.flovatarComponentCollection.withdraw(withdrawID: mouth) as! @FlovatarComponent.NFT
-        self.clothingNFT <- self.flovatarComponentCollection.withdraw(withdrawID: clothing) as! @FlovatarComponent.NFT
+        for(componentId in epicBoost) {
+            self.epicBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
+        }
+        for(componentId in legendaryBoost) {
+            self.legendaryBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
+        }
 
 
         if(accessory != nil){
@@ -87,17 +85,21 @@ transaction(
     execute {
 
         let flovatar <- Flovatar.createFlovatar(
-            body: <-self.bodyNFT,
-            hair: <-self.hairNFT,
-            facialHair: <-self.facialHairNFT,
-            eyes: <-self.eyesNFT,
-            nose: <-self.noseNFT,
-            mouth: <-self.mouthNFT,
-            clothing: <-self.clothingNFT,
+            spark: <-self.sparkNFT,
+            body: body,
+            hair: hair,
+            facialHair: facialHair,
+            eyes: eyes,
+            nose: nose,
+            mouth: mouth,
+            clothing: clothing,
             accessory: <-self.accessoryNFT,
             hat: <-self.hatNFT,
             eyeglasses: <-self.eyeglassesNFT,
             background: <-self.backgroundNFT,
+            rareBoost: <-self.rareBoostNFT,
+            epicBoost: <-self.epicBoostNFT,
+            legendaryBoost: <-self.legendaryBoostNFT,
             address: self.accountAddress
         )
 
