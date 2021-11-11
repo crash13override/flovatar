@@ -34,6 +34,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun getSvg(): String
         pub fun getCategory(): String
         pub fun getSeries(): UInt32
+        pub fun getRarity(): String
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -92,6 +93,11 @@ pub contract FlovatarComponent: NonFungibleToken {
         // Gets the series number from the parent Template
         pub fun getSeries(): UInt32 {
             return self.getTemplate().series
+        }
+
+        // Gets the rarity from the parent Template
+        pub fun getRarity(): String {
+            return self.getTemplate().rarity
         }
 
         // Emit a Destroyed event when it will be burned to create a Flovatar
@@ -285,8 +291,8 @@ pub contract FlovatarComponent: NonFungibleToken {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarComponentCollection007
-        self.CollectionStoragePath = /storage/FlovatarComponentCollection007
+        self.CollectionPublicPath = /public/FlovatarComponentCollection008
+        self.CollectionStoragePath = /storage/FlovatarComponentCollection008
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
