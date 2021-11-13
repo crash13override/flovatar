@@ -42,6 +42,7 @@ pub contract Flovatar: NonFungibleToken {
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64, metadata: Metadata)
     pub event Updated(id: UInt64)
+    pub event NameSet(id: UInt64, name: String)
 
 
     pub struct Royalties{
@@ -136,10 +137,10 @@ pub contract Flovatar: NonFungibleToken {
     //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
         pub fun setName(name: String): String
-        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64?
+        pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
     }
 
     //The NFT resource that implements both Private and Public interfaces
@@ -147,10 +148,10 @@ pub contract Flovatar: NonFungibleToken {
         pub let id: UInt64
         access(contract) let metadata: Metadata
         access(contract) let royalties: Royalties
-        access(contract) var accessory: UInt64?
-        access(contract) var hat: UInt64?
-        access(contract) var eyeglasses: UInt64?
-        access(contract) var background: UInt64?
+        access(contract) var accessory: @FlovatarComponent.NFT?
+        access(contract) var hat: @FlovatarComponent.NFT?
+        access(contract) var eyeglasses: @FlovatarComponent.NFT?
+        access(contract) var background: @FlovatarComponent.NFT?
 
         access(contract) var name: String
         pub let description: String
@@ -164,15 +165,22 @@ pub contract Flovatar: NonFungibleToken {
             self.id = Flovatar.totalSupply
             self.metadata = metadata
             self.royalties = royalties
-            self.accessory = nil
-            self.hat = nil
-            self.eyeglasses = nil
-            self.background = nil
+            self.accessory <- nil
+            self.hat <- nil
+            self.eyeglasses <- nil
+            self.background <- nil
 
             self.schema = nil
             self.name = ""
             self.description = ""
             self.bio = {}
+        }
+
+        destroy() {
+            destroy self.accessory
+            destroy self.hat
+            destroy self.eyeglasses
+            destroy self.background
         }
 
         pub fun getID(): UInt64 {
@@ -216,96 +224,89 @@ pub contract Flovatar: NonFungibleToken {
 
             // Adds the name to the array to remember it
             Flovatar.addMintedName(name: name)
+            emit NameSet(id: self.id, name: name)
 
             return self.name
         }
 
         pub fun getAccessory(): UInt64? {
-            return self.accessory
+            return self.accessory?.id
         }
         
         // This will allow to change the Accessory of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Accessory component will be burned in the process and if a previous 
         // one was set, it will be lost.
-        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "accessory" : "The component needs to be an accessory"
                 component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
             }
 
-            self.accessory = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.accessory
+            let compNFT <- self.accessory <- component
+            return <- compNFT
         }
 
         pub fun getHat(): UInt64? {
-            return self.hat
+            return self.hat?.id
         }
 
         // This will allow to change the Hat of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Hat component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setHat(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "hat" : "The component needs to be a hat"
                 component.getSeries() == self.metadata.series : "The hat belongs to a different series"
             }
 
-            self.hat = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.hat
+            let compNFT <- self.hat <- component
+            return <-compNFT
         }
 
         pub fun getEyeglasses(): UInt64? {
-            return self.eyeglasses
+            return self.eyeglasses?.id
         }
         
         // This will allow to change the Eyeglasses of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Eyeglasses component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
                 component.getSeries() == self.metadata.series : "The eyeglasses belongs to a different series"
             }
 
-            self.eyeglasses = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.eyeglasses
+            let compNFT <- self.eyeglasses <-component
+            return <-compNFT
         }
 
         pub fun getBackground(): UInt64? {
-            return self.background
+            return self.background?.id
         }
         
         // This will allow to change the Background of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Eyeglasses component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "background" : "The component needs to be a background"
                 component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
             }
 
-            self.background = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.background
+            let compNFT <- self.background <- component
+            return <-compNFT
         }
 
         // This function will return the full SVG of the Flovatar. It will take the 
@@ -818,22 +819,26 @@ pub contract Flovatar: NonFungibleToken {
         // Checks for any additional optional component (accessory, hat, 
         // eyeglasses, background) and assigns it to the Flovatar if present.
         if(accessory != nil){
-            newNFT.setAccessory(component: <-accessory!)
+            let temp <- newNFT.setAccessory(component: <-accessory!)
+            destroy temp
         } else {
             destroy accessory
         }
         if(hat != nil){
-            newNFT.setHat(component: <-hat!)
+            let temp <- newNFT.setHat(component: <-hat!)
+            destroy temp
         } else {
             destroy hat
         }
         if(eyeglasses != nil){
-            newNFT.setEyeglasses(component: <-eyeglasses!)
+            let temp <- newNFT.setEyeglasses(component: <-eyeglasses!)
+            destroy temp
         } else {
             destroy eyeglasses
         }
         if(background != nil){
-            newNFT.setBackground(component: <-background!)
+            let temp <- newNFT.setBackground(component: <-background!)
+            destroy temp
         } else {
             destroy background
         }

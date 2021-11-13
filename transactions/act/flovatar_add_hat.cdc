@@ -31,6 +31,6 @@ transaction(
 
         let flovatar: &{Flovatar.Private} = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
-        flovatar.setHat(component: <-self.hatNFT)
+        self.flovatarComponentCollection.deposit(token: <-flovatar.setHat(component: <-self.hatNFT))
     }
 }
