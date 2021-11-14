@@ -199,6 +199,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub let name: String
         pub let description: String
         pub let category: String
+        pub let rarity: String
         pub let color: String
 
         init(id: UInt64, templateId: UInt64, mint: UInt64) {
@@ -209,6 +210,7 @@ pub contract FlovatarComponent: NonFungibleToken {
             self.name = componentTemplate.name
             self.description = componentTemplate.description
             self.category = componentTemplate.category
+            self.rarity = componentTemplate.rarity
             self.color = componentTemplate.color
         }
     }
