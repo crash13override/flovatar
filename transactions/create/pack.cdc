@@ -26,6 +26,9 @@ transaction(
 
 
     prepare(account: AuthAccount) {
+
+        self.componentsNFT <- []
+
         self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
         self.flovatarPackCollection = account.borrow<&FlovatarPack.Collection>(from: FlovatarPack.CollectionStoragePath)!
@@ -33,7 +36,8 @@ transaction(
         self.flovatarAdmin = account.borrow<&Flovatar.Admin>(from: Flovatar.AdminStoragePath)!
 
         for componentId in components {
-            self.componentsNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
+            let tempNFT <- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT
+            self.componentsNFT.append(<-tempNFT)
         }
 
     }
@@ -42,7 +46,10 @@ transaction(
         let flovatarPack <- self.flovatarAdmin.createPack(
             components: <-self.componentsNFT,
             randomString: randomString,
-            price: price
+            price: price,
+            sparkCount: sparkCount,
+            series: series,
+            name: name
         ) as! @FlovatarPack.Pack
 
         self.flovatarPackCollection.deposit(token: <-flovatarPack)
