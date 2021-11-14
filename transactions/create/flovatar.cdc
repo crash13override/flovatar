@@ -85,6 +85,8 @@ transaction(
             self.backgroundNFT <- nil
         }
 
+        self.flovatarComponentCollection.withdraw(withdrawID: background!) as! @FlovatarComponent.NFT
+
         self.accountAddress = account.address
     }
 
