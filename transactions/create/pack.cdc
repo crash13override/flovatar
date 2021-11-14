@@ -32,7 +32,7 @@ transaction(
 
         self.flovatarAdmin = account.borrow<&Flovatar.Admin>(from: Flovatar.AdminStoragePath)!
 
-        for(componentId in components) {
+        for componentId in components {
             self.componentsNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
         }
 
