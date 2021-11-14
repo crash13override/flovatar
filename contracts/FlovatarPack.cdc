@@ -345,8 +345,8 @@ pub contract FlovatarPack {
         let wallet =  self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
 
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection009
-        self.CollectionStoragePath=/storage/FlovatarPackCollection009
+        self.CollectionPublicPath=/public/FlovatarPackCollection010
+        self.CollectionStoragePath=/storage/FlovatarPackCollection010
 
         // Initialize the total supply
         self.totalSupply = 0
