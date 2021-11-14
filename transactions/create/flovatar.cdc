@@ -44,13 +44,13 @@ transaction(
 
         self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
-        for(componentId in rareBoost) {
+        for componentId in rareBoost {
             self.rareBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
         }
-        for(componentId in epicBoost) {
+        for componentId in epicBoost {
             self.epicBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
         }
-        for(componentId in legendaryBoost) {
+        for componentId in legendaryBoost {
             self.legendaryBoostNFT.append(<- self.flovatarComponentCollection.withdraw(withdrawID: componentId) as! @FlovatarComponent.NFT)
         }
 
