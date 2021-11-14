@@ -767,7 +767,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         let facialHairSvg:String  = facialHairTemplate != nil ? facialHairTemplate?.svg! : ""
-        let svg = (bodyTemplate.svg!).concat(clothingTemplate.svg!).concat(eyesTemplate.svg!).concat(noseTemplate.svg!).concat(mouthTemplate.svg!).concat(facialHairSvg).concat(hairTemplate.svg!)
+        let svg = (bodyTemplate.svg!).concat(clothingTemplate.svg!).concat(hairTemplate.svg!).concat(eyesTemplate.svg!).concat(noseTemplate.svg!).concat(mouthTemplate.svg!).concat(facialHairSvg)
 
         // TODO fix this with optional if possible. If I define it as UInt64? 
         // instead of UInt64 it's throwing an error even if it's defined in Metadata struct
