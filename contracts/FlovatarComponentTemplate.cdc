@@ -11,7 +11,7 @@
  Each templates will also declare in advance the maximum amount of mintable components, so that 
  the scarcity can be enforced by the smart contract itself and so that different rarities can be guaranteed.
 
- Finally, Templates are organizes in Series, so that in the future it will be possible to create new editions
+ Finally, Templates are organized in Series, so that in the future it will be possible to create new editions
  with different characters and styles.
 
  */
@@ -282,4 +282,3 @@ pub contract FlovatarComponentTemplate {
         emit ContractInitialized()
 	}
 }
-
