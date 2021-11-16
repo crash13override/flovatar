@@ -16,7 +16,8 @@ transaction(
     description: String,
     svg: String,
     series: UInt32,
-    maxMintableComponents: UInt64) {
+    maxMintableComponents: UInt64
+    rarity: String) {
 
     let flovatarComponentTemplateCollection: &FlovatarComponentTemplate.Collection
     let flovatarAdmin: &Flovatar.Admin
@@ -35,7 +36,8 @@ transaction(
             description: description,
             svg: svg,
             series: series,
-            maxMintableComponents: maxMintableComponents
+            maxMintableComponents: maxMintableComponents,
+            rarity: rarity
             ) as! @FlovatarComponentTemplate.ComponentTemplate
 
 

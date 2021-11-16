@@ -42,6 +42,7 @@ pub contract Flovatar: NonFungibleToken {
     pub event Deposit(id: UInt64, to: Address?)
     pub event Created(id: UInt64, metadata: Metadata)
     pub event Updated(id: UInt64)
+    pub event NameSet(id: UInt64, name: String)
 
 
     pub struct Royalties{
@@ -73,31 +74,37 @@ pub contract Flovatar: NonFungibleToken {
 
     // This Metada struct contains all the most important informations about the Flovatar
     pub struct Metadata {
-        pub let name: String
         pub let mint: UInt64
         pub let series: UInt32
         pub let svg: String
         pub let combination: String
         pub let creatorAddress: Address
         access(self) let components: {String: UInt64}
+        pub let rareCount: UInt8
+        pub let epicCount: UInt8
+        pub let legendaryCount: UInt8
 
 
         init(
-            name: String,
             mint: UInt64,
             series: UInt32,
             svg: String,
             combination: String,
             creatorAddress: Address,
-            components: {String: UInt64}
+            components: {String: UInt64},
+            rareCount: UInt8,
+            epicCount: UInt8,
+            legendaryCount: UInt8
         ) {
-                self.name = name
                 self.mint = mint
                 self.series = series
                 self.svg = svg
                 self.combination = combination
                 self.creatorAddress = creatorAddress
                 self.components = components
+                self.rareCount = rareCount
+                self.epicCount = epicCount
+                self.legendaryCount = legendaryCount
         }
     }
 
@@ -114,6 +121,7 @@ pub contract Flovatar: NonFungibleToken {
         pub let description: String
         pub let schema: String?
 
+        pub fun getName(): String
         pub fun getAccessory(): UInt64?
         pub fun getHat(): UInt64?
         pub fun getEyeglasses(): UInt64?
@@ -129,10 +137,10 @@ pub contract Flovatar: NonFungibleToken {
     //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
         pub fun setName(name: String): String
-        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setHat(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64?
-        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64?
+        pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
     }
 
     //The NFT resource that implements both Private and Public interfaces
@@ -140,10 +148,10 @@ pub contract Flovatar: NonFungibleToken {
         pub let id: UInt64
         access(contract) let metadata: Metadata
         access(contract) let royalties: Royalties
-        access(contract) var accessory: UInt64?
-        access(contract) var hat: UInt64?
-        access(contract) var eyeglasses: UInt64?
-        access(contract) var background: UInt64?
+        access(contract) var accessory: @FlovatarComponent.NFT?
+        access(contract) var hat: @FlovatarComponent.NFT?
+        access(contract) var eyeglasses: @FlovatarComponent.NFT?
+        access(contract) var background: @FlovatarComponent.NFT?
 
         access(contract) var name: String
         pub let description: String
@@ -157,15 +165,22 @@ pub contract Flovatar: NonFungibleToken {
             self.id = Flovatar.totalSupply
             self.metadata = metadata
             self.royalties = royalties
-            self.accessory = nil
-            self.hat = nil
-            self.eyeglasses = nil
-            self.background = nil
+            self.accessory <- nil
+            self.hat <- nil
+            self.eyeglasses <- nil
+            self.background <- nil
 
             self.schema = nil
-            self.name = metadata.name
-            self.description = metadata.name
+            self.name = ""
+            self.description = ""
             self.bio = {}
+        }
+
+        destroy() {
+            destroy self.accessory
+            destroy self.hat
+            destroy self.eyeglasses
+            destroy self.background
         }
 
         pub fun getID(): UInt64 {
@@ -209,96 +224,89 @@ pub contract Flovatar: NonFungibleToken {
 
             // Adds the name to the array to remember it
             Flovatar.addMintedName(name: name)
+            emit NameSet(id: self.id, name: name)
 
             return self.name
         }
 
         pub fun getAccessory(): UInt64? {
-            return self.accessory
+            return self.accessory?.id
         }
         
         // This will allow to change the Accessory of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Accessory component will be burned in the process and if a previous 
         // one was set, it will be lost.
-        pub fun setAccessory(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "accessory" : "The component needs to be an accessory"
                 component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
             }
 
-            self.accessory = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.accessory
+            let compNFT <- self.accessory <- component
+            return <- compNFT
         }
 
         pub fun getHat(): UInt64? {
-            return self.hat
+            return self.hat?.id
         }
 
         // This will allow to change the Hat of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Hat component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setHat(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "hat" : "The component needs to be a hat"
                 component.getSeries() == self.metadata.series : "The hat belongs to a different series"
             }
 
-            self.hat = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.hat
+            let compNFT <- self.hat <- component
+            return <-compNFT
         }
 
         pub fun getEyeglasses(): UInt64? {
-            return self.eyeglasses
+            return self.eyeglasses?.id
         }
         
         // This will allow to change the Eyeglasses of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Eyeglasses component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setEyeglasses(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
                 component.getSeries() == self.metadata.series : "The eyeglasses belongs to a different series"
             }
 
-            self.eyeglasses = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.eyeglasses
+            let compNFT <- self.eyeglasses <-component
+            return <-compNFT
         }
 
         pub fun getBackground(): UInt64? {
-            return self.background
+            return self.background?.id
         }
         
         // This will allow to change the Background of the Flovatar any time. 
         // It checks for the right category and series before executing. 
         // The Eyeglasses component will be burned in the process and if a previous one 
         // was set, it will be lost.
-        pub fun setBackground(component: @FlovatarComponent.NFT): UInt64? {
+        pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "background" : "The component needs to be a background"
                 component.getSeries() == self.metadata.series : "The accessory belongs to a different series"
             }
 
-            self.background = component.templateId
-
             emit Updated(id: self.id)
 
-            destroy component
-            return self.background
+            let compNFT <- self.background <- component
+            return <-compNFT
         }
 
         // This function will return the full SVG of the Flovatar. It will take the 
@@ -306,7 +314,7 @@ pub contract Flovatar: NonFungibleToken {
         // original Template resources, while all the other unmutable components are 
         // taken from the Metadata directly.
         pub fun getSvg(): String {
-            let svg: String = "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'>"
+            let svg: String = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3000 3000' width='100%' height='100%'>"
 
             if let background = self.getBackground() {
                 if let template = FlovatarComponentTemplate.getComponentTemplate(id: background) {
@@ -438,6 +446,7 @@ pub contract Flovatar: NonFungibleToken {
     // when retrieved using the contract helper methods outside the collection.
     pub struct FlovatarData {
         pub let id: UInt64
+        pub let name: String
         pub let metadata: Flovatar.Metadata
         pub let accessoryId: UInt64?
         pub let hatId: UInt64?
@@ -446,6 +455,7 @@ pub contract Flovatar: NonFungibleToken {
         pub let bio: {String: String}
         init(
             id: UInt64, 
+            name: String,
             metadata: Flovatar.Metadata,
             accessoryId: UInt64?,
             hatId: UInt64?,
@@ -454,6 +464,7 @@ pub contract Flovatar: NonFungibleToken {
             bio: {String: String}
             ) {
             self.id = id
+            self.name = name
             self.metadata = metadata
             self.accessoryId = accessoryId
             self.hatId = hatId
@@ -473,6 +484,7 @@ pub contract Flovatar: NonFungibleToken {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
+                    name: flovatar!.getName(),
                     metadata: flovatar!.getMetadata(),
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
@@ -496,6 +508,7 @@ pub contract Flovatar: NonFungibleToken {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 flovatarData.append(FlovatarData(
                     id: id,
+                    name: flovatar!.getName(),
                     metadata: flovatar!.getMetadata(),
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
@@ -577,57 +590,76 @@ pub contract Flovatar: NonFungibleToken {
     // A list of components resources needs to be passed to executed.
     // It will check first for uniqueness of the combination + name and will then 
     // generate the Flovatar and burn all the passed components.
+    // The Spark NFT will entitle to use any common basic component (body, hair, etc.)
+    // In order to use special rare components a boost of the same rarity will be needed
+    // for each component used 
     pub fun createFlovatar(
-        body: @FlovatarComponent.NFT,
-        hair: @FlovatarComponent.NFT,
-        facialHair: @FlovatarComponent.NFT?,
-        eyes: @FlovatarComponent.NFT,
-        nose: @FlovatarComponent.NFT,
-        mouth: @FlovatarComponent.NFT,
-        clothing: @FlovatarComponent.NFT,
+        spark: @FlovatarComponent.NFT,
+        body: UInt64,
+        hair: UInt64,
+        facialHair: UInt64?,
+        eyes: UInt64,
+        nose: UInt64,
+        mouth: UInt64,
+        clothing: UInt64,
         accessory: @FlovatarComponent.NFT?,
         hat: @FlovatarComponent.NFT?,
         eyeglasses: @FlovatarComponent.NFT?,
         background: @FlovatarComponent.NFT?,
+        rareBoost: @[FlovatarComponent.NFT],
+        epicBoost: @[FlovatarComponent.NFT],
+        legendaryBoost: @[FlovatarComponent.NFT],
         address: Address
     ) : @Flovatar.NFT {
 
-
         pre {
-
-            // Make sure that all components belong to the correct category
-            body.getCategory() == "body" : "The body component belongs to the wrong category"
-            hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
-            eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
-            nose.getCategory() == "nose" : "The nose component belongs to the wrong category"
-            mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
-            clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
-
-            // Make sure that all the components belong to the same series like the body
-            body.getSeries() == hair.getSeries() : "The hair doesn't belong to the same series like the body"
-            body.getSeries() == eyes.getSeries() : "The eyes doesn't belong to the same series like the body"
-            body.getSeries() == nose.getSeries() : "The nose doesn't belong to the same series like the body"
-            body.getSeries() == mouth.getSeries() : "The mouth doesn't belong to the same series like the body"
-            body.getSeries() == clothing.getSeries() : "The clothing doesn't belong to the same series like the body"
-
+            // Make sure that the spark component belongs to the correct category
+            spark.getCategory() == "spark" : "The spark component belongs to the wrong category"
         }
+
+        let bodyTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: body)!
+        let hairTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: hair)!
+        let eyesTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: eyes)!
+        let noseTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: nose)!
+        let mouthTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: mouth)!
+        let clothingTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: clothing)!
+
+
+        // Make sure that all components belong to the correct category
+        if(bodyTemplate.category != "body") { panic("The body component belongs to the wrong category") }
+        if(hairTemplate.category != "hair") { panic("The hair component belongs to the wrong category") }
+        if(eyesTemplate.category != "eyes") { panic("The eyes component belongs to the wrong category") }
+        if(noseTemplate.category != "nose") { panic("The nose component belongs to the wrong category") }
+        if(mouthTemplate.category != "mouth") { panic("The mouth component belongs to the wrong category") }
+        if(clothingTemplate.category != "clothing") { panic("The clothing component belongs to the wrong category") }
+
+        // Make sure that all the components belong to the same series like the spark
+        if(bodyTemplate.series != spark.getSeries()) { panic("The body doesn't belong to the correct series") }
+        if(hairTemplate.series != spark.getSeries()) { panic("The hair doesn't belong to the correct series") }
+        if(eyesTemplate.series != spark.getSeries()) { panic("The eyes doesn't belong to the correct series") }
+        if(noseTemplate.series != spark.getSeries()) { panic("The nose doesn't belong to the correct series") }
+        if(mouthTemplate.series != spark.getSeries()) { panic("The mouth doesn't belong to the correct series") }
+        if(clothingTemplate.series != spark.getSeries()) { panic("The clothing doesn't belong to the correct series") }
 
         // Make more checks for the additional components to check for the right category and uniqueness
+        var facialHairTemplate: FlovatarComponentTemplate.ComponentTemplateData? = nil
         if(facialHair != nil){
-            if(facialHair?.getCategory() != "facialHair"){
+            facialHairTemplate = FlovatarComponentTemplate.getComponentTemplate(id: facialHair!)
+            if(facialHairTemplate?.category != "facialHair"){
                 panic("The facial hair component belongs to the wrong category")
             }
-            if(facialHair?.getSeries() != body.getSeries()){
-                panic("The facial hair doesn't belong to the same series like the body")
+            if(facialHairTemplate?.series != spark.getSeries()){
+                panic("The facial hair doesn't belong to the correct series")
             }
         }
+
 
         if(accessory != nil){
             if(accessory?.getCategory() != "accessory"){
                 panic("The accessory component belongs to the wrong category")
             }
-            if(accessory?.getSeries() != body.getSeries()){
-                panic("The accessory doesn't belong to the same series like the body")
+            if(accessory?.getSeries() != spark.getSeries()){
+                panic("The accessory doesn't belong to the correct series")
             }
         }
 
@@ -635,8 +667,8 @@ pub contract Flovatar: NonFungibleToken {
             if(hat?.getCategory() != "hat"){
                 panic("The hat component belongs to the wrong category")
             }
-            if(hat?.getSeries() != body.getSeries()){
-                panic("The hat doesn't belong to the same series like the body")
+            if(hat?.getSeries() != spark.getSeries()){
+                panic("The hat doesn't belong to the correct series")
             }
         }
 
@@ -644,8 +676,8 @@ pub contract Flovatar: NonFungibleToken {
             if(eyeglasses?.getCategory() != "eyeglasses"){
                 panic("The eyeglasses component belongs to the wrong category")
             }
-            if(eyeglasses?.getSeries() != body.getSeries()){
-                panic("The eyeglasses doesn't belong to the same series like the body")
+            if(eyeglasses?.getSeries() != spark.getSeries()){
+                panic("The eyeglasses doesn't belong to the correct series")
             }
         }
 
@@ -653,53 +685,116 @@ pub contract Flovatar: NonFungibleToken {
             if(background?.getCategory() != "background"){
                 panic("The background component belongs to the wrong category")
             }
-            if(background?.getSeries() != body.getSeries()){
-                panic("The background doesn't belong to the same series like the body")
+            if(background?.getSeries() != spark.getSeries()){
+                panic("The background doesn't belong to the correct series")
             }
         }
+
+
+        //Make sure that all the Rarity Boosts are from the correct category
+        var i: Int = 0
+        while( i < rareBoost.length) {
+            if(rareBoost[i].getCategory() != "boost" && rareBoost[i].getRarity() != "rare") {
+                panic("The rare boost belongs to the wrong category")
+            }
+            i = i + 1
+        }
+        i = 0
+        while( i < epicBoost.length) {
+            if(epicBoost[i].getCategory() != "boost" && epicBoost[i].getRarity() != "epic") {
+                panic("The epic boost belongs to the wrong category")
+            }
+        }
+        i = 0
+        while( i < legendaryBoost.length) {
+            if(legendaryBoost[i].getCategory() != "boost" && legendaryBoost[i].getRarity() != "legendary") {
+                panic("The legendary boost belongs to the wrong category")
+            }
+        }
+
+        //Keep count of the necessary rarity boost for the selected templates
+        var rareCount: UInt8 = 0
+        var epicCount: UInt8 = 0
+        var legendaryCount: UInt8 = 0
+
+        if(bodyTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+        if(hairTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+        if(eyesTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+        if(noseTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+        if(mouthTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+        if(clothingTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
+
+        if(bodyTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+        if(hairTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+        if(eyesTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+        if(noseTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+        if(mouthTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+        if(clothingTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
+
+        if(bodyTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+        if(hairTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+        if(eyesTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+        if(noseTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+        if(mouthTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+        if(clothingTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
+
+
+        if(Int(rareCount) != rareBoost.length){
+            panic("The rare boosts are not equal the ones needed")
+        }
+        if(Int(epicCount) != epicBoost.length){
+            panic("The epic boosts are not equal the ones needed")
+        }
+        if(Int(legendaryCount) != legendaryBoost.length){
+            panic("The epic boosts are not equal the ones needed")
+        }
+
+
 
 
         // Generates the combination string to check for uniqueness. 
         // This is like a barcode that defines exactly which components were used
         // to create the Flovatar
         let combinationString = Flovatar.getCombinationString(
-            body: body.templateId, 
-            hair: hair.templateId, 
-            facialHair: facialHair != nil ? facialHair?.templateId : nil, 
-            eyes: eyes.templateId, 
-            nose: nose.templateId, 
-            mouth: mouth.templateId, 
-            clothing: clothing.templateId)
+            body: body, 
+            hair: hair, 
+            facialHair: facialHair, 
+            eyes: eyes, 
+            nose: nose, 
+            mouth: mouth, 
+            clothing: clothing)
 
         // Makes sure that the combination is available and not taken already
         if(Flovatar.mintedCombinations.containsKey(combinationString) == true) {
             panic("This combination has already been taken")
         }
 
-        let facialHairSvg:String  = facialHair != nil ? facialHair?.getSvg()! : ""
-        let svg = (body.getSvg()!).concat(facialHairSvg).concat(eyes.getSvg()!).concat(nose.getSvg()!).concat(mouth.getSvg()!).concat(clothing.getSvg()!).concat(hair.getSvg()!)
+        let facialHairSvg:String  = facialHairTemplate != nil ? facialHairTemplate?.svg! : ""
+        let svg = (bodyTemplate.svg!).concat(clothingTemplate.svg!).concat(hairTemplate.svg!).concat(eyesTemplate.svg!).concat(noseTemplate.svg!).concat(mouthTemplate.svg!).concat(facialHairSvg)
 
         // TODO fix this with optional if possible. If I define it as UInt64? 
         // instead of UInt64 it's throwing an error even if it's defined in Metadata struct
-        let facialHairId: UInt64 = facialHair != nil ? facialHair?.templateId! : 0
+        let facialHairId: UInt64 = facialHair != nil ? facialHair! : 0
 
         // Creates the metadata for the new Flovatar
         let metadata = Metadata(
-            name: "",
             mint: Flovatar.totalSupply + UInt64(1),
-            series: body.getSeries(),
+            series: spark.getSeries(),
             svg: svg,
             combination: combinationString,
             creatorAddress: address,
             components: {
-                "body": body.templateId, 
-                "hair": hair.templateId, 
+                "body": body, 
+                "hair": hair, 
                 "facialHair": facialHairId, 
-                "eyes": eyes.templateId, 
-                "nose": nose.templateId, 
-                "mouth": mouth.templateId, 
-                "clothing": clothing.templateId
-            }
+                "eyes": eyes, 
+                "nose": nose, 
+                "mouth": mouth, 
+                "clothing": clothing
+            },
+            rareCount: rareCount,
+            epicCount: epicCount,
+            legendaryCount: legendaryCount
         )
 
         let royalties: [Royalty] = []
@@ -727,22 +822,26 @@ pub contract Flovatar: NonFungibleToken {
         // Checks for any additional optional component (accessory, hat, 
         // eyeglasses, background) and assigns it to the Flovatar if present.
         if(accessory != nil){
-            newNFT.setAccessory(component: <-accessory!)
+            let temp <- newNFT.setAccessory(component: <-accessory!)
+            destroy temp
         } else {
             destroy accessory
         }
         if(hat != nil){
-            newNFT.setHat(component: <-hat!)
+            let temp <- newNFT.setHat(component: <-hat!)
+            destroy temp
         } else {
             destroy hat
         }
         if(eyeglasses != nil){
-            newNFT.setEyeglasses(component: <-eyeglasses!)
+            let temp <- newNFT.setEyeglasses(component: <-eyeglasses!)
+            destroy temp
         } else {
             destroy eyeglasses
         }
         if(background != nil){
-            newNFT.setBackground(component: <-background!)
+            let temp <- newNFT.setBackground(component: <-background!)
+            destroy temp
         } else {
             destroy background
         }
@@ -750,14 +849,27 @@ pub contract Flovatar: NonFungibleToken {
         // Emits the Created event to notify about its existence
         emit Created(id: newNFT.id, metadata: metadata)
 
-        // Destroy all the main components since they are not needed anymore.
-        destroy body
-        destroy hair
-        destroy facialHair
-        destroy eyes
-        destroy nose
-        destroy mouth
-        destroy clothing
+        // Destroy all the spark and the rarity boost since they are not needed anymore.
+
+        destroy spark
+
+        while(rareBoost.length > 0){
+            let boost <- rareBoost.remove(at: 0)
+            destroy boost
+        }
+        destroy rareBoost
+
+        while(epicBoost.length > 0){
+            let boost <- epicBoost.remove(at: 0)
+            destroy boost
+        }
+        destroy epicBoost
+
+        while(legendaryBoost.length > 0){
+            let boost <- legendaryBoost.remove(at: 0)
+            destroy boost
+        }
+        destroy legendaryBoost
 
         return <- newNFT
     }
@@ -799,7 +911,8 @@ pub contract Flovatar: NonFungibleToken {
             description: String,
             svg: String,
             series: UInt32,
-            maxMintableComponents: UInt64
+            maxMintableComponents: UInt64,
+            rarity: String
         ) : @FlovatarComponentTemplate.ComponentTemplate {
             return <- FlovatarComponentTemplate.createComponentTemplate(
                 name: name,
@@ -808,7 +921,8 @@ pub contract Flovatar: NonFungibleToken {
                 description: description,
                 svg: svg,
                 series: series,
-                maxMintableComponents: maxMintableComponents
+                maxMintableComponents: maxMintableComponents,
+                rarity: rarity
             )
         }
 
@@ -826,35 +940,21 @@ pub contract Flovatar: NonFungibleToken {
         // purchase of it (more info on FlovatarPack.cdc).
         // Finally the sale price is set as well.
         pub fun createPack(
-            body: @FlovatarComponent.NFT,
-            hair: @FlovatarComponent.NFT,
-            facialHair: @FlovatarComponent.NFT?,
-            eyes: @FlovatarComponent.NFT,
-            nose: @FlovatarComponent.NFT,
-            mouth: @FlovatarComponent.NFT,
-            clothing: @FlovatarComponent.NFT,
-            hat: @FlovatarComponent.NFT?,
-            eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?,
-            background: @FlovatarComponent.NFT?,
+            components: @[FlovatarComponent.NFT],
             randomString: String,
-            price: UFix64
+            price: UFix64,
+            sparkCount: UInt32,
+            series: UInt32,
+            name: String
         ) : @FlovatarPack.Pack {
 
             return <- FlovatarPack.createPack(
-                body: <-body,
-                hair: <-hair,
-                facialHair: <-facialHair,
-                eyes: <-eyes,
-                nose: <-nose,
-                mouth: <-mouth,
-                clothing: <-clothing,
-                hat: <-hat,
-                eyeglasses: <-eyeglasses,
-                accessory: <-accessory,
-                background: <-background,
+                components: <-components,
                 randomString: randomString,
-                price: price
+                price: price,
+                sparkCount: sparkCount,
+                series: series,
+                name: name
             )
         }
 
@@ -881,9 +981,9 @@ pub contract Flovatar: NonFungibleToken {
 
 	init() {
         // TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection007
-        self.CollectionStoragePath = /storage/FlovatarCollection007
-        self.AdminStoragePath = /storage/FlovatarAdmin007
+        self.CollectionPublicPath = /public/FlovatarCollection011
+        self.CollectionStoragePath = /storage/FlovatarCollection011
+        self.AdminStoragePath = /storage/FlovatarAdmin011
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)

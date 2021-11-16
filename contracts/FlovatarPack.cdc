@@ -40,6 +40,9 @@ pub contract FlovatarPack {
     pub resource interface Public {
         pub let id: UInt64
         pub let price: UFix64
+        pub let sparkCount: UInt32
+        pub let series: UInt32
+        pub let name: String
     }
 
     // The Pack resource that implements the Public interface and that contains 
@@ -47,127 +50,62 @@ pub contract FlovatarPack {
     pub resource Pack: Public {
         pub let id: UInt64
         pub let price: UFix64
-        access(account) let components: @{String: FlovatarComponent.NFT}
+        pub let sparkCount: UInt32
+        pub let series: UInt32
+        pub let name: String
+        access(account) let components: @[FlovatarComponent.NFT]
         access(account) var randomString: String
 
-        // Initializes the Pack with all the required and optional Components.
+        // Initializes the Pack with all the Components.
         // It receives also the price and a random String that will signed by 
         // the account owner to validate the purchase process.
         init(
-            body: @FlovatarComponent.NFT,
-            hair: @FlovatarComponent.NFT,
-            facialHair: @FlovatarComponent.NFT?,
-            eyes: @FlovatarComponent.NFT,
-            nose: @FlovatarComponent.NFT,
-            mouth: @FlovatarComponent.NFT,
-            clothing: @FlovatarComponent.NFT,
-            hat: @FlovatarComponent.NFT?,
-            eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?,
-            background: @FlovatarComponent.NFT?,
+            components: @[FlovatarComponent.NFT],
             randomString: String,
-            price: UFix64
+            price: UFix64,
+            sparkCount: UInt32,
+            series: UInt32,
+            name: String
         ) {
 
-            // Makes sure that all the required Components belong to the correct category
-            pre {
-                body.getCategory() == "body" : "The body component belongs to the wrong category"
-                hair.getCategory() == "hair" : "The hair component belongs to the wrong category"
-                eyes.getCategory() == "eyes" : "The eyes component belongs to the wrong category"
-                nose.getCategory() == "nose" : "The nose component belongs to the wrong category"
-                mouth.getCategory() == "mouth" : "The mouth component belongs to the wrong category"
-                clothing.getCategory() == "clothing" : "The clothing component belongs to the wrong category"
-            }
+            // Makes sure that if it's set to have a spark component, this one is present in the array
 
-            // Makes additional checks also for the optional Components to make sure
-            // they belong to the correct category
-            if(facialHair != nil) {
-                if(facialHair?.getCategory() != "facialHair"){
-                    panic("The facial hair component belongs to the wrong category")
+            var sparkCountCheck: UInt32 = 0
+            if(sparkCount > 0){
+                var i: Int = 0
+                while(i < components.length){
+                    if(components[i].getCategory() == "spark"){
+                        sparkCountCheck = sparkCountCheck + 1
+                    }
+                    i = i + 1
                 }
             }
-            if(hat != nil){
-                if(hat?.getCategory() != "hat") {
-                    panic("The hat component belongs to the wrong category")
-                }
+                
+            if(sparkCount != sparkCountCheck){
+                panic("There is a mismatch in the spark count")
             }
-            if(eyeglasses != nil){
-                if(eyeglasses?.getCategory() != "eyeglasses"){
-                    panic("The eyeglasses component belongs to the wrong category")
-                }
-            }
-            if(accessory != nil){
-                if(accessory?.getCategory() != "accessory"){
-                    panic("The accessory component belongs to the wrong category")
-                }
-            }
-            if(background != nil){
-                if(background?.getCategory() != "background"){
-                    panic("The background component belongs to the wrong category")
-                }
-            }
+            
+
+
 
             // Increments the total supply counter
             FlovatarPack.totalSupply = FlovatarPack.totalSupply + UInt64(1)
             self.id = FlovatarPack.totalSupply
 
-
-            // Creates an empty Dictionary and stores all the components in it
-            self.components <- {}
-
-            let oldBody <- self.components["body"] <- body
-            destroy oldBody
-
-            let oldHair <- self.components["hair"] <- hair
-            destroy oldHair
-
-            if(facialHair != nil) {
-                let oldFacialHair <-self.components["facialHair"] <- facialHair
-                destroy oldFacialHair
-            } else {
-                destroy facialHair
+            // Moves all the components into the array
+            self.components <- []
+            while(components.length > 0){
+                self.components.append(<- components.remove(at: 0))
             }
 
-            let oldEyes <- self.components["eyes"] <- eyes
-            destroy oldEyes
-
-            let oldNose <- self.components["nose"] <- nose
-            destroy oldNose
-
-            let oldMouth <- self.components["mouth"] <- mouth
-            destroy oldMouth
-
-            let oldClothing <- self.components["clothing"] <- clothing
-            destroy oldClothing
-
-            if(hat != nil){
-                let oldHat <- self.components["hat"] <- hat
-                destroy oldHat
-            } else {
-                destroy hat
-            }
-            if(eyeglasses != nil){
-                let oldEyeglasses <- self.components["eyeglasses"] <- eyeglasses
-                destroy oldEyeglasses
-            } else {
-                destroy eyeglasses
-            }
-            if(accessory != nil){
-                let oldAccessory <- self.components["accessory"] <- accessory
-                destroy oldAccessory
-            } else {
-                destroy accessory
-            }
-            if(background != nil){
-                let oldBackground <- self.components["background"] <- background
-                destroy oldBackground
-            } else {
-                destroy background
-            }
+            destroy components
 
             // Sets the randomString text and the price
             self.randomString = randomString
             self.price = price
+            self.sparkCount = sparkCount
+            self.series = series
+            self.name = name
         }
 
         destroy() {
@@ -244,51 +182,16 @@ pub contract FlovatarPack {
             // Gets the Component Collection Public capability to be able to 
             // send there the Components contained in the Pack
             let recipientCap = self.owner!.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
-            let recipient=recipientCap.borrow()!
+            let recipient = recipientCap.borrow()!
 
             // Removed the pack from the collection
             let pack <- self.withdraw(withdrawID: id)
 
             // Removes all the components from the Pack and deposits them to the 
             // Component Collection of the owner
-            let newBody <-pack.components.remove(key: "body") ?? panic("Missing body")
-            recipient.deposit(token: <-newBody)
 
-            let newHair <-pack.components.remove(key: "hair") ?? panic("Missing hair")
-            recipient.deposit(token: <-newHair)
-
-            if(pack.components.containsKey("facialHair")){
-                let newFacialHair <-pack.components.remove(key: "facialHair") ?? panic("Missing facial hair")
-                recipient.deposit(token: <-newFacialHair)
-            }
-
-            let newEyes <-pack.components.remove(key: "eyes") ?? panic("Missing eyes")
-            recipient.deposit(token: <-newEyes)
-
-            let newNose <-pack.components.remove(key: "nose") ?? panic("Missing nose")
-            recipient.deposit(token: <-newNose)
-
-            let newMouth <-pack.components.remove(key: "mouth") ?? panic("Missing mouth")
-            recipient.deposit(token: <-newMouth)
-
-            let newClothing <-pack.components.remove(key: "clothing") ?? panic("Missing clothing")
-            recipient.deposit(token: <-newClothing)
-
-            if(pack.components.containsKey("hat")){
-                let newHat <-pack.components.remove(key: "hat") ?? panic("Missing hat")
-                recipient.deposit(token: <-newHat)
-            }
-            if(pack.components.containsKey("eyeglasses")){
-                let newEyeglasses <-pack.components.remove(key: "eyeglasses") ?? panic("Missing eyeglasses")
-                recipient.deposit(token: <-newEyeglasses)
-            }
-            if(pack.components.containsKey("accessory")){
-                let newAccessory <-pack.components.remove(key: "accessory") ?? panic("Missing accessory")
-                recipient.deposit(token: <-newAccessory)
-            }
-            if(pack.components.containsKey("background")){
-                let newBackground <-pack.components.remove(key: "background") ?? panic("Missing background")
-                recipient.deposit(token: <-newBackground)
+            while(pack.components.length > 0){
+                recipient.deposit(token: <- pack.components.remove(at: 0))
             }
 
             // Emits the event to notify that the pack was opened
@@ -323,6 +226,7 @@ pub contract FlovatarPack {
         // to generate a hash from the original random String contained in each Pack.
         // This will guarantee that the contract owner will be able to decide which user can buy a pack, by
         // providing them the correct signature. 
+        //
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String) {
 
             // Checks that the pack is still available and that the FLOW tokens are sufficient
@@ -412,35 +316,21 @@ pub contract FlovatarPack {
     // It creates a new pack from a list of Components, the random String and the price.
     // Some Components are required and others are optional
     access(account) fun createPack(
-            body: @FlovatarComponent.NFT,
-            hair: @FlovatarComponent.NFT,
-            facialHair: @FlovatarComponent.NFT?,
-            eyes: @FlovatarComponent.NFT,
-            nose: @FlovatarComponent.NFT,
-            mouth: @FlovatarComponent.NFT,
-            clothing: @FlovatarComponent.NFT,
-            hat: @FlovatarComponent.NFT?,
-            eyeglasses: @FlovatarComponent.NFT?,
-            accessory: @FlovatarComponent.NFT?,
-            background: @FlovatarComponent.NFT?,
+            components: @[FlovatarComponent.NFT],
             randomString: String,
-            price: UFix64
+            price: UFix64,
+            sparkCount: UInt32,
+            series: UInt32,
+            name: String
         ) : @FlovatarPack.Pack {
 
         var newPack <- create Pack(
-            body: <-body,
-            hair: <-hair,
-            facialHair: <-facialHair,
-            eyes: <-eyes,
-            nose: <-nose,
-            mouth: <-mouth,
-            clothing: <-clothing,
-            hat: <-hat,
-            eyeglasses: <-eyeglasses,
-            accessory: <-accessory,
-            background: <-background,
+            components: <-components,
             randomString: randomString,
-            price: price
+            price: price,
+            sparkCount: sparkCount,
+            series: series,
+            name: name
         )
 
         // Emits an event to notify that a Pack was created. 
@@ -455,8 +345,8 @@ pub contract FlovatarPack {
         let wallet =  self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
 
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarPackCollection007
-        self.CollectionStoragePath=/storage/FlovatarPackCollection007
+        self.CollectionPublicPath=/public/FlovatarPackCollection011
+        self.CollectionStoragePath=/storage/FlovatarPackCollection011
 
         // Initialize the total supply
         self.totalSupply = 0

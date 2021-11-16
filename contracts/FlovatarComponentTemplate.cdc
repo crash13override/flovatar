@@ -44,6 +44,7 @@ pub contract FlovatarComponentTemplate {
         pub let svg: String
         pub let series: UInt32
         pub let maxMintableComponents: UInt64
+        pub let rarity: String
     }
 
     // The Component resource implementing the public interface as well
@@ -56,6 +57,7 @@ pub contract FlovatarComponentTemplate {
         pub let svg: String
         pub let series: UInt32
         pub let maxMintableComponents: UInt64
+        pub let rarity: String
 
         // Initialize a Template with all the necessary data
         init(
@@ -65,7 +67,8 @@ pub contract FlovatarComponentTemplate {
             description: String,
             svg: String,
             series: UInt32,
-            maxMintableComponents: UInt64
+            maxMintableComponents: UInt64,
+            rarity: String
         ) {
             // increments the counter and stores it as the ID
             FlovatarComponentTemplate.totalSupply = FlovatarComponentTemplate.totalSupply + UInt64(1)
@@ -77,6 +80,7 @@ pub contract FlovatarComponentTemplate {
             self.svg = svg
             self.series = series
             self.maxMintableComponents = maxMintableComponents
+            self.rarity = rarity
         }
     }
 
@@ -149,6 +153,7 @@ pub contract FlovatarComponentTemplate {
         pub let maxMintableComponents: UInt64
         pub let totalMintedComponents: UInt64
         pub let lastComponentMintedAt: UFix64
+        pub let rarity: String
 
         init(
             id: UInt64,
@@ -158,7 +163,8 @@ pub contract FlovatarComponentTemplate {
             description: String,
             svg: String?,
             series: UInt32,
-            maxMintableComponents: UInt64
+            maxMintableComponents: UInt64,
+            rarity: String
         ) {
             self.id = id
             self.name = name
@@ -170,6 +176,7 @@ pub contract FlovatarComponentTemplate {
             self.maxMintableComponents = maxMintableComponents
             self.totalMintedComponents = FlovatarComponentTemplate.getTotalMintedComponents(id: id)!
             self.lastComponentMintedAt = FlovatarComponentTemplate.getLastComponentMintedAt(id: id)!
+            self.rarity = rarity
         }
     }
 
@@ -189,7 +196,8 @@ pub contract FlovatarComponentTemplate {
                     description: componentTemplate!.description,
                     svg: nil,
                     series: componentTemplate!.series,
-                    maxMintableComponents: componentTemplate!.maxMintableComponents
+                    maxMintableComponents: componentTemplate!.maxMintableComponents,
+                    rarity: componentTemplate!.rarity
                     ))
             }
         }
@@ -208,7 +216,8 @@ pub contract FlovatarComponentTemplate {
                     description: componentTemplate!.description,
                     svg: componentTemplate!.svg,
                     series: componentTemplate!.series,
-                    maxMintableComponents: componentTemplate!.maxMintableComponents
+                    maxMintableComponents: componentTemplate!.maxMintableComponents,
+                    rarity: componentTemplate!.rarity
                     )
             }
         }
@@ -243,7 +252,8 @@ pub contract FlovatarComponentTemplate {
         description: String,
         svg: String,
         series: UInt32,
-        maxMintableComponents: UInt64
+        maxMintableComponents: UInt64,
+        rarity: String
     ) : @FlovatarComponentTemplate.ComponentTemplate {
 
         var newComponentTemplate <- create ComponentTemplate(
@@ -253,7 +263,8 @@ pub contract FlovatarComponentTemplate {
             description: description,
             svg: svg,
             series: series,
-            maxMintableComponents: maxMintableComponents
+            maxMintableComponents: maxMintableComponents,
+            rarity: rarity
         )
 
         // Emits the Created event to notify about the new Template
@@ -268,8 +279,8 @@ pub contract FlovatarComponentTemplate {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarComponentTemplateCollection007
-        self.CollectionStoragePath=/storage/FlovatarComponentTemplateCollection007
+        self.CollectionPublicPath=/public/FlovatarComponentTemplateCollection011
+        self.CollectionStoragePath=/storage/FlovatarComponentTemplateCollection011
 
         // Initialize the total supply
         self.totalSupply = 0
