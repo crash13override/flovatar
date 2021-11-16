@@ -72,7 +72,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
 
-    // This Metada struct contains all the most important informations about the Flovatar
+    // This Metadata struct contains all the most important informations about the Flovatar
     pub struct Metadata {
         pub let mint: UInt64
         pub let series: UInt32
@@ -116,7 +116,7 @@ pub contract Flovatar: NonFungibleToken {
         access(contract) let metadata: Metadata
         access(contract) let royalties: Royalties
 
-        //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
+        // these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         access(contract) var name: String
         pub let description: String
         pub let schema: String?
@@ -1003,4 +1003,3 @@ pub contract Flovatar: NonFungibleToken {
         emit ContractInitialized()
 	}
 }
-
