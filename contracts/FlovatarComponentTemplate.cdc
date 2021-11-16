@@ -279,8 +279,8 @@ pub contract FlovatarComponentTemplate {
 
 	init() {
         //TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath=/public/FlovatarComponentTemplateCollection010
-        self.CollectionStoragePath=/storage/FlovatarComponentTemplateCollection010
+        self.CollectionPublicPath=/public/FlovatarComponentTemplateCollection011
+        self.CollectionStoragePath=/storage/FlovatarComponentTemplateCollection011
 
         // Initialize the total supply
         self.totalSupply = 0
