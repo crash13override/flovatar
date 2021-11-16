@@ -590,6 +590,9 @@ pub contract Flovatar: NonFungibleToken {
     // A list of components resources needs to be passed to executed.
     // It will check first for uniqueness of the combination + name and will then 
     // generate the Flovatar and burn all the passed components.
+    // The Spark NFT will entitle to use any common basic component (body, hair, etc.)
+    // In order to use special rare components a boost of the same rarity will be needed
+    // for each component used 
     pub fun createFlovatar(
         spark: @FlovatarComponent.NFT,
         body: UInt64,
