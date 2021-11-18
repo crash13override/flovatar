@@ -693,12 +693,14 @@ pub contract Flovatar: NonFungibleToken {
             if(!epicBoost[i].isBooster(rarity: "epic")) {
                 panic("The epic boost belongs to the wrong category")
             }
+            i = i + 1
         }
         i = 0
         while( i < legendaryBoost.length) {
             if(!legendaryBoost[i].isBooster(rarity: "legendary")) {
                 panic("The legendary boost belongs to the wrong category")
             }
+            i = i + 1
         }
 
         //Keep count of the necessary rarity boost for the selected templates
