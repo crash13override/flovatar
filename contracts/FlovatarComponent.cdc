@@ -35,6 +35,8 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun getCategory(): String
         pub fun getSeries(): UInt32
         pub fun getRarity(): String
+        pub fun isBooster(rarity: String): Bool
+        pub fun checkCategorySeries(category: String, series: UInt32): Bool
 
         //these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
         pub let name: String
@@ -98,6 +100,18 @@ pub contract FlovatarComponent: NonFungibleToken {
         // Gets the rarity from the parent Template
         pub fun getRarity(): String {
             return self.getTemplate().rarity
+        }
+
+        // Check the boost and rarity from the parent Template
+        pub fun isBooster(rarity: String): Bool {
+            let template = self.getTemplate()
+            return template.category == "boost" && template.rarity == rarity
+        }
+
+        //Check the category and series from the parent Template
+        pub fun checkCategorySeries(category: String, series: UInt32): Bool {
+            let template = self.getTemplate()
+            return template.category == category && template.series == series
         }
 
         // Emit a Destroyed event when it will be burned to create a Flovatar

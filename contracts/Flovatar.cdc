@@ -633,13 +633,14 @@ pub contract Flovatar: NonFungibleToken {
         if(mouthTemplate.category != "mouth") { panic("The mouth component belongs to the wrong category") }
         if(clothingTemplate.category != "clothing") { panic("The clothing component belongs to the wrong category") }
 
+        let sparkSeries = spark.getSeries();
         // Make sure that all the components belong to the same series like the spark
-        if(bodyTemplate.series != spark.getSeries()) { panic("The body doesn't belong to the correct series") }
-        if(hairTemplate.series != spark.getSeries()) { panic("The hair doesn't belong to the correct series") }
-        if(eyesTemplate.series != spark.getSeries()) { panic("The eyes doesn't belong to the correct series") }
-        if(noseTemplate.series != spark.getSeries()) { panic("The nose doesn't belong to the correct series") }
-        if(mouthTemplate.series != spark.getSeries()) { panic("The mouth doesn't belong to the correct series") }
-        if(clothingTemplate.series != spark.getSeries()) { panic("The clothing doesn't belong to the correct series") }
+        if(bodyTemplate.series != sparkSeries) { panic("The body doesn't belong to the correct series") }
+        if(hairTemplate.series != sparkSeries) { panic("The hair doesn't belong to the correct series") }
+        if(eyesTemplate.series != sparkSeries) { panic("The eyes doesn't belong to the correct series") }
+        if(noseTemplate.series != sparkSeries) { panic("The nose doesn't belong to the correct series") }
+        if(mouthTemplate.series != sparkSeries) { panic("The mouth doesn't belong to the correct series") }
+        if(clothingTemplate.series != sparkSeries) { panic("The clothing doesn't belong to the correct series") }
 
         // Make more checks for the additional components to check for the right category and uniqueness
         var facialHairTemplate: FlovatarComponentTemplate.ComponentTemplateData? = nil
@@ -648,45 +649,33 @@ pub contract Flovatar: NonFungibleToken {
             if(facialHairTemplate?.category != "facialHair"){
                 panic("The facial hair component belongs to the wrong category")
             }
-            if(facialHairTemplate?.series != spark.getSeries()){
+            if(facialHairTemplate?.series != sparkSeries){
                 panic("The facial hair doesn't belong to the correct series")
             }
         }
 
 
         if(accessory != nil){
-            if(accessory?.getCategory() != "accessory"){
-                panic("The accessory component belongs to the wrong category")
-            }
-            if(accessory?.getSeries() != spark.getSeries()){
-                panic("The accessory doesn't belong to the correct series")
+            if(!(accessory?.checkCategorySeries(category: "accessory", series: sparkSeries)!)){
+                panic("The accessory component belongs to the wrong category or the wrong series")
             }
         }
 
         if(hat != nil){
-            if(hat?.getCategory() != "hat"){
-                panic("The hat component belongs to the wrong category")
-            }
-            if(hat?.getSeries() != spark.getSeries()){
-                panic("The hat doesn't belong to the correct series")
+            if(!(hat?.checkCategorySeries(category: "hat", series: sparkSeries)!)){
+                panic("The hat component belongs to the wrong category or the wrong series")
             }
         }
 
         if(eyeglasses != nil){
-            if(eyeglasses?.getCategory() != "eyeglasses"){
-                panic("The eyeglasses component belongs to the wrong category")
-            }
-            if(eyeglasses?.getSeries() != spark.getSeries()){
-                panic("The eyeglasses doesn't belong to the correct series")
+            if(!(eyeglasses?.checkCategorySeries(category: "eyeglasses", series: sparkSeries)!)){
+                panic("The eyeglasses component belongs to the wrong category or the wrong series")
             }
         }
 
         if(background != nil){
-            if(background?.getCategory() != "background"){
-                panic("The background component belongs to the wrong category")
-            }
-            if(background?.getSeries() != spark.getSeries()){
-                panic("The background doesn't belong to the correct series")
+            if(!(background?.checkCategorySeries(category: "background", series: sparkSeries)!)){
+                panic("The background component belongs to the wrong category or the wrong series")
             }
         }
 
@@ -694,20 +683,20 @@ pub contract Flovatar: NonFungibleToken {
         //Make sure that all the Rarity Boosts are from the correct category
         var i: Int = 0
         while( i < rareBoost.length) {
-            if(rareBoost[i].getCategory() != "boost" && rareBoost[i].getRarity() != "rare") {
+            if(!rareBoost[i].isBooster(rarity: "rare")) {
                 panic("The rare boost belongs to the wrong category")
             }
             i = i + 1
         }
         i = 0
         while( i < epicBoost.length) {
-            if(epicBoost[i].getCategory() != "boost" && epicBoost[i].getRarity() != "epic") {
+            if(!epicBoost[i].isBooster(rarity: "epic")) {
                 panic("The epic boost belongs to the wrong category")
             }
         }
         i = 0
         while( i < legendaryBoost.length) {
-            if(legendaryBoost[i].getCategory() != "boost" && legendaryBoost[i].getRarity() != "legendary") {
+            if(!legendaryBoost[i].isBooster(rarity: "legendary")) {
                 panic("The legendary boost belongs to the wrong category")
             }
         }
