@@ -219,12 +219,13 @@ pub contract Flovatar: NonFungibleToken {
                 panic("This name has already been taken")
             }
 
-            self.name = name
+            // DISABLING THIS FUNCTIONALITY TO BE INTRODUCED AT A LATER DATE
+            //self.name = name
 
 
             // Adds the name to the array to remember it
-            Flovatar.addMintedName(name: name)
-            emit NameSet(id: self.id, name: name)
+            //Flovatar.addMintedName(name: name)
+            //emit NameSet(id: self.id, name: name)
 
             return self.name
         }
