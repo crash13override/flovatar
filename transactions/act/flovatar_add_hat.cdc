@@ -31,6 +31,11 @@ transaction(
 
         let flovatar: &{Flovatar.Private} = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
-        self.flovatarComponentCollection.deposit(token: <-flovatar.setHat(component: <-self.hatNFT))
+        let hat <-flovatar.setHat(component: <-self.hatNFT)
+        if(hat != nil){
+            self.flovatarComponentCollection.deposit(token: <-hat!)
+        } else {
+            destroy hat
+        }
     }
 }
