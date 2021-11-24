@@ -231,7 +231,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         pub fun getAccessory(): UInt64? {
-            return self.accessory?.id
+            return self.accessory?.templateId
         }
         
         // This will allow to change the Accessory of the Flovatar any time. 
@@ -251,7 +251,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         pub fun getHat(): UInt64? {
-            return self.hat?.id
+            return self.hat?.templateId
         }
 
         // This will allow to change the Hat of the Flovatar any time. 
@@ -271,7 +271,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         pub fun getEyeglasses(): UInt64? {
-            return self.eyeglasses?.id
+            return self.eyeglasses?.templateId
         }
         
         // This will allow to change the Eyeglasses of the Flovatar any time. 
@@ -291,7 +291,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         pub fun getBackground(): UInt64? {
-            return self.background?.id
+            return self.background?.templateId
         }
         
         // This will allow to change the Background of the Flovatar any time. 
@@ -972,10 +972,9 @@ pub contract Flovatar: NonFungibleToken {
 
 
 	init() {
-        // TODO: remove suffix before deploying to mainnet!!!
-        self.CollectionPublicPath = /public/FlovatarCollection011
-        self.CollectionStoragePath = /storage/FlovatarCollection011
-        self.AdminStoragePath = /storage/FlovatarAdmin011
+        self.CollectionPublicPath = /public/FlovatarCollection
+        self.CollectionStoragePath = /storage/FlovatarCollection
+        self.AdminStoragePath = /storage/FlovatarAdmin
 
         // Initialize the total supply
         self.totalSupply = UInt64(0)
@@ -984,7 +983,7 @@ pub contract Flovatar: NonFungibleToken {
 
         // Set the default Royalty and Marketplace cuts
         self.royaltyCut = 0.01
-        self.marketplaceCut = 0.03
+        self.marketplaceCut = 0.05
 
         self.account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
         self.account.link<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
