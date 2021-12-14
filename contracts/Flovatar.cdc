@@ -731,6 +731,12 @@ pub contract Flovatar: NonFungibleToken {
         if(clothingTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
 
 
+        if(facialHairTemplate != nil){
+            if(facialHairTemplate?.rarity == "rare"){ rareCount = rareCount + 1}
+            if(facialHairTemplate?.rarity == "epic"){ epicCount = epicCount + 1}
+            if(facialHairTemplate?.rarity == "legendary"){ legendaryCount = legendaryCount + 1}
+        }
+
         if(Int(rareCount) != rareBoost.length){
             panic("The rare boosts are not equal the ones needed")
         }
