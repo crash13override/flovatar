@@ -141,6 +141,10 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
+        pub fun removeAccessory(): @FlovatarComponent.NFT?
+        pub fun removeHat(): @FlovatarComponent.NFT?
+        pub fun removeEyeglasses(): @FlovatarComponent.NFT?
+        pub fun removeBackground(): @FlovatarComponent.NFT?
     }
 
     //The NFT resource that implements both Private and Public interfaces
@@ -236,8 +240,6 @@ pub contract Flovatar: NonFungibleToken {
         
         // This will allow to change the Accessory of the Flovatar any time. 
         // It checks for the right category and series before executing. 
-        // The Accessory component will be burned in the process and if a previous 
-        // one was set, it will be lost.
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "accessory" : "The component needs to be an accessory"
@@ -250,14 +252,19 @@ pub contract Flovatar: NonFungibleToken {
             return <- compNFT
         }
 
+        // This will allow to remove the Accessory of the Flovatar any time. 
+        pub fun removeAccessory(): @FlovatarComponent.NFT? {
+            emit Updated(id: self.id)
+            let compNFT <- self.accessory <- nil
+            return <-compNFT
+        }
+
         pub fun getHat(): UInt64? {
             return self.hat?.templateId
         }
 
         // This will allow to change the Hat of the Flovatar any time. 
         // It checks for the right category and series before executing. 
-        // The Hat component will be burned in the process and if a previous one 
-        // was set, it will be lost.
         pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "hat" : "The component needs to be a hat"
@@ -270,14 +277,19 @@ pub contract Flovatar: NonFungibleToken {
             return <-compNFT
         }
 
+        // This will allow to remove the Hat of the Flovatar any time. 
+        pub fun removeHat(): @FlovatarComponent.NFT? {
+            emit Updated(id: self.id)
+            let compNFT <- self.hat <- nil
+            return <-compNFT
+        }
+
         pub fun getEyeglasses(): UInt64? {
             return self.eyeglasses?.templateId
         }
         
         // This will allow to change the Eyeglasses of the Flovatar any time. 
         // It checks for the right category and series before executing. 
-        // The Eyeglasses component will be burned in the process and if a previous one 
-        // was set, it will be lost.
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "eyeglasses" : "The component needs to be a pair of eyeglasses"
@@ -290,14 +302,19 @@ pub contract Flovatar: NonFungibleToken {
             return <-compNFT
         }
 
+        // This will allow to remove the Eyeglasses of the Flovatar any time. 
+        pub fun removeEyeglasses(): @FlovatarComponent.NFT? {
+            emit Updated(id: self.id)
+            let compNFT <- self.eyeglasses <- nil
+            return <-compNFT
+        }
+
         pub fun getBackground(): UInt64? {
             return self.background?.templateId
         }
         
         // This will allow to change the Background of the Flovatar any time. 
         // It checks for the right category and series before executing. 
-        // The Eyeglasses component will be burned in the process and if a previous one 
-        // was set, it will be lost.
         pub fun setBackground(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
             pre {
                 component.getCategory() == "background" : "The component needs to be a background"
@@ -307,6 +324,13 @@ pub contract Flovatar: NonFungibleToken {
             emit Updated(id: self.id)
 
             let compNFT <- self.background <- component
+            return <-compNFT
+        }
+
+        // This will allow to remove the Background of the Flovatar any time. 
+        pub fun removeBackground(): @FlovatarComponent.NFT? {
+            emit Updated(id: self.id)
+            let compNFT <- self.background <- nil
             return <-compNFT
         }
 
@@ -687,6 +711,9 @@ pub contract Flovatar: NonFungibleToken {
             if(!rareBoost[i].isBooster(rarity: "rare")) {
                 panic("The rare boost belongs to the wrong category")
             }
+            if(rareBoost[i].getSeries() != sparkSeries) { 
+                panic("The rare boost doesn't belong to the correct series") 
+            }
             i = i + 1
         }
         i = 0
@@ -694,12 +721,18 @@ pub contract Flovatar: NonFungibleToken {
             if(!epicBoost[i].isBooster(rarity: "epic")) {
                 panic("The epic boost belongs to the wrong category")
             }
+            if(epicBoost[i].getSeries() != sparkSeries) { 
+                panic("The epic boost doesn't belong to the correct series") 
+            }
             i = i + 1
         }
         i = 0
         while( i < legendaryBoost.length) {
             if(!legendaryBoost[i].isBooster(rarity: "legendary")) {
                 panic("The legendary boost belongs to the wrong category")
+            }
+            if(legendaryBoost[i].getSeries() != sparkSeries) { 
+                panic("The legendary boost doesn't belong to the correct series") 
             }
             i = i + 1
         }
