@@ -6,11 +6,13 @@
     }
   },
   "contracts": {
+    "FlovatarDustToken": "./contracts/FlovatarDustToken.cdc",
     "FlovatarComponentTemplate": "./contracts/FlovatarComponentTemplate.cdc",
     "FlovatarComponent": "./contracts/FlovatarComponent.cdc",
     "FlovatarPack": "./contracts/FlovatarPack.cdc",
     "Flovatar": "./contracts/Flovatar.cdc",
     "FlovatarMarketplace": "./contracts/FlovatarMarketplace.cdc",
+    "FlovatarInbox": "./contracts/FlovatarInbox.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {

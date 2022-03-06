@@ -8,15 +8,34 @@ import FlovatarDustToken from 0x921ea449dffec68a
 
 /*
 
- This contract defines the Inbox for Flovatar owners where they can claim their airdrops and rewards
+ This contract defines the Inbox for Flovatars and Flovatar owners where they can withdraw their
+ airdrops and rewards and claim the daily DUST distributed for each Flovatar.
 
  This contract contains also the Admin resource that can be used to manage the different inboxes.
+
+ The following inboxes are provided:
+ - DUST reward vault for each Flovatar
+ - Flobit (FlovatarComponent) airdrop/reward collection for each Flovatar
+ - DUST reward vault for each Flovatar owner wallet
+ - Flobit (FlovatarComponent) airdrop/reward collection for each Flovatar owner wallet
+ - DUST for each Flovatar that can be claimed daily and that is coming from the Community Vault distribution
 
  */
 
 pub contract FlovatarInbox {
 
+    // The withdrawEnabled will allow to put all withdraws on hold while the distribution of new airdrops is happening
+    // So that everyone will be then be able to access his rewards at the same time
     access(account) var withdrawEnabled: Bool
+
+    //The communityVault holds the total of the DUST assigned to the community distribution over a period of 10 years
+    access(account) let communityVault: @FlovatarDustToken.Vault
+
+    //Stores the timestamp when Dust was first release and when the community distribution should start
+    pub let dustDistributionStart: UFix64
+
+    //Defines the amount of Dust to distribute to each Flovatar for each Rarity Score point
+    pub var dustPerDayPerScore: UFix64
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
@@ -24,6 +43,7 @@ pub contract FlovatarInbox {
     // Event to notify about the Inbox creation
     pub event ContractInitialized()
 
+    // Events to notify when Dust or Components are deposited or withdrawn
     pub event FlovatarDepositComponent(flovatarId: UInt64, componentId: UInt64)
     pub event FlovatarDepositDust(id: UInt64, amount: UFix64)
     pub event FlovatarWithdrawComponent(flovatarId: UInt64, componentId: UInt64, to: Address)
@@ -32,8 +52,27 @@ pub contract FlovatarInbox {
     pub event WalletDepositDust(address: Address, amount: UFix64)
     pub event WalletWithdrawComponent(address: Address, componentId: UInt64)
     pub event WalletWithdrawDust(address: Address, amount: UFix64)
+    pub event FlovatarClaimedCommunityDust(id: UInt64, amount: UFix64, to: Address)
 
-    // The Container resounce holds both the FlovatarComponent and the Dust for each Flovatar minted
+    // This struct contains all the information about the Dust about to the claimed for each Flovatar by the user
+    pub struct ClaimableDust{
+        pub let amount: UFix64
+        pub let days: UInt64
+        pub let rarityScore: UFix64
+        pub let flovatarId: UInt64
+        pub let wallet: Address
+
+
+        init(amount: UFix64, days: UInt64, rarityScore: UFix64, flovatarId: UInt64, wallet: Address){
+            self.amount = amount
+            self.days = days
+            self.rarityScore = rarityScore
+            self.flovatarId = flovatarId
+            self.wallet = wallet
+        }
+    }
+
+    // The Container resounce holds both the FlovatarComponent Dictionary and the DUST Vault
     pub resource Container {
         access(contract) let dustVault: @FlovatarDustToken.Vault
         access(contract) let flovatarComponents: @{UInt64: FlovatarComponent.NFT}
@@ -48,24 +87,33 @@ pub contract FlovatarInbox {
 
     // The main Collection that manages the Containers
     pub resource Collection {
-        // Dictionary of Component Templates
+
+        // Dictionary of Containers for the Flovatars and the Flovatar Owners Wallets
         pub var flovatarContainers: @{UInt64: FlovatarInbox.Container}
         pub var walletContainers: @{Address: FlovatarInbox.Container}
+
+        // Dictionary to remember the last time that DUST was claimed by each Flovatar
+        // so that it can calculate the right amount to be claimable
+        pub var lastClaimedDust: {UInt64: UFix64}
 
         init () {
             self.flovatarContainers <- {}
             self.walletContainers <- {}
+            self.lastClaimedDust <- {}
         }
 
-        pub fun borrowFlovatarContainer(id: UInt64) &{FlovatarInbox.Container} {
-            if self.containers[id] == nil {
+        // Borrows the Container Collection for the Flovatar and if not present it initializes it
+        pub fun borrowFlovatarContainer(id: UInt64): &{FlovatarInbox.Container} {
+            if self.flovatarContainers[id] == nil {
                 let oldContainer <- self.flovatarContainers[id] <- create Container()
                 destroy oldContainer
             }
             return &self.flovatarContainers[id] as auth &FlovatarInbox.Container
         }
-        pub fun borrowWalletContainer(address: Address) &{FlovatarInbox.Container} {
-            if self.containers[address] == nil {
+
+        // Borrows the Container Collection for the Flovatar Owner Wallet and if not present it initializes it
+        pub fun borrowWalletContainer(address: Address): &{FlovatarInbox.Container} {
+            if self.walletContainers[address] == nil {
                 let oldContainer <- self.walletContainers[address] <- create Container()
                 destroy oldContainer
             }
@@ -74,31 +122,35 @@ pub contract FlovatarInbox {
 
         pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault) {
             let ref = self.borrowFlovatarContainer(id: id)
+            emit FlovatarDepositDust(id: id, amount: vault.balance)
             ref.dustVault.deposit(vault: <- vault)
         }
 
         pub fun depositDustToWallet(address: Address, vault: @FlovatarDustToken.Vault) {
             let ref = self.borrowWalletContainer(address: address)
+            emit WalletDepositDust(address: address, amount: vault.balance)
             ref.dustVault.deposit(vault: <- vault)
         }
 
         pub fun depositComponentToFlovatar(id: UInt64, component: @FlovatarComponent.NFT) {
             let ref = self.borrowFlovatarContainer(id: id)
+            emit FlovatarDepositComponent(flovatarId: id, componentId: component.id)
             let oldComponent <- ref.flovatarComponents[id] <- component
             destroy oldComponent
         }
         pub fun depositComponentToWallet(address: Address, component: @FlovatarComponent.NFT) {
             let ref = self.borrowWalletContainer(address: address)
+            emit WalletDepositComponent(address: address, componentId: component.id)
             let oldComponent <- ref.flovatarComponents[address] <- component
             destroy oldComponent
         }
 
-        pub fun getFlovatarDustBalance(id: UInt64) UFix64 {
+        pub fun getFlovatarDustBalance(id: UInt64): UFix64 {
             let ref = self.borrowFlovatarContainer(id: id)
             return ref.dustVault.balance
         }
 
-        pub fun getWalletDustBalance(address: Address) UFix64 {
+        pub fun getWalletDustBalance(address: Address): UFix64 {
             let ref = self.borrowWalletContainer(address: address)
             return ref.dustVault.balance
         }
@@ -112,11 +164,15 @@ pub contract FlovatarInbox {
             return ref.dustVault.flovatarComponents.keys
         }
 
-        pub fun getFlovatarIDs(): [UInt64] {
-            return self.flovatarContainers.keys
+        pub fun getLastClaimedDust(id: UInt64): UFix64{
+            if self.lastClaimedDust[id] == nil {
+                self.lastClaimedDust[id] = FlovatarInbox.dustDistributionStart
+            }
+            return self.lastClaimedDust[id]
         }
-        pub fun getWalletAddresses(): [Address] {
-            return self.walletContainers.keys
+
+        pub fun setLastClaimedDust(id: UInt64, value: UFix64){
+            self.lastClaimedDust[id] = value
         }
 
         pub fun withdrawFlovatarComponent(id: UInt64, withdrawID: UInt64): @NonFungibleToken.NFT {
@@ -130,11 +186,23 @@ pub contract FlovatarInbox {
             return <- token
         }
 
+        pub fun withdrawFlovatarDust(id: UInt64): @FlovatarDustToken.Vault {
+            let ref = self.borrowFlovatarContainer(id: id)
+            return <- ref.dustVault.withdraw(amount: ref.dustVault.balance)
+        }
+        pub fun withdrawWalletDust(address: Address): @FlovatarDustToken.Vault {
+            let ref = self.borrowWalletContainer(address: address)
+            return <- ref.dustVault.withdraw(amount: ref.dustVault.balance)
+        }
+
         destroy() {
             destroy self.flovatarContainers
             destroy self.walletContainers
+            destroy self.lastClaimedDust
         }
     }
+
+
 
     // This function can only be called by the account owner to create an empty Collection
     access(account) fun createEmptyCollection(): @FlovatarInbox.Collection {
@@ -143,33 +211,40 @@ pub contract FlovatarInbox {
 
 
 
-
-    pub fun getFlovatarDustBalance(id: UInt64) : UFix64 {
+    // Returns the amount of DUST received by the Flovatar for additional rewards or activities (not comint from the Community pool)
+    pub fun getFlovatarDustBalance(id: UInt64): UFix64 {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
-            return inboxCollection.getFlovatarDustBalance(id: id);
+            return inboxCollection.getFlovatarDustBalance(id: id)
         }
         return 0.0
     }
-    pub fun getWalletDustBalance(address: Address) : UFix64 {
+    // Returns the amount of DUST received by the Flovatar Owner for additional rewards or activities (not comint from the Community pool)
+    pub fun getWalletDustBalance(address: Address): UFix64 {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
-            return inboxCollection.getWalletDustBalance(address: address);
+            return inboxCollection.getWalletDustBalance(address: address)
         }
         return 0.0
     }
+    // Returns the IDs of the Components (Flobits) received by the Flovatar
     pub fun getFlovatarComponentIDs(id: UInt64): [UInt64] {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
-            return inboxCollection.getFlovatarComponentIDs(id: id);
+            return inboxCollection.getFlovatarComponentIDs(id: id)
         }
         return []
     }
+    // Returns the IDs of the Components (Flobits) received by the Flovatar Owner
     pub fun getWalletComponentIDs(address: Address): [UInt64] {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
-            return inboxCollection.getWalletComponentIDs(address: address);
+            return inboxCollection.getWalletComponentIDs(address: address)
         }
         return []
     }
 
+    // This function withdraws all the Components assigned to a Flovatar and sends them to the Owner's address
     pub fun withdrawFlovatarComponent(id: UInt64, address: Address) {
+        if(!self.withdrawEnabled){
+            return
+        }
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
             if let flovatar = Flovatar.getFlovatar(address: address, id: id){
                 let receiverAccount = getAccount(address)
@@ -194,7 +269,11 @@ pub contract FlovatarInbox {
         }
     }
 
+    // This function withdraws all the Components assigned to a Flovatar Owner and sends them to his address
     pub fun withdrawWalletComponent(address: Address) {
+        if(!self.withdrawEnabled){
+            return
+        }
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
             let receiverAccount = getAccount(address)
             let flovatarComponentReceiverCollection = receiverAccount.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
@@ -217,11 +296,134 @@ pub contract FlovatarInbox {
         }
     }
 
+    // This function withdraws all the DUST assigned to a Flovatar (not from general community pool) and sends it to the Owner's vault
+    pub fun withdrawFlovatarDust(id: UInt64, address: Address) {
+        if(!self.withdrawEnabled){
+            return
+        }
+        if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
+            if let flovatar = Flovatar.getFlovatar(address: address, id: id){
+                let receiverAccount = getAccount(address)
+                let receiverRef = receiverAccount.getCapability(FlovatarDustToken.VaultReceiverPath)!.borrow<&{FungibleToken.Receiver}>()
+                          ?? panic("Could not borrow receiver reference to the recipient's Vault")
 
+                let vault <- inboxCollection.withdrawFlovatarDust(id: id)
+
+                emit FlovatarWithdrawDust(id: id, amount: vault.balance, to: address)
+
+                receiverRef.deposit(from: <- vault)
+
+            }
+        }
+    }
+
+    // This function withdraws all the DUST assigned to a Flovatar Owner (not from general community pool) and sends it to his vault
+    pub fun withdrawWalletDust(address: Address) {
+        if(!self.withdrawEnabled){
+            return
+        }
+        if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
+            let receiverAccount = getAccount(address)
+            let receiverRef = receiverAccount.getCapability(FlovatarDustToken.VaultReceiverPath)!.borrow<&{FungibleToken.Receiver}>()
+                      ?? panic("Could not borrow receiver reference to the recipient's Vault")
+
+            let vault <- inboxCollection.withdrawWalletDust(address: address)
+
+            emit WalletWithdrawDust(address: address, amount: vault.balance)
+
+            receiverRef.deposit(from: <- vault)
+        }
+    }
+
+
+    // Returns the amount of DUST available and yet to be distributed to the community
+    pub fun getCommunityDustBalance(): UFix64 {
+        return self.communityVault.balance
+    }
+
+    // Calculates how much DUST a Flovatar should be able to claim based on
+    // his rarity score and on the amount of days passed since the last completed claim
+    pub fun getClaimableFlovatarCommunityDust(id: UInt64, address: Address): ClaimableDust? {
+        if let flovatarScore: UFix64 = Flovatar.getFlovatarRarityScore(address: Address, flovatarId: UInt64){
+            if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
+                let lastClaimed: UFix64 = inboxCollection.getLastClaimedDust(id: id)
+                let currentTime: UFix64 = getCurrentBlock().timestamp
+                let timeDiff: UFix64 = currentTime - lastClaimed
+                let dayLength: UFix64 = 86400.0
+                if(timeDiff > dayLength){
+                    let daysDiff: UInt64 = UInt64(timeDiff / dayLength)
+                    return ClaimableDust(
+                        amount: UFix64(daysDiff) * (3.0 + flovatarScore) * FlovatarInbox.dustPerDayPerScore,
+                        days: daysDiff,
+                        rarityScore: flovatarScore,
+                        flovatarId: id,
+                        wallet: address
+                    )
+                }
+            }
+        }
+        return nil
+    }
+
+    // Internal function to update the timestamp of the last time DUST were claimed for a specific Flovatar
+    access(self) fun setLastClaimedDust(id: UInt64, days: UInt64){
+        if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
+            let lastClaimed: UFix64 = inboxCollection.getLastClaimedDust(id: id)
+            inboxCollection.setLastClaimedDust(id: id, value: lastClaimed + UFix64(days * 86400))
+        }
+    }
+
+    // This function will allow any Flovatar to claim his share of the daily distribution of DUST from the community pool
+    pub fun claimFlovatarCommunityDust(id: UInt64, address: Address) {
+        if let claimableDust: ClaimableDust = self.getClaimableFlovatarCommunityDust(id: id, address: address){
+            if(claimableDust.amount > self.communityVault.balance){
+                panic("Not enough community DUST left to be claimed")
+            }
+            if(claimableDust.amount > UFix64(0.0)){
+
+                let receiverAccount = getAccount(address)
+                let receiverRef = receiverAccount.getCapability(FlovatarDustToken.VaultReceiverPath)!.borrow<&{FungibleToken.Receiver}>()
+                          ?? panic("Could not borrow receiver reference to the recipient's Vault")
+
+                let vault <- self.communityVault.withdraw(amount: claimableDust.amount)
+                self.setLastClaimedDust(id: id, days: claimableDust.days)
+
+
+                emit FlovatarClaimedCommunityDust(id: id, amount: vault.balance, to: address)
+
+                receiverRef.deposit(from: <- vault)
+            }
+        }
+    }
+
+    // Admin function to temporarly enable or disable the airdrop and reward withdraw so that
+    // we can distribute them to everyone at the same time
+    access(account) fun setWithdrawEnable(enabled: Bool) {
+        self.withdrawEnbled = enabled
+    }
+    // Admin function to deposit DUST into the community pool
+    access(account) fun depositCommunityDust(vault: @FlovatarDustToken.Vault) {
+        self.communityVault.deposit(vault: <- vault)
+    }
+
+    // Returns the multiplier used to calculate the amount of DUST to distribute for each Rarity Score point per day for each Flovatar
+    pub fun getDustPerDayPerScore(): UFix64 {
+        return self.dustPerDayPerScore
+    }
+
+    // Admin function to allow potential adjustments for the distribution speed of the community DUST
+    access(account) fun setDustPerDayPerScore(value: UFix64) {
+        self.dustPerDayPerScore = value
+    }
 
 
 	init() {
 	    self.withdrawEnabled = true
+	    self.communityVault <- FlovatarDustToken.createEmptyVault()
+
+	    self.dustDistributionStart = getCurrentBlock().timestamp
+
+	    self.dustPerDayPerScore = 0.91447
 
         self.CollectionPublicPath=/public/FlovatarInboxCollection
         self.CollectionStoragePath=/storage/FlovatarInboxCollection

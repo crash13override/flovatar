@@ -131,6 +131,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getMetadata(): Metadata
         pub fun getRoyalties(): Royalties
         pub fun getBio(): {String: String}
+        pub fun getRarityScore(): UFix64
     }
 
     //The private interface can update the Accessory, Hat, Eyeglasses and Background 
@@ -372,6 +373,32 @@ pub contract Flovatar: NonFungibleToken {
             return svg
 
         }
+
+        pub fun getRarityScore(): UFix64{
+            var rareCount: UInt8 = self.metadata.rareCount
+            var epicCount: UInt8 = self.metadata.epicCount
+            var legendaryCount: UInt8 = self.metadata.legendaryCount
+
+            var totalBoosters: UInt8 = legendaryCount + epicCount + rareCount;
+            let totalCommon = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
+
+            if(totalBoosters > UInt8(6)){
+                if(rareCount > UInt8(0)) {
+                    rareCount = rareCount - UInt8(1);
+                } else if(epicCount > UInt8(0)) {
+                    epicCount = epicCount - UInt8(1);
+                } else if(legendaryCount > UInt8(0)) {
+                    legendaryCount = legendaryCount - UInt8(1);
+                }
+            }
+
+            let score: UInt8 = (legendaryCount * UInt8(125)) + (epicCount * UInt8(25)) + (rareCount * UInt8(5)) + totalCommon;
+            let min: UInt8 = 6;
+            let max: UInt8 = 6 * 125;
+
+            let scoreFix: UFix64 = UFix64(score - min) * UFix64(100.0) / UFix64(max - min) ;
+            return scoreFix
+        }
     }
 
 
@@ -517,6 +544,18 @@ pub contract Flovatar: NonFungibleToken {
                     backgroundId: flovatar!.getBackground(),
                     bio: flovatar!.getBio()
                 )
+            }
+        }
+        return nil
+    }
+    // This function will look for a specific Flovatar on a user account and return the Score
+    pub fun getFlovatarRarityScore(address: Address, flovatarId: UInt64) : UFix64? {
+
+        let account = getAccount(address)
+
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
+                return flovatar.getRarityScore()
             }
         }
         return nil
