@@ -115,7 +115,7 @@ pub contract FlovatarInbox {
         init () {
             self.flovatarContainers <- {}
             self.walletContainers <- {}
-            self.lastClaimedDust <- {}
+            self.lastClaimedDust = {}
         }
 
         // Borrows the Container Collection for the Flovatar and if not present it initializes it
@@ -133,7 +133,7 @@ pub contract FlovatarInbox {
                 let oldContainer <- self.walletContainers[address] <- create Container()
                 destroy oldContainer
             }
-            return &self.walletContainers[id] as auth &FlovatarInbox.Container
+            return &self.walletContainers[address] as auth &FlovatarInbox.Container
         }
 
         pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault) {
@@ -185,7 +185,7 @@ pub contract FlovatarInbox {
             if self.lastClaimedDust[id] == nil {
                 self.lastClaimedDust[id] = FlovatarInbox.dustDistributionStart
             }
-            return self.lastClaimedDust[id]
+            return self.lastClaimedDust[id]!
         }
 
         pub fun setLastClaimedDust(id: UInt64, value: UFix64){
@@ -215,7 +215,6 @@ pub contract FlovatarInbox {
         destroy() {
             destroy self.flovatarContainers
             destroy self.walletContainers
-            destroy self.lastClaimedDust
         }
     }
 
@@ -420,7 +419,7 @@ pub contract FlovatarInbox {
     }
     // Admin function to deposit DUST into the community pool
     access(account) fun depositCommunityDust(vault: @FlovatarDustToken.Vault) {
-        self.communityVault.deposit(vault: <- vault)
+        self.communityVault.deposit(from: <- vault)
     }
 
     // Returns the multiplier used to calculate the amount of DUST to distribute for each Rarity Score point per day for each Flovatar
