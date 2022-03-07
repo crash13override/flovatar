@@ -81,7 +81,7 @@ pub contract FlovatarInbox {
             self.dustVault <- FlovatarDustToken.createEmptyVault()
             self.flovatarComponents <- {}
         }
-
+        
         destroy(){
             destroy self.dustVault
             destroy self.flovatarComponents
