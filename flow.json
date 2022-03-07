@@ -65,20 +65,24 @@
   "deployments": {
     "testnet": {
       "testnet-account": [
-        "FlovatarComponentTemplate",
-        "FlovatarComponent",
-        "FlovatarPack",
-        "Flovatar",
-        "FlovatarMarketplace"
-      ]
-    },
-    "emulator": {
-      "emulator-account": [
+        "FlovatarDustToken",
         "FlovatarComponentTemplate",
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
         "FlovatarMarketplace",
+        "FlovatarInbox"
+      ]
+    },
+    "emulator": {
+      "emulator-account": [
+        "FlovatarDustToken",
+        "FlovatarComponentTemplate",
+        "FlovatarComponent",
+        "FlovatarPack",
+        "Flovatar",
+        "FlovatarMarketplace",
+        "FlovatarInbox",
         "NonFungibleToken"
       ]
     }
