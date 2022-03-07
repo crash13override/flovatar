@@ -380,7 +380,7 @@ pub contract Flovatar: NonFungibleToken {
             var legendaryCount: UInt8 = self.metadata.legendaryCount
 
             var totalBoosters: UInt8 = legendaryCount + epicCount + rareCount;
-            let totalCommon = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
+            let totalCommon:UInt8 = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
 
             if(totalBoosters > UInt8(6)){
                 if(rareCount > UInt8(0)) {
