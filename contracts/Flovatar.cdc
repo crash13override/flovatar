@@ -1,9 +1,9 @@
-import FungibleToken from 0xf233dcee88fe0abe
-import NonFungibleToken from 0x1d7e57aa55817448
-import FlowToken from 0x1654653399040a61
-import FlovatarComponentTemplate from 0x921ea449dffec68a
-import FlovatarComponent from 0x921ea449dffec68a
-import FlovatarPack from 0x921ea449dffec68a
+import FungibleToken from "./FungibleToken.cdc"
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import FlovatarComponent from "./FlovatarComponent.cdc"
+import FlovatarPack from "./FlovatarPack.cdc"
 
 /*
 
@@ -380,7 +380,7 @@ pub contract Flovatar: NonFungibleToken {
             var legendaryCount: UInt8 = self.metadata.legendaryCount
 
             var totalBoosters: UInt8 = legendaryCount + epicCount + rareCount;
-            let totalCommon = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
+            let totalCommon: UInt8 = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
 
             if(totalBoosters > UInt8(6)){
                 if(rareCount > UInt8(0)) {

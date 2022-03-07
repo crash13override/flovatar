@@ -1,5 +1,5 @@
-import NonFungibleToken from 0x1d7e57aa55817448
-import FlovatarComponentTemplate from 0x921ea449dffec68a
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 
 /*
 
