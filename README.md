@@ -9,7 +9,7 @@ Check https://flovatar.com/! 💪
 # Contribute
 This repository contains code for contracts, scripts and transaction associated with [Flovatar](https://flovatar.com/) project. Take a look around and if you have ideas how to make it better - we welcome it with open heart! :hearts:
 
-# Intergation
+# Integration
 Our contracts are deployed to both networks:
 - `Mainnet` - **0x921ea449dffec68a** - [Flow View Source - Flovatar Account](https://flow-view-source.com/mainnet/account/0x921ea449dffec68a)
 - `Testnet` - **0x0cf264811b95d465** - [Flow View Source - Flovatar Account](https://flow-view-source.com/testnet/account/0x0cf264811b95d465)
