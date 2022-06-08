@@ -1,4 +1,6 @@
+import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 
@@ -47,7 +49,7 @@ pub contract FlovatarComponent: NonFungibleToken {
 
     
     // The NFT resource that implements the Public interface as well
-    pub resource NFT: NonFungibleToken.INFT, Public {
+    pub resource NFT: NonFungibleToken.INFT, Public, MetadataViews.Resolver {
         pub let id: UInt64
         pub let templateId: UInt64
         pub let mint: UInt64
@@ -121,6 +123,97 @@ pub contract FlovatarComponent: NonFungibleToken {
         destroy() {
             emit Destroyed(id: self.id, templateId: self.templateId)
         }
+
+        pub fun getViews() : [Type] {
+            var views : [Type]=[]
+            views.append(Type<MetadataViews.NFTCollectionData>())
+            views.append(Type<MetadataViews.NFTCollectionDisplay>())
+            views.append(Type<MetadataViews.Display>())
+            views.append(Type<MetadataViews.Royalties>())
+            views.append(Type<MetadataViews.Edition>())
+            views.append(Type<MetadataViews.ExternalURL>())
+            views.append(Type<MetadataViews.Serial>())
+            return views
+        }
+        
+        pub fun resolveView(_ type: Type): AnyStruct? {
+
+            if type == Type<MetadataViews.ExternalURL>() {
+                return MetadataViews.ExternalURL("https://flovatar.com/builder/")
+            }
+
+            if type == Type<MetadataViews.Royalties>() {
+                let royalties : [MetadataViews.Royalty] = []
+                royalties.append(MetadataViews.Royalty(recepient: FlovatarComponent.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver), cut: 0.05, description: "Flovatar Royalty"))
+                return MetadataViews.Royalties(cutInfos: royalties)
+            }
+
+            if type == Type<MetadataViews.Serial>() {
+                return MetadataViews.Serial(self.id)
+            }
+
+            if type ==  Type<MetadataViews.Editions>() {
+                let componentTemplate: FlovatarComponentTemplate.ComponentTemplateData = self.getTemplate()
+
+                let editionInfo = MetadataViews.Edition(name: "Flovatar Component", number: self.mint, max: componentTemplate.maxMintableComponents)
+                let editionList: [MetadataViews.Edition] = [editionInfo]
+                return MetadataViews.Editions(
+                    editionList
+                )
+            }
+
+            if type == Type<MetadataViews.NFTCollectionDisplay>() {
+                let mediaSquare = MetadataViews.Media(
+                    file: MetadataViews.HTTPFile(
+                        url: "https://images.flovatar.com/logo.svg"
+                    ),
+                    mediaType: "image/svg+xml"
+                )
+                let mediaBanner = MetadataViews.Media(
+                    file: MetadataViews.HTTPFile(
+                        url: "https://images.flovatar.com/logo-horizontal.svg"
+                    ),
+                    mediaType: "image/svg+xml"
+                )
+                return MetadataViews.NFTCollectionDisplay(
+                    name: "Flovatar",
+                    description: "Flovatar is pioneering a new way to unleash community creativity in Web3 by allowing users to be co-creators of their prized NFTs, instead of just being passive collectors.",
+                    externalURL: MetadataViews.ExternalURL("https://flovatar.com"),
+                    squareImage: mediaSquare,
+                    bannerImage: mediaBanner,
+                    socials: {
+                        "discord": MetadataViews.ExternalURL("https://discord.gg/flovatar"),
+                        "twitter": MetadataViews.ExternalURL("https://twitter.com/flovatar"),
+                        "instagram": MetadataViews.ExternalURL("https://instagram.com/flovatar_nft"),
+                        "tiktok": MetadataViews.ExternalURL("https://www.tiktok.com/@flovatar")
+                    }
+                )
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: FlovatarComponent.CollectionStoragePath,
+                publicPath: FlovatarComponent.CollectionPublicPath,
+                providerPath: /private/FlovatarComponentCollection,
+                publicCollection: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                publicLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                providerLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarComponent.createEmptyCollection()}
+                )
+            }
+
+            if type == Type<MetadataViews.Display>() {
+                return MetadataViews.Display(
+                    name: self.name,
+                    description: self.description,
+                    thumbnail: MetadataViews.HTTPFile(
+                        url: "https://flovatar.com/api/image/template/".concat(self.templateId.toString())
+                    )
+                )
+            }
+
+            return nil
+        }
     }
 
     // Standard NFT collectionPublic interface that can also borrowComponent as the correct type
@@ -140,7 +233,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     }
 
     // Main Collection to manage all the Components NFT
-    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
+    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
@@ -197,6 +290,15 @@ pub contract FlovatarComponent: NonFungibleToken {
 
         destroy() {
             destroy self.ownedNFTs
+        }
+
+        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+            pre {
+                self.ownedNFTs[id] != nil : "NFT does not exist"
+            }
+            let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+            let componentNFT = nft as! &FlovatarComponent.NFT
+            return componentNFT as &AnyResource{MetadataViews.Resolver}
         }
     }
 
@@ -295,16 +397,16 @@ pub contract FlovatarComponent: NonFungibleToken {
 
     // This function will batch create multiple Components and pass them back as a Collection
     access(account) fun batchCreateComponents(templateId: UInt64, quantity: UInt64): @Collection {
-            let newCollection <- create Collection()
+        let newCollection <- create Collection()
 
-            var i: UInt64 = 0
-            while i < quantity {
-                newCollection.deposit(token: <-self.createComponent(templateId: templateId))
-                i = i + UInt64(1)
-            }
-
-            return <-newCollection
+        var i: UInt64 = 0
+        while i < quantity {
+            newCollection.deposit(token: <-self.createComponent(templateId: templateId))
+            i = i + UInt64(1)
         }
+
+        return <-newCollection
+    }
 
 	init() {
         self.CollectionPublicPath = /public/FlovatarComponentCollection
