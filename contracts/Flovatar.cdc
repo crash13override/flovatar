@@ -415,13 +415,15 @@ pub contract Flovatar: NonFungibleToken {
         pub fun resolveView(_ type: Type): AnyStruct? {
 
             if type == Type<MetadataViews.ExternalURL>() {
-                return MetadataViews.ExternalURL("https://images.flovatar.com/flovatar/png/".concat(self.id.toString()).concat(".png"))
+                return MetadataViews.ExternalURL("https://flovatar.com/flovatars/".concat(self.id.toString()))
             }
 
             if type == Type<MetadataViews.Royalties>() {
                 let royalties : [MetadataViews.Royalty] = []
+                var count: Int = 0
                 for royalty in self.royalties.royalty {
-                    royalties.append(MetadataViews.Royalty(recepient: royalty.wallet, cut: royalty.cut, description: "Flovatar Royalty"))
+                    royalties.append(MetadataViews.Royalty(recepient: royalty.wallet, cut: royalty.cut, description: "Flovatar Royalty ".concat(count.toString())))
+                    count = count + Int(1)
                 }
                 return MetadataViews.Royalties(cutInfos: royalties)
             }
