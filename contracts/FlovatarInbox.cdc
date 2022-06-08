@@ -86,6 +86,19 @@ pub contract FlovatarInbox {
             destroy self.dustVault
             destroy self.flovatarComponents
         }
+
+        access(contract) fun setComponent(id: UInt64, component: @FlovatarComponent.NFT) {
+            pre {
+                self.flovatarComponents[id] != nil : "NFT does not exist"
+            }
+            let oldComponent <- self.flovatarComponents[id] <- component
+            destroy oldComponent
+        }
+
+        access(contract) fun removeComponent(id: UInt64): @FlovatarComponent.NFT {
+            let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
+            return <- token
+        }
     }
 
 
@@ -124,7 +137,7 @@ pub contract FlovatarInbox {
                 let oldContainer <- self.flovatarContainers[id] <- create Container()
                 destroy oldContainer
             }
-            return &self.flovatarContainers[id] as auth &FlovatarInbox.Container
+            return (&self.flovatarContainers[id] as auth &FlovatarInbox.Container?)!
         }
 
         // Borrows the Container Collection for the Flovatar Owner Wallet and if not present it initializes it
@@ -133,7 +146,7 @@ pub contract FlovatarInbox {
                 let oldContainer <- self.walletContainers[address] <- create Container()
                 destroy oldContainer
             }
-            return &self.walletContainers[address] as auth &FlovatarInbox.Container
+            return (&self.walletContainers[address] as auth &FlovatarInbox.Container?)!
         }
 
         pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault) {
@@ -151,15 +164,13 @@ pub contract FlovatarInbox {
         pub fun depositComponentToFlovatar(id: UInt64, component: @FlovatarComponent.NFT) {
             let ref = self.borrowFlovatarContainer(id: id)
             emit FlovatarDepositComponent(flovatarId: id, componentId: component.id)
-            let oldComponent <- ref.flovatarComponents[component.id] <- component
-            destroy oldComponent
+            ref.setComponent(id: id, component: <- component)
         }
 
         pub fun depositComponentToWallet(address: Address, component: @FlovatarComponent.NFT) {
             let ref = self.borrowWalletContainer(address: address)
             emit WalletDepositComponent(address: address, componentId: component.id)
-            let oldComponent <- ref.flovatarComponents[component.id] <- component
-            destroy oldComponent
+            ref.setComponent(id: component.id, component: <- component)
         }
 
         pub fun getFlovatarDustBalance(id: UInt64): UFix64 {
@@ -194,13 +205,11 @@ pub contract FlovatarInbox {
 
         pub fun withdrawFlovatarComponent(id: UInt64, withdrawID: UInt64): @NonFungibleToken.NFT {
             let ref = self.borrowFlovatarContainer(id: id)
-            let token <- ref.flovatarComponents.remove(key: withdrawID) ?? panic("missing NFT")
-            return <- token
+            return <- ref.removeComponent(id: withdrawID)
         }
         pub fun withdrawWalletComponent(address: Address, withdrawID: UInt64): @NonFungibleToken.NFT {
             let ref = self.borrowWalletContainer(address: address)
-            let token <- ref.flovatarComponents.remove(key: withdrawID) ?? panic("missing NFT")
-            return <- token
+            return <- ref.removeComponent(id: withdrawID)
         }
 
         pub fun withdrawFlovatarDust(id: UInt64): @FungibleToken.Vault {

@@ -122,7 +122,7 @@ pub contract FlovatarComponentTemplate {
         // so that the caller can read data and call methods from it.
         pub fun borrowComponentTemplate(id: UInt64): &{FlovatarComponentTemplate.Public}? {
             if self.ownedComponentTemplates[id] != nil {
-                let ref = &self.ownedComponentTemplates[id] as auth &FlovatarComponentTemplate.ComponentTemplate
+                let ref = (&self.ownedComponentTemplates[id] as auth &FlovatarComponentTemplate.ComponentTemplate?)!
                 return ref as! &FlovatarComponentTemplate.ComponentTemplate
             } else {
                 return nil

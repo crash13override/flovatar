@@ -250,7 +250,7 @@ pub contract FlovatarMarketplace {
         // so that the caller can read data and call methods from it.
         pub fun getFlovatar(tokenId: UInt64): &{Flovatar.Public}? {
             if self.flovatarForSale[tokenId] != nil {
-                let ref = &self.flovatarForSale[tokenId] as auth &NonFungibleToken.NFT
+                let ref = (&self.flovatarForSale[tokenId] as auth &NonFungibleToken.NFT?)!
                 return ref as! &Flovatar.NFT
             } else {
                 return nil
@@ -260,7 +260,7 @@ pub contract FlovatarMarketplace {
         // so that the caller can read data and call methods from it.
         pub fun getFlovatarComponent(tokenId: UInt64): &{FlovatarComponent.Public}? {
             if self.flovatarComponentForSale[tokenId] != nil {
-                let ref = &self.flovatarComponentForSale[tokenId] as auth &NonFungibleToken.NFT
+                let ref = (&self.flovatarComponentForSale[tokenId] as auth &NonFungibleToken.NFT?)!
                 return ref as! &FlovatarComponent.NFT
             } else {
                 return nil

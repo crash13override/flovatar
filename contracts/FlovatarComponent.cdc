@@ -1,5 +1,6 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import MetadataViews from "./MetadataViews.cdc"
 
 /*
 
@@ -180,14 +181,14 @@ pub contract FlovatarComponent: NonFungibleToken {
         // borrowNFT gets a reference to an NFT in the collection
         // so that the caller can read its metadata and call its methods
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
-            return &self.ownedNFTs[id] as &NonFungibleToken.NFT
+            return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
         // borrowComponent returns a borrowed reference to a FlovatarComponent
         // so that the caller can read data and call methods from it.
         pub fun borrowComponent(id: UInt64): &FlovatarComponent.NFT? {
             if self.ownedNFTs[id] != nil {
-                let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
+                let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &FlovatarComponent.NFT
             } else {
                 return nil
@@ -232,7 +233,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     // Get the SVG of a specific Component from an account and the ID
     pub fun getSvgForComponent(address: Address, componentId: UInt64) : String? {
         let account = getAccount(address)
-        if let componentCollection= account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
             return componentCollection.borrowComponent(id: componentId)!.getSvg()
         }
         return nil

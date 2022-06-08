@@ -124,6 +124,10 @@ pub contract FlovatarPack {
             self.randomString = randomString
         }
 
+        pub fun removeComponent(at: Int): @FlovatarComponent.NFT {
+            return <- self.components.remove(at: at)
+        }
+
     }
 
     //Pack CollectionPublic interface that allows users to purchase a Pack
@@ -191,7 +195,7 @@ pub contract FlovatarPack {
             // Component Collection of the owner
 
             while(pack.components.length > 0){
-                recipient.deposit(token: <- pack.components.remove(at: 0))
+                recipient.deposit(token: <- pack.removeComponent(at: 0))
             }
 
             // Emits the event to notify that the pack was opened
@@ -202,19 +206,19 @@ pub contract FlovatarPack {
 
         // Gets the price for a specific Pack
         access(account) fun getPrice(id: UInt64): UFix64 {
-            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            let pack: &FlovatarPack.Pack = (&self.ownedPacks[id] as auth &FlovatarPack.Pack?)!
             return pack.price
         }
 
         // Gets the random String for a specific Pack 
         access(account) fun getRandomString(id: UInt64): String {
-            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            let pack: &FlovatarPack.Pack = (&self.ownedPacks[id] as auth &FlovatarPack.Pack?)!
             return pack.getRandomString()
         }
 
         // Sets the random String for a specific Pack
         access(account) fun setRandomString(id: UInt64, randomString: String) {
-            let pack: &FlovatarPack.Pack = &self.ownedPacks[id] as auth &FlovatarPack.Pack
+            let pack: &FlovatarPack.Pack = (&self.ownedPacks[id] as auth &FlovatarPack.Pack?)!
             pack.setRandomString(randomString: randomString)
         }
 
