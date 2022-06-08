@@ -139,6 +139,8 @@ pub contract FlovatarComponent: NonFungibleToken {
         pub fun resolveView(_ type: Type): AnyStruct? {
 
             if type == Type<MetadataViews.ExternalURL>() {
+                let address = self.owner?.address
+                let url = (address == nil) ? "https://flovatar.com/builder/" : "https://flovatar.com/components/".concat(self.id.toString()).concat("/").concat(address!.toString())
                 return MetadataViews.ExternalURL("https://flovatar.com/builder/")
             }
 
