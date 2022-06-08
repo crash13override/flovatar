@@ -484,7 +484,7 @@ pub contract Flovatar: NonFungibleToken {
                     name: self.name,
                     description: self.description,
                     thumbnail: MetadataViews.HTTPFile(
-                        url: "https://images.flovatar.com/flovatar/png/".concat(self.id.toString()).concat(".png")
+                        url: "https://images.flovatar.com/flovatar/svg/".concat(self.id.toString()).concat(".svg")
                     )
                 )
             }
