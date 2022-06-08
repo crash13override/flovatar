@@ -32,6 +32,13 @@
         "mainnet": "0x1d7e57aa55817448"
       }
     },
+    "MetadataViews": {
+      "source": "./contracts/MetadataViews.cdc",
+      "aliases": {
+        "testnet": "0x631e88ae7f1d7c20",
+        "mainnet": "0x1d7e57aa55817448"
+      }
+    },
     "FlowToken": {
       "source": "./contracts/FlowToken.cdc",
       "aliases": {
@@ -72,6 +79,7 @@
     },
     "emulator": {
       "emulator-account": [
+        "MetadataViews",
         "FlovatarComponentTemplate",
         "FlovatarComponent",
         "FlovatarPack",
