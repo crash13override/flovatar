@@ -24,7 +24,7 @@ transaction {
     } else {
         let flovatarCapMeta = account.getCapability<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath)
         if(!flovatarCapMeta.check()) {
-            account.unlink(Flovatar.FlovatarCollectionPublicPath)
+            account.unlink(Flovatar.CollectionPublicPath)
             account.link<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
         }
     }
@@ -36,7 +36,7 @@ transaction {
     } else {
         let flovatarComponentCapMeta = account.getCapability<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath)
         if(!flovatarComponentCapMeta.check()) {
-            account.save<@NonFungibleToken.Collection>(<- FlovatarComponent.createEmptyCollection(), to: FlovatarComponent.CollectionStoragePath)
+            account.unlink(FlovatarComponent.CollectionPublicPath)
             account.link<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
         }
     }
