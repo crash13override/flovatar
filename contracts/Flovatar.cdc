@@ -107,6 +107,9 @@ pub contract Flovatar: NonFungibleToken {
                 self.epicCount = epicCount
                 self.legendaryCount = legendaryCount
         }
+        pub fun getComponents(): {String: UInt64} {
+            return self.components
+        }
     }
 
     // The public interface can show metadata and the content for the Flovatar. 
@@ -132,6 +135,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun getMetadata(): Metadata
         pub fun getRoyalties(): Royalties
         pub fun getBio(): {String: String}
+        pub fun getRarityScore(): UFix64
     }
 
     //The private interface can update the Accessory, Hat, Eyeglasses and Background 
@@ -649,6 +653,18 @@ pub contract Flovatar: NonFungibleToken {
         }
         return nil
     }
+    // This function will look for a specific Flovatar on a user account and return the Score
+    pub fun getFlovatarRarityScore(address: Address, flovatarId: UInt64) : UFix64? {
+
+        let account = getAccount(address)
+
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
+                return flovatar.getRarityScore()
+            }
+        }
+        return nil
+    }
 
     // This function will return all Flovatars on a user account and return an array of FlovatarData
     pub fun getFlovatars(address: Address) : [FlovatarData] {
@@ -659,10 +675,22 @@ pub contract Flovatar: NonFungibleToken {
         if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
             for id in flovatarCollection.getIDs() {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
+                let flovatarMetadata = flovatar!.getMetadata()
+                let newMetadata = Metadata(
+                            mint: flovatarMetadata.mint,
+                            series: flovatarMetadata.series,
+                            svg: "",
+                            combination: flovatarMetadata.combination,
+                            creatorAddress: flovatarMetadata.creatorAddress,
+                            components: flovatarMetadata.getComponents(),
+                            rareCount: flovatarMetadata.rareCount,
+                            epicCount: flovatarMetadata.epicCount,
+                            legendaryCount: flovatarMetadata.legendaryCount
+                        )
                 flovatarData.append(FlovatarData(
                     id: id,
                     name: flovatar!.getName(),
-                    metadata: flovatar!.getMetadata(),
+                    metadata: newMetadata,
                     accessoryId: flovatar!.getAccessory(),
                     hatId: flovatar!.getHat(),
                     eyeglassesId: flovatar!.getEyeglasses(),
