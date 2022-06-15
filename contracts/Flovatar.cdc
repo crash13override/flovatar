@@ -4,6 +4,7 @@ import FlowToken from 0x1654653399040a61
 import FlovatarComponentTemplate from 0x921ea449dffec68a
 import FlovatarComponent from 0x921ea449dffec68a
 import FlovatarPack from 0x921ea449dffec68a
+import MetadataViews from 0x1d7e57aa55817448
 
 /*
 
@@ -148,7 +149,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
     //The NFT resource that implements both Private and Public interfaces
-    pub resource NFT: NonFungibleToken.INFT, Public, Private {
+    pub resource NFT: NonFungibleToken.INFT, Public, Private, MetadataViews.Resolver {
         pub let id: UInt64
         access(contract) let metadata: Metadata
         access(contract) let royalties: Royalties
@@ -372,6 +373,124 @@ pub contract Flovatar: NonFungibleToken {
             return svg
 
         }
+
+        pub fun getRarityScore(): UFix64{
+            var rareCount: UInt8 = self.metadata.rareCount
+            var epicCount: UInt8 = self.metadata.epicCount
+            var legendaryCount: UInt8 = self.metadata.legendaryCount
+
+            var totalBoosters: UInt8 = legendaryCount + epicCount + rareCount;
+            let totalCommon: UInt8 = (totalBoosters > UInt8(6)) ? 0 : (UInt8(6) - totalBoosters);
+
+            if(totalBoosters > UInt8(6)){
+                if(rareCount > UInt8(0)) {
+                    rareCount = rareCount - UInt8(1);
+                } else if(epicCount > UInt8(0)) {
+                    epicCount = epicCount - UInt8(1);
+                } else if(legendaryCount > UInt8(0)) {
+                    legendaryCount = legendaryCount - UInt8(1);
+                }
+            }
+
+            let score: UInt8 = (legendaryCount * UInt8(125)) + (epicCount * UInt8(25)) + (rareCount * UInt8(5)) + totalCommon;
+            let min: UInt8 = 6;
+            let max: UInt8 = 6 * 125;
+
+            let scoreFix: UFix64 = UFix64(score - min) * UFix64(100.0) / UFix64(max - min) ;
+            return scoreFix
+        }
+
+        pub fun getViews() : [Type] {
+            var views : [Type]=[]
+            views.append(Type<MetadataViews.NFTCollectionData>())
+            views.append(Type<MetadataViews.NFTCollectionDisplay>())
+            views.append(Type<MetadataViews.Display>())
+            views.append(Type<MetadataViews.Royalties>())
+            views.append(Type<MetadataViews.Edition>())
+            views.append(Type<MetadataViews.ExternalURL>())
+            views.append(Type<MetadataViews.Serial>())
+            return views
+        }
+        pub fun resolveView(_ type: Type): AnyStruct? {
+
+            if type == Type<MetadataViews.ExternalURL>() {
+                return MetadataViews.ExternalURL("https://flovatar.com/flovatars/".concat(self.id.toString()))
+            }
+
+            if type == Type<MetadataViews.Royalties>() {
+                let royalties : [MetadataViews.Royalty] = []
+                var count: Int = 0
+                for royalty in self.royalties.royalty {
+                    royalties.append(MetadataViews.Royalty(recepient: royalty.wallet, cut: royalty.cut, description: "Flovatar Royalty ".concat(count.toString())))
+                    count = count + Int(1)
+                }
+                return MetadataViews.Royalties(cutInfos: royalties)
+            }
+
+            if type == Type<MetadataViews.Serial>() {
+                return MetadataViews.Serial(self.id)
+            }
+
+            if type ==  Type<MetadataViews.Editions>() {
+                let editionInfo = MetadataViews.Edition(name: "Flovatar Series 1", number: self.id, max: UInt64(9999))
+                let editionList: [MetadataViews.Edition] = [editionInfo]
+                return MetadataViews.Editions(
+                    editionList
+                )
+            }
+
+            if type == Type<MetadataViews.NFTCollectionDisplay>() {
+                let mediaSquare = MetadataViews.Media(
+                    file: MetadataViews.HTTPFile(
+                        url: "https://images.flovatar.com/logo.svg"
+                    ),
+                    mediaType: "image/svg+xml"
+                )
+                let mediaBanner = MetadataViews.Media(
+                    file: MetadataViews.HTTPFile(
+                        url: "https://images.flovatar.com/logo-horizontal.svg"
+                    ),
+                    mediaType: "image/svg+xml"
+                )
+                return MetadataViews.NFTCollectionDisplay(
+                    name: "Flovatar",
+                    description: "Flovatar is pioneering a new way to unleash community creativity in Web3 by allowing users to be co-creators of their prized NFTs, instead of just being passive collectors.",
+                    externalURL: MetadataViews.ExternalURL("https://flovatar.com"),
+                    squareImage: mediaSquare,
+                    bannerImage: mediaBanner,
+                    socials: {
+                        "discord": MetadataViews.ExternalURL("https://discord.gg/flovatar"),
+                        "twitter": MetadataViews.ExternalURL("https://twitter.com/flovatar"),
+                        "instagram": MetadataViews.ExternalURL("https://instagram.com/flovatar_nft"),
+                        "tiktok": MetadataViews.ExternalURL("https://www.tiktok.com/@flovatar")
+                    }
+                )
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: Flovatar.CollectionStoragePath,
+                publicPath: Flovatar.CollectionPublicPath,
+                providerPath: /private/FlovatarCollection,
+                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
+                )
+            }
+
+            if type == Type<MetadataViews.Display>() {
+                return MetadataViews.Display(
+                    name: self.name,
+                    description: self.description,
+                    thumbnail: MetadataViews.HTTPFile(
+                        url: "https://images.flovatar.com/flovatar/svg/".concat(self.id.toString()).concat(".svg")
+                    )
+                )
+            }
+
+            return nil
+        }
     }
 
 
@@ -391,7 +510,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
     // Main Collection to manage all the Flovatar NFT
-    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
+    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
@@ -432,14 +551,14 @@ pub contract Flovatar: NonFungibleToken {
         // borrowNFT gets a reference to an NFT in the collection
         // so that the caller can read its metadata and call its methods
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
-            return &self.ownedNFTs[id] as &NonFungibleToken.NFT
+            return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
         // borrowFlovatar returns a borrowed reference to a Flovatar
         // so that the caller can read data and call methods from it.
         pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
             if self.ownedNFTs[id] != nil {
-                let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
+                let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &Flovatar.NFT
             } else {
                 return nil
@@ -450,7 +569,7 @@ pub contract Flovatar: NonFungibleToken {
         // so that the caller can read data and call methods from it, like setting the optional components.
         pub fun borrowFlovatarPrivate(id: UInt64): &{Flovatar.Private}? {
             if self.ownedNFTs[id] != nil {
-                let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT
+                let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &Flovatar.NFT
             } else {
                 return nil
@@ -459,6 +578,15 @@ pub contract Flovatar: NonFungibleToken {
 
         destroy() {
             destroy self.ownedNFTs
+        }
+
+        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+            pre {
+                self.ownedNFTs[id] != nil : "NFT does not exist"
+            }
+            let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+            let flovatarNFT = nft as! &Flovatar.NFT
+            return flovatarNFT as &AnyResource{MetadataViews.Resolver}
         }
     }
 
