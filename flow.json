@@ -68,6 +68,15 @@
     }
   },
   "deployments": {
+    "mainnet": {
+      "mainnet-account": [
+        "FlovatarComponentTemplate",
+        "FlovatarComponent",
+        "FlovatarPack",
+        "Flovatar",
+        "FlovatarMarketplace"
+      ]
+    },
     "testnet": {
       "testnet-account": [
         "FlovatarComponentTemplate",
