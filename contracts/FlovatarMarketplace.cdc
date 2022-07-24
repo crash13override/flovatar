@@ -122,6 +122,7 @@ pub contract FlovatarMarketplace {
         // Lists a Component NFT for sale in this collection
         pub fun listFlovatarComponentForSale(token: @FlovatarComponent.NFT, price: UFix64) {
             let id = token.id
+            let mint = token.mint
 
             // store the price in the price array
             self.flovatarComponentPrices[id] = price
@@ -132,7 +133,7 @@ pub contract FlovatarMarketplace {
 
             let vaultRef = self.ownerVault.borrow()
                 ?? panic("Could not borrow reference to owner token vault")
-            emit FlovatarComponentForSale(id: id, price: price, address: vaultRef.owner!.address, mint: token.mint)
+            emit FlovatarComponentForSale(id: id, price: price, address: vaultRef.owner!.address, mint: mint)
         }
 
         // Changes the price of a Flovatar that is currently for sale
