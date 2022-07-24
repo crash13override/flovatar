@@ -22,7 +22,7 @@ pub contract FlovatarMarketplace {
 
     // Event that is emitted when a new NFT is put up for sale
     pub event FlovatarForSale(id: UInt64, price: UFix64, address: Address)
-    pub event FlovatarComponentForSale(id: UInt64, price: UFix64, address: Address)
+    pub event FlovatarComponentForSale(id: UInt64, price: UFix64, address: Address, mint: UInt64)
 
     // Event that is emitted when the price of an NFT changes
     pub event FlovatarPriceChanged(id: UInt64, newPrice: UFix64, address: Address)
@@ -132,7 +132,7 @@ pub contract FlovatarMarketplace {
 
             let vaultRef = self.ownerVault.borrow()
                 ?? panic("Could not borrow reference to owner token vault")
-            emit FlovatarComponentForSale(id: id, price: price, address: vaultRef.owner!.address)
+            emit FlovatarComponentForSale(id: id, price: price, address: vaultRef.owner!.address, mint: token.mint)
         }
 
         // Changes the price of a Flovatar that is currently for sale

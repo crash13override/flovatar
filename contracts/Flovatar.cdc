@@ -344,35 +344,35 @@ pub contract Flovatar: NonFungibleToken {
         // original Template resources, while all the other unmutable components are 
         // taken from the Metadata directly.
         pub fun getSvg(): String {
-            let svg: String = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3000 3000' width='100%' height='100%'>"
+            var svg: String = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3000 3000' width='100%' height='100%'>"
 
             if let background = self.getBackground() {
                 if let template = FlovatarComponentTemplate.getComponentTemplate(id: background) {
-                    svg.concat(template.svg!)
+                    svg = svg.concat(template.svg!)
                 }
             }
 
-            svg.concat(self.metadata.svg)
+            svg = svg.concat(self.metadata.svg)
 
             if let eyeglasses = self.getEyeglasses() {
                 if let template = FlovatarComponentTemplate.getComponentTemplate(id: eyeglasses) {
-                    svg.concat(template.svg!)
+                    svg = svg.concat(template.svg!)
                 }
             }
 
             if let hat = self.getHat() {
                 if let template = FlovatarComponentTemplate.getComponentTemplate(id: hat) {
-                    svg.concat(template.svg!)
+                    svg = svg.concat(template.svg!)
                 }
             }
 
             if let accessory = self.getAccessory() {
                 if let template = FlovatarComponentTemplate.getComponentTemplate(id: accessory) {
-                    svg.concat(template.svg!)
+                    svg = svg.concat(template.svg!)
                 }
             }
 
-            svg.concat("</svg>")
+            svg = svg.concat("</svg>")
 
             return svg
 
