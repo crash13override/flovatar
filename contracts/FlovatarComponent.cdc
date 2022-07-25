@@ -24,7 +24,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, templateId: UInt64)
+    pub event Created(id: UInt64, templateId: UInt64, mint: UInt64)
     pub event Destroyed(id: UInt64, templateId: UInt64)
 
     // The public interface provides all the basic informations about
@@ -392,7 +392,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         }
         
         var newNFT <- create NFT(templateId: templateId)
-        emit Created(id: newNFT.id, templateId: templateId)
+        emit Created(id: newNFT.id, templateId: templateId, mint: newNFT.mint)
 
         return <- newNFT
     }
