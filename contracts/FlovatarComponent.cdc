@@ -146,7 +146,7 @@ pub contract FlovatarComponent: NonFungibleToken {
 
             if type == Type<MetadataViews.Royalties>() {
                 let royalties : [MetadataViews.Royalty] = []
-                royalties.append(MetadataViews.Royalty(recepient: FlovatarComponent.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver), cut: 0.05, description: "Flovatar Royalty"))
+                royalties.append(MetadataViews.Royalty(receiver: FlovatarComponent.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver), cut: 0.05, description: "Flovatar Royalty"))
                 return MetadataViews.Royalties(cutInfos: royalties)
             }
 
@@ -423,4 +423,3 @@ pub contract FlovatarComponent: NonFungibleToken {
         emit ContractInitialized()
 	}
 }
-

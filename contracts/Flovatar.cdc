@@ -425,7 +425,7 @@ pub contract Flovatar: NonFungibleToken {
                 let royalties : [MetadataViews.Royalty] = []
                 var count: Int = 0
                 for royalty in self.royalties.royalty {
-                    royalties.append(MetadataViews.Royalty(recepient: royalty.wallet, cut: royalty.cut, description: "Flovatar Royalty ".concat(count.toString())))
+                    royalties.append(MetadataViews.Royalty(receiver: royalty.wallet, cut: royalty.cut, description: "Flovatar Royalty ".concat(count.toString())))
                     count = count + Int(1)
                 }
                 return MetadataViews.Royalties(cutInfos: royalties)
