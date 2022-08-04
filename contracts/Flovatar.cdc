@@ -396,9 +396,9 @@ pub contract Flovatar: NonFungibleToken {
                 }
             }
 
-            let score: UInt8 = (legendaryCount * UInt8(125)) + (epicCount * UInt8(25)) + (rareCount * UInt8(5)) + totalCommon;
-            let min: UInt8 = 6;
-            let max: UInt8 = 6 * 125;
+            let score: UInt64 = (UInt64(legendaryCount) * UInt64(125)) + (UInt64(epicCount) * UInt64(25)) + (UInt64(rareCount) * UInt64(5)) + UInt64(totalCommon);
+            let min: UInt64 = 6;
+            let max: UInt64 = 6 * 125;
 
             let scoreFix: UFix64 = UFix64(score - min) * UFix64(100.0) / UFix64(max - min) ;
             return scoreFix
