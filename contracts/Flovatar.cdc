@@ -529,7 +529,7 @@ pub contract Flovatar: NonFungibleToken {
                     }
                 }
 
-                let trait = MetadataViews.Trait(name: "Rarity Score", value: self.getRarityScore(), displayType:"UFix64", rarity: MetadataViews.Rarity(score: self.getRarityScore(), max: 100.0, description: "Rarity Score"))
+                let trait = MetadataViews.Trait(name: "Rarity Score", value: self.getRarityScore(), displayType:"Number", rarity: MetadataViews.Rarity(score: self.getRarityScore(), max: 100.0, description: "Rarity Score"))
                 traits.append(trait)
 
                 return MetadataViews.Traits(traits)
