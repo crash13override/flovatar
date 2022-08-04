@@ -225,6 +225,11 @@ pub contract FlovatarComponent: NonFungibleToken {
                 return MetadataViews.Traits(traits)
             }
 
+            if type == Type<MetadataViews.Rarity>() {
+                let template = self.getTemplate()
+                return MetadataViews.Rarity(score: nil, max: nil, description: template.rarity)
+            }
+
             return nil
         }
     }
