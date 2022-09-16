@@ -4,15 +4,16 @@ import FlowToken from 0x1654653399040a61
 import FlovatarComponentTemplate from 0x921ea449dffec68a
 import FlovatarComponent from 0x921ea449dffec68a
 import Crypto
+import FlowUtilityToken from 0xead892083b3e2c6c
 
 /*
 
  This contract defines the Flovatar Packs and a Collection to manage them.
 
- Each Pack will contain one item for each required Component (body, hair, eyes, nose, mouth, clothing), 
+ Each Pack will contain one item for each required Component (body, hair, eyes, nose, mouth, clothing),
  and two other Components that are optional (facial hair, accessory, hat, eyeglasses, background).
- 
- Packs will be pre-minted and can be purchased from the contract owner's account by providing a 
+
+ Packs will be pre-minted and can be purchased from the contract owner's account by providing a
  verified signature that is different for each Pack (more info in the purchase function).
 
  Once purchased, packs cannot be re-sold and users will only be able to open them to receive
@@ -45,7 +46,7 @@ pub contract FlovatarPack {
         pub let name: String
     }
 
-    // The Pack resource that implements the Public interface and that contains 
+    // The Pack resource that implements the Public interface and that contains
     // different Components in a Dictionary
     pub resource Pack: Public {
         pub let id: UInt64
@@ -57,7 +58,7 @@ pub contract FlovatarPack {
         access(account) var randomString: String
 
         // Initializes the Pack with all the Components.
-        // It receives also the price and a random String that will signed by 
+        // It receives also the price and a random String that will signed by
         // the account owner to validate the purchase process.
         init(
             components: @[FlovatarComponent.NFT],
@@ -80,11 +81,11 @@ pub contract FlovatarPack {
                     i = i + 1
                 }
             }
-                
+
             if(sparkCount != sparkCountCheck){
                 panic("There is a mismatch in the spark count")
             }
-            
+
 
 
 
@@ -112,7 +113,7 @@ pub contract FlovatarPack {
             destroy self.components
         }
 
-        // This function is used to retrieve the random string to match it 
+        // This function is used to retrieve the random string to match it
         // against the signature passed during the purchase process
         access(contract) fun getRandomString(): String {
             return self.randomString
@@ -135,9 +136,10 @@ pub contract FlovatarPack {
         pub fun getIDs(): [UInt64]
         pub fun deposit(token: @FlovatarPack.Pack)
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String)
+        pub fun purchaseDapper(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String, expectedPrice: UFix64)
     }
 
-    // Main Collection that implements the Public interface and that 
+    // Main Collection that implements the Public interface and that
     // will handle the purchase transactions
     pub resource Collection: CollectionPublic {
         // Dictionary of all the Packs owned
@@ -183,7 +185,7 @@ pub contract FlovatarPack {
         // The pack is destroyed after the Components are delivered.
         pub fun openPack(id: UInt64) {
 
-            // Gets the Component Collection Public capability to be able to 
+            // Gets the Component Collection Public capability to be able to
             // send there the Components contained in the Pack
             let recipientCap = self.owner!.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
             let recipient = recipientCap.borrow()!
@@ -191,7 +193,7 @@ pub contract FlovatarPack {
             // Removed the pack from the collection
             let pack <- self.withdraw(withdrawID: id)
 
-            // Removes all the components from the Pack and deposits them to the 
+            // Removes all the components from the Pack and deposits them to the
             // Component Collection of the owner
 
             while(pack.components.length > 0){
@@ -210,7 +212,7 @@ pub contract FlovatarPack {
             return pack.price
         }
 
-        // Gets the random String for a specific Pack 
+        // Gets the random String for a specific Pack
         access(account) fun getRandomString(id: UInt64): String {
             let pack: &FlovatarPack.Pack = (&self.ownedPacks[id] as auth &FlovatarPack.Pack?)!
             return pack.getRandomString()
@@ -224,12 +226,12 @@ pub contract FlovatarPack {
 
 
         // This function provides the ability for anyone to purchase a Pack
-        // It receives as parameters the Pack ID, the Pack Collection Public capability to receive the pack, 
+        // It receives as parameters the Pack ID, the Pack Collection Public capability to receive the pack,
         // a vault containing the necessary FLOW token, and finally a signature to validate the process.
         // The signature is generated off-chain by the smart contract's owner account using the Crypto library
         // to generate a hash from the original random String contained in each Pack.
         // This will guarantee that the contract owner will be able to decide which user can buy a pack, by
-        // providing them the correct signature. 
+        // providing them the correct signature.
         //
         pub fun purchase(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String) {
 
@@ -237,6 +239,7 @@ pub contract FlovatarPack {
             pre {
                 self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
                 self.getPrice(id: tokenId) <= buyTokens.balance : "Not enough tokens to buy the Pack!"
+                buyTokens.isInstance(Type<@FlowToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             // Gets the Crypto.KeyList and the public key of the collection's owner
@@ -292,11 +295,80 @@ pub contract FlovatarPack {
             emit Purchased(id: packId)
 
         }
+        //
+        pub fun purchaseDapper(tokenId: UInt64, recipientCap: Capability<&{FlovatarPack.CollectionPublic}>, buyTokens: @FungibleToken.Vault, signature: String, expectedPrice: UFix64) {
+
+            // Checks that the pack is still available and that the FLOW tokens are sufficient
+            pre {
+                self.ownedPacks.containsKey(tokenId) == true : "Pack not found!"
+                self.getPrice(id: tokenId) <= buyTokens.balance : "Not enough tokens to buy the Pack!"
+                self.getPrice(id: tokenId) == expectedPrice : "Price not set as expected!"
+                buyTokens.isInstance(Type<@FlowUtilityToken.Vault>()) : "Vault not of the right Token Type"
+            }
+
+            // Gets the Crypto.KeyList and the public key of the collection's owner
+            let keyList = Crypto.KeyList()
+            let accountKey = self.owner!.keys.get(keyIndex: 0)!.publicKey
+
+            // Adds the public key to the keyList
+            keyList.add(
+                PublicKey(
+                    publicKey: accountKey.publicKey,
+                    signatureAlgorithm: accountKey.signatureAlgorithm
+                ),
+                hashAlgorithm: HashAlgorithm.SHA3_256,
+                weight: 1.0
+            )
+
+            // Creates a Crypto.KeyListSignature from the signature provided in the parameters
+            let signatureSet: [Crypto.KeyListSignature] = []
+            signatureSet.append(
+                Crypto.KeyListSignature(
+                    keyIndex: 0,
+                    signature: signature.decodeHex()
+                )
+            )
+
+            // Verifies that the signature is valid and that it was generated from the
+            // owner of the collection
+            if(!keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8)){
+                panic("Unable to validate the signature for the pack!")
+            }
+
+
+            // Borrows the recipient's capability and withdraws the Pack from the collection.
+            // If this fails the transaction will revert but the signature will be exposed.
+            // For this reason in case it happens, the randomString will be reset when the purchase
+            // reservation timeout expires by the web server back-end.
+            let recipient = recipientCap.borrow()!
+            let pack <- self.withdraw(withdrawID: tokenId)
+
+            // Borrows the owner's capability for the Vault and deposits the FLOW tokens
+            //testnet
+            let dapperMarketVault = getAccount(0xf973db40ee7af81c).getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
+            //mainnet
+            //let dapperMarketVault = getAccount(0x8a86f18e0e05bd9f).getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
+            let vaultRef = dapperMarketVault.borrow() ?? panic("Could not borrow reference to owner pack vault")
+            vaultRef.deposit(from: <-buyTokens)
+
+
+            // Resets the randomString so that the provided signature will become useless
+            let packId: UInt64 = pack.id
+            pack.setRandomString(randomString: unsafeRandom().toString())
+
+            // Deposits the Pack to the recipient's collection
+            recipient.deposit(token: <- pack)
+
+            // Emits an even to notify about the purchase
+            emit Purchased(id: packId)
+        }
 
         destroy() {
             destroy self.ownedPacks
         }
     }
+
+
 
     // public function that anyone can call to create a new empty collection
     pub fun createEmptyCollection(ownerVault: Capability<&{FungibleToken.Receiver}>): @FlovatarPack.Collection {
@@ -337,7 +409,7 @@ pub contract FlovatarPack {
             name: name
         )
 
-        // Emits an event to notify that a Pack was created. 
+        // Emits an event to notify that a Pack was created.
         // Sends the first 4 digits of the randomString to be able to sync the ID with the off-chain DB
         // that will store also the signatures once they are generated
         emit Created(id: newPack.id, prefix: randomString.slice(from: 0, upTo: 4))
