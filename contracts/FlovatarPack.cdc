@@ -344,10 +344,7 @@ pub contract FlovatarPack {
             let pack <- self.withdraw(withdrawID: tokenId)
 
             // Borrows the owner's capability for the Vault and deposits the FLOW tokens
-            //testnet
-            let dapperMarketVault = getAccount(0xf973db40ee7af81c).getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
-            //mainnet
-            //let dapperMarketVault = getAccount(0x8a86f18e0e05bd9f).getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
+            let dapperMarketVault = getAccount(0x8a86f18e0e05bd9f).getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
             let vaultRef = dapperMarketVault.borrow() ?? panic("Could not borrow reference to owner pack vault")
             vaultRef.deposit(from: <-buyTokens)
 
