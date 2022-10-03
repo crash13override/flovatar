@@ -179,7 +179,7 @@ pub contract FlovatarComponent: NonFungibleToken {
                     mediaType: "image/svg+xml"
                 )
                 return MetadataViews.NFTCollectionDisplay(
-                    name: "Flovatar",
+                    name: "Flovatar Component",
                     description: "Flovatar is pioneering a new way to unleash community creativity in Web3 by allowing users to be co-creators of their prized NFTs, instead of just being passive collectors.",
                     externalURL: MetadataViews.ExternalURL("https://flovatar.com"),
                     squareImage: mediaSquare,
