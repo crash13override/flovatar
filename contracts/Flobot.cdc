@@ -374,7 +374,7 @@ pub contract Flobot: NonFungibleToken {
 
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
-                    name: self.name,
+                    name: self.name == "" ? "Flobot #".concat(self.id.toString()) : self.name,
                     description: self.description,
                     thumbnail: MetadataViews.HTTPFile(
                         url: "https://images.flovatar.com/flobot/svg/".concat(self.id.toString()).concat(".svg")
