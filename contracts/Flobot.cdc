@@ -422,7 +422,7 @@ pub contract Flobot: NonFungibleToken {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowFlobot(id: UInt64): &Flobot.NFT? {
+        pub fun borrowFlobot(id: UInt64): &Flobot.NFT{Flobot.Public}? {
             // If the result isn't nil, the id of the returned reference
             // should be the same as the argument to the function
             post {
