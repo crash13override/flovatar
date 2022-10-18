@@ -603,10 +603,11 @@ pub contract Flovatar: NonFungibleToken {
 
         // borrowFlovatar returns a borrowed reference to a Flovatar
         // so that the caller can read data and call methods from it.
-        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT{Flovatar.Public}? {
             if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-                return ref as! &Flovatar.NFT
+                let flovatarNFT = ref as! &Flovatar.NFT
+                return flovatarNFT as &Flovatar.NFT{Flovatar.Public}
             } else {
                 return nil
             }
