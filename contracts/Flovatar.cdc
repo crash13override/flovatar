@@ -546,7 +546,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT{Flovatar.Public}? {
             // If the result isn't nil, the id of the returned reference
             // should be the same as the argument to the function
             post {
@@ -603,10 +603,11 @@ pub contract Flovatar: NonFungibleToken {
 
         // borrowFlovatar returns a borrowed reference to a Flovatar
         // so that the caller can read data and call methods from it.
-        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT? {
+        pub fun borrowFlovatar(id: UInt64): &Flovatar.NFT{Flovatar.Public}? {
             if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-                return ref as! &Flovatar.NFT
+                let flovatarNFT = ref as! &Flovatar.NFT
+                return flovatarNFT as &Flovatar.NFT{Flovatar.Public}
             } else {
                 return nil
             }
