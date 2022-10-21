@@ -5,6 +5,7 @@ import FlovatarComponentTemplate from 0x921ea449dffec68a
 import FlovatarComponent from 0x921ea449dffec68a
 import FlovatarPack from 0x921ea449dffec68a
 import FlovatarDustToken from 0x921ea449dffec68a
+import Flovatar from 0x921ea449dffec68a
 
 /*
 
@@ -189,7 +190,7 @@ pub contract FlovatarInbox {
             return self.lastClaimedDust[id]!
         }
 
-        pub fun setLastClaimedDust(id: UInt64, value: UFix64){
+        access(contract) fun setLastClaimedDust(id: UInt64, value: UFix64){
             self.lastClaimedDust[id] = value
         }
 
@@ -259,8 +260,8 @@ pub contract FlovatarInbox {
 
     // This function withdraws all the Components assigned to a Flovatar and sends them to the Owner's address
     pub fun withdrawFlovatarComponent(id: UInt64, address: Address) {
-        if(!self.withdrawEnabled){
-            return
+        pre {
+        	self.withdrawEnabled : "Withdrawal is not enabled!"
         }
         if let inboxCollection = self.account.borrow<&FlovatarInbox.Collection>(from: self.CollectionStoragePath) {
             if let flovatar = Flovatar.getFlovatar(address: address, flovatarId: id){
@@ -270,7 +271,8 @@ pub contract FlovatarInbox {
                 var i: UInt32 = 0
                 let componentIds = self.getFlovatarComponentIDs(id: id)
 
-                while i < UInt32(componentIds.length) {
+                //set a max of 50 Components to be withdrawn to avoid gas limits
+                while (i < UInt32(componentIds.length) && i < UInt32(50)) {
                     let component <- inboxCollection.withdrawFlovatarComponent(id: id, withdrawID: componentIds[i])
 
                     if(component == nil){
@@ -288,8 +290,8 @@ pub contract FlovatarInbox {
 
     // This function withdraws all the Components assigned to a Flovatar Owner and sends them to his address
     pub fun withdrawWalletComponent(address: Address) {
-        if(!self.withdrawEnabled){
-            return
+        pre {
+        	self.withdrawEnabled : "Withdrawal is not enabled!"
         }
         if let inboxCollection = self.account.borrow<&FlovatarInbox.Collection>(from: self.CollectionStoragePath) {
             let receiverAccount = getAccount(address)
@@ -298,7 +300,8 @@ pub contract FlovatarInbox {
             var i: UInt32 = 0
             let componentIds = self.getWalletComponentIDs(address: address)
 
-            while i < UInt32(componentIds.length) {
+            //set a max of 50 Components to be withdrawn to avoid gas limits
+            while (i < UInt32(componentIds.length) && i < UInt32(50)) {
                 let component <- inboxCollection.withdrawWalletComponent(address: address, withdrawID: componentIds[i])
 
                 if(component == nil){
@@ -315,8 +318,8 @@ pub contract FlovatarInbox {
 
     // This function withdraws all the DUST assigned to a Flovatar (not from general community pool) and sends it to the Owner's vault
     pub fun withdrawFlovatarDust(id: UInt64, address: Address) {
-        if(!self.withdrawEnabled){
-            return
+        pre {
+            self.withdrawEnabled : "Withdrawal is not enabled!"
         }
         if let inboxCollection = self.account.borrow<&FlovatarInbox.Collection>(from: self.CollectionStoragePath) {
             if let flovatar = Flovatar.getFlovatar(address: address, flovatarId: id){
@@ -336,8 +339,8 @@ pub contract FlovatarInbox {
 
     // This function withdraws all the DUST assigned to a Flovatar Owner (not from general community pool) and sends it to his vault
     pub fun withdrawWalletDust(address: Address) {
-        if(!self.withdrawEnabled){
-            return
+        pre {
+            self.withdrawEnabled : "Withdrawal is not enabled!"
         }
         if let inboxCollection = self.account.borrow<&FlovatarInbox.Collection>(from: self.CollectionStoragePath) {
             let receiverAccount = getAccount(address)
@@ -392,6 +395,9 @@ pub contract FlovatarInbox {
 
     // This function will allow any Flovatar to claim his share of the daily distribution of DUST from the community pool
     pub fun claimFlovatarCommunityDust(id: UInt64, address: Address) {
+        pre {
+            self.withdrawEnabled : "Withdrawal is not enabled!"
+        }
         if let claimableDust: ClaimableDust = self.getClaimableFlovatarCommunityDust(id: id, address: address){
             if(claimableDust.amount > self.communityVault.balance){
                 panic("Not enough community DUST left to be claimed")

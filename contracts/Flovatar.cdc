@@ -532,7 +532,7 @@ pub contract Flovatar: NonFungibleToken {
 
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
@@ -553,7 +553,7 @@ pub contract Flovatar: NonFungibleToken {
 
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return flovatar.getRarityScore()
             }
@@ -567,7 +567,7 @@ pub contract Flovatar: NonFungibleToken {
         var flovatarData: [FlovatarData] = []
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
             for id in flovatarCollection.getIDs() {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 flovatarData.append(FlovatarData(
