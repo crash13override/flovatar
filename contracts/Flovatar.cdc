@@ -607,7 +607,7 @@ pub contract Flovatar: NonFungibleToken {
             if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 let flovatarNFT = ref as! &Flovatar.NFT
-                return flovatarNFT as &Flovatar.NFT{Flovatar.Public}
+                return flovatarNFT as &Flovatar.NFT{Flovatar.Public, MetadataViews.Resolver}
             } else {
                 return nil
             }

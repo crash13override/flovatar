@@ -483,7 +483,7 @@ pub contract Flobot: NonFungibleToken {
             if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 let flobotNFT = ref as! &Flobot.NFT
-                return flobotNFT as &Flobot.NFT{Flobot.Public}
+                return flobotNFT as &Flobot.NFT{Flobot.Public, MetadataViews.Resolver}
             } else {
                 return nil
             }
