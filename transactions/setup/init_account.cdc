@@ -7,6 +7,7 @@ import FlovatarComponentTemplate from "../../contracts/FlovatarComponentTemplate
 import FlovatarPack from "../../contracts/FlovatarPack.cdc"
 import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 import MetadataViews from "../contracts/MetadaViews.cdc"
+import FlovatarDustToken from "../../contracts/FlovatarDustToken.cdc"
 
 transaction {
   // We want the account's address for later so we can verify if the account was initialized properly
@@ -57,6 +58,16 @@ transaction {
 
         // publish a capability to the Collection in storage
         account.link<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath, target: FlovatarMarketplace.CollectionStoragePath)
+    }
+
+    let dustTokenCap = account.getCapability<&FlovatarDustToken.Vault{FlovatarDustToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
+    if(!dustTokenCap.check()) {
+        let vault <- FlovatarDustToken.createEmptyVault()
+        // Store the vault in the account storage
+        account.save<@FlovatarDustToken.Vault>(<-vault, to: FlovatarDustToken.VaultStoragePath)
+        // Create a public Receiver capability to the Vault
+        account.link<&FlovatarDustToken.Vault{FlovatarDustToken.Receiver, FlovatarDustToken.Balance}>(FlovatarDustToken.VaultReceiverPath, target: FlovatarDustToken.VaultStoragePath)
+        account.link<&FlovatarDustToken.Vault{FlovatarDustToken.Balance}>(FlovatarDustToken.VaultBalancePath, target: FlovatarDustToken.VaultStoragePath)
     }
 
   }

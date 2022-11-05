@@ -1,36 +1,26 @@
 //import FungibleToken from 0xf233dcee88fe0abe
 //import NonFungibleToken from 0x1d7e57aa55817448
 //import FlowToken from 0x1654653399040a61
-//import FlovatarComponentTemplate from 0x921ea449dffec68a
-//import FlovatarComponent from 0x921ea449dffec68a
-//import FlovatarPack from 0x921ea449dffec68a
+//import FlovatarDustCollectibleTemplate from 0x921ea449dffec68a
 //import MetadataViews from 0x1d7e57aa55817448
 //import FlovatarDustToken from 0x921ea449dffec68a
 import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import FlowToken from "./FlowToken.cdc"
-import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
-import FlovatarComponent from "./FlovatarComponent.cdc"
-import FlovatarPack from "./FlovatarPack.cdc"
+import FlovatarDustCollectibleTemplate from "./FlovatarDustCollectibleTemplate.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 import FlovatarDustToken from "./FlovatarDustToken.cdc"
 
 /*
 
- The contract that defines the Flovatar NFT and a Collection to manage them
-
-Base components that will be used to generate the unique combination of the Flovatar
-'body', 'hair', 'facialhair', 'eyes', 'nose', 'mouth', 'clothing'
-
-Extra components that can be added in a second moment
-'accessory', 'hat', eyeglass', 'background'
+ The contract that defines the Dust Collectible NFT and a Collection to manage them
 
 
-This contract contains also the Admin resource that can be used to manage and generate all the other ones (Components, Templates, Packs).
+This contract contains also the Admin resource that can be used to manage and generate the Dust Collectible Templates.
 
  */
 
-pub contract Flovatar: NonFungibleToken {
+pub contract FlovatarDustCollectible: NonFungibleToken {
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath

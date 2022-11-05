@@ -1,4 +1,5 @@
-import FungibleToken from 0xf233dcee88fe0abe
+//import FungibleToken from 0xf233dcee88fe0abe
+import FungibleToken from "./FungibleToken.cdc"
 
 pub contract FlovatarDustToken: FungibleToken {
 
@@ -205,7 +206,7 @@ pub contract FlovatarDustToken: FungibleToken {
         // Create a public capability to the stored Vault that only exposes
         // the `deposit` method through the `Receiver` interface
         //
-        self.account.link<&{FungibleToken.Receiver}>(
+        self.account.link<&{FungibleToken.Receiver, FungibleToken.Balance}>(
             self.VaultReceiverPath,
             target: self.VaultStoragePath
         )

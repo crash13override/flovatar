@@ -13,6 +13,8 @@
     "Flovatar": "./contracts/Flovatar.cdc",
     "FlovatarMarketplace": "./contracts/FlovatarMarketplace.cdc",
     "FlovatarInbox": "./contracts/FlovatarInbox.cdc",
+    "FlovatarDustCollectible": "./contracts/FlovatarDustCollectible.cdc",
+    "FlovatarDustCollectibleTemplate": "./contracts/FlovatarDustCollectibleTemplate.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {
@@ -47,6 +49,13 @@
           "testnet": "0x7e60df042a9c0868",
           "emulator": "0x0ae53cb6e3f42a79",
           "mainnet": "0x1654653399040a61"
+      }
+    },
+    "FlowUtilityToken": {
+      "source": "./contracts/FlowUtilityToken.cdc",
+      "aliases": {
+        "testnet": "0x82ec283f88a62e65",
+        "mainnet": "0xead892083b3e2c6c"
       }
     }
   },
@@ -100,7 +109,10 @@
         "Flovatar",
         "FlovatarMarketplace",
         "FlovatarInbox",
-        "NonFungibleToken"
+        "NonFungibleToken",
+        "FlowUtilityToken",
+        "FlovatarDustCollectible",
+        "FlovatarDustCollectibleTemplate"
       ]
     }
   }

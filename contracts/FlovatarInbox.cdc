@@ -1,11 +1,19 @@
-import FungibleToken from 0xf233dcee88fe0abe
-import NonFungibleToken from 0x1d7e57aa55817448
-import FlowToken from 0x1654653399040a61
-import FlovatarComponentTemplate from 0x921ea449dffec68a
-import FlovatarComponent from 0x921ea449dffec68a
-import FlovatarPack from 0x921ea449dffec68a
-import FlovatarDustToken from 0x921ea449dffec68a
-import Flovatar from 0x921ea449dffec68a
+//import FungibleToken from 0xf233dcee88fe0abe
+//import NonFungibleToken from 0x1d7e57aa55817448
+//import FlowToken from 0x1654653399040a61
+//import FlovatarComponentTemplate from 0x921ea449dffec68a
+//import FlovatarComponent from 0x921ea449dffec68a
+//import FlovatarPack from 0x921ea449dffec68a
+//import FlovatarDustToken from 0x921ea449dffec68a
+//import Flovatar from 0x921ea449dffec68a
+import FungibleToken from "./FungibleToken.cdc"
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import FlovatarComponent from "./FlovatarComponent.cdc"
+import FlovatarPack from "./FlovatarPack.cdc"
+import FlovatarDustToken from "./FlovatarDustToken.cdc"
+import Flovatar from "./Flovatar.cdc"
 
 /*
 
@@ -55,7 +63,7 @@ pub contract FlovatarInbox {
     pub event WalletWithdrawDust(address: Address, amount: UFix64)
     pub event FlovatarClaimedCommunityDust(id: UInt64, amount: UFix64, to: Address)
 
-    // This struct contains all the information about the Dust about to the claimed for each Flovatar by the user
+    // This struct contains all the information about the Dust the be claimed for each Flovatar by the user
     pub struct ClaimableDust{
         pub let amount: UFix64
         pub let days: UInt64
@@ -82,6 +90,16 @@ pub contract FlovatarInbox {
         init() {
             self.dustVault <- FlovatarDustToken.createEmptyVault()
             self.flovatarComponents <- {}
+        }
+
+        pub fun insertComponent(component: @FlovatarComponent.NFT) {
+            let oldComponent <- self.flovatarComponents[component.id] <- component
+            destroy oldComponent
+        }
+
+        pub fun withdrawComponent(id: UInt64) : @FlovatarComponent.NFT{
+            let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
+            return <- token
         }
         
         destroy(){
@@ -126,7 +144,7 @@ pub contract FlovatarInbox {
                 let oldContainer <- self.flovatarContainers[id] <- create Container()
                 destroy oldContainer
             }
-            return &self.flovatarContainers[id] as auth &FlovatarInbox.Container
+            return (&self.flovatarContainers[id] as auth &FlovatarInbox.Container?)!
         }
 
         // Borrows the Container Collection for the Flovatar Owner Wallet and if not present it initializes it
@@ -135,7 +153,7 @@ pub contract FlovatarInbox {
                 let oldContainer <- self.walletContainers[address] <- create Container()
                 destroy oldContainer
             }
-            return &self.walletContainers[address] as auth &FlovatarInbox.Container
+            return (&self.walletContainers[address] as auth &FlovatarInbox.Container?)!
         }
 
         pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault) {
@@ -153,15 +171,13 @@ pub contract FlovatarInbox {
         pub fun depositComponentToFlovatar(id: UInt64, component: @FlovatarComponent.NFT) {
             let ref = self.borrowFlovatarContainer(id: id)
             emit FlovatarDepositComponent(flovatarId: id, componentId: component.id)
-            let oldComponent <- ref.flovatarComponents[component.id] <- component
-            destroy oldComponent
+            ref.insertComponent(component: <- component)
         }
 
         pub fun depositComponentToWallet(address: Address, component: @FlovatarComponent.NFT) {
             let ref = self.borrowWalletContainer(address: address)
             emit WalletDepositComponent(address: address, componentId: component.id)
-            let oldComponent <- ref.flovatarComponents[component.id] <- component
-            destroy oldComponent
+            ref.insertComponent(component: <- component)
         }
 
         pub fun getFlovatarDustBalance(id: UInt64): UFix64 {
@@ -196,13 +212,11 @@ pub contract FlovatarInbox {
 
         pub fun withdrawFlovatarComponent(id: UInt64, withdrawID: UInt64): @NonFungibleToken.NFT {
             let ref = self.borrowFlovatarContainer(id: id)
-            let token <- ref.flovatarComponents.remove(key: withdrawID) ?? panic("missing NFT")
-            return <- token
+            return <- ref.withdrawComponent(id: withdrawID)
         }
         pub fun withdrawWalletComponent(address: Address, withdrawID: UInt64): @NonFungibleToken.NFT {
             let ref = self.borrowWalletContainer(address: address)
-            let token <- ref.flovatarComponents.remove(key: withdrawID) ?? panic("missing NFT")
-            return <- token
+            return <- ref.withdrawComponent(id: withdrawID)
         }
 
         pub fun withdrawFlovatarDust(id: UInt64): @FungibleToken.Vault {
@@ -229,14 +243,14 @@ pub contract FlovatarInbox {
 
 
 
-    // Returns the amount of DUST received by the Flovatar for additional rewards or activities (not comint from the Community pool)
+    // Returns the amount of DUST received by the Flovatar for additional rewards or activities (not coming from the Community pool)
     pub fun getFlovatarDustBalance(id: UInt64): UFix64 {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
             return inboxCollection.getFlovatarDustBalance(id: id)
         }
         return 0.0
     }
-    // Returns the amount of DUST received by the Flovatar Owner for additional rewards or activities (not comint from the Community pool)
+    // Returns the amount of DUST received by the Flovatar Owner for additional rewards or activities (not coming from the Community pool)
     pub fun getWalletDustBalance(address: Address): UFix64 {
         if let inboxCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarInbox.CollectionPublic}>()  {
             return inboxCollection.getWalletDustBalance(address: address)
@@ -425,7 +439,10 @@ pub contract FlovatarInbox {
         self.withdrawEnabled = enabled
     }
     // Admin function to deposit DUST into the community pool
-    access(account) fun depositCommunityDust(vault: @FlovatarDustToken.Vault) {
+    pub fun depositCommunityDust(vault: @FungibleToken.Vault) {
+        pre {
+            vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+        }
         self.communityVault.deposit(from: <- vault)
     }
 

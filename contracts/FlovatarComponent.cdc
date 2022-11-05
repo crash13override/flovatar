@@ -1,8 +1,13 @@
-import FungibleToken from 0xf233dcee88fe0abe
-import NonFungibleToken from 0x1d7e57aa55817448
-import FlowToken from 0x1654653399040a61
-import FlovatarComponentTemplate from 0x921ea449dffec68a
-import MetadataViews from 0x1d7e57aa55817448
+//import FungibleToken from 0xf233dcee88fe0abe
+//import NonFungibleToken from 0x1d7e57aa55817448
+//import FlowToken from 0x1654653399040a61
+//import FlovatarComponentTemplate from 0x921ea449dffec68a
+//import MetadataViews from 0x1d7e57aa55817448
+import FungibleToken from "./FungibleToken.cdc"
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import MetadataViews from "./MetadataViews.cdc"
 
 /*
 
