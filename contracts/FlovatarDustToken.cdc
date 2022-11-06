@@ -103,6 +103,9 @@ pub contract FlovatarDustToken: FungibleToken {
         }
 
         destroy() {
+            if(self.balance >= 0.0){
+                emit TokensBurned(amount: self.balance)
+            }
             FlovatarDustToken.totalSupply = FlovatarDustToken.totalSupply - self.balance
         }
     }

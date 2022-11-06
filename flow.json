@@ -111,7 +111,6 @@
         "FlovatarInbox",
         "NonFungibleToken",
         "FlowUtilityToken",
-        "FlovatarDustCollectible",
         "FlovatarDustCollectibleTemplate"
       ]
     }

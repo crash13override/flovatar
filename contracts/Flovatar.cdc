@@ -153,9 +153,10 @@ pub contract Flovatar: NonFungibleToken {
     //The private interface can update the Accessory, Hat, Eyeglasses and Background
     //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
-        pub fun setName(name: String, vault: @FlovatarDustToken.Vault): String
-        pub fun addStory(text: String, vault: @FlovatarDustToken.Vault): String
-        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FlovatarDustToken.Vault): String
+        pub fun setName(name: String, vault: @FungibleToken.Vault): String
+        pub fun addStory(text: String, vault: @FungibleToken.Vault): String
+        pub fun unlock3DFile(vault: @FungibleToken.Vault)
+        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FungibleToken.Vault): String
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
@@ -229,7 +230,7 @@ pub contract Flovatar: NonFungibleToken {
         // This will allow to change the Name of the Flovatar only once.
         // It checks for the current name is empty, otherwise it will throw an error.
         // $DUST vault must contain 100 tokens that will be burned in the process
-        pub fun setName(name: String, vault: @FlovatarDustToken.Vault): String {
+        pub fun setName(name: String, vault: @FungibleToken.Vault): String {
             pre {
                 // TODO: Make sure that the text of the name is sanitized
                 //and that bad words are not accepted?
@@ -237,6 +238,7 @@ pub contract Flovatar: NonFungibleToken {
                 name.length < 32 : "The name is too long"
                 self.name == "" : "The name has already been set"
                 vault.balance == 100.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             // Makes sure that the name is available and not taken already
@@ -259,13 +261,14 @@ pub contract Flovatar: NonFungibleToken {
         // The String will be concatenated each time.
         // There is a limit of 300 characters per story but there is no limit in the full concatenated story length
         // $DUST vault must contain 50 tokens that will be burned in the process
-        pub fun addStory(text: String, vault: @FlovatarDustToken.Vault): String {
+        pub fun addStory(text: String, vault: @FungibleToken.Vault): String {
             pre {
                 // TODO: Make sure that the text of the name is sanitized
                 //and that bad words are not accepted?
                 text.length > 0 : "The text is too short"
                 text.length <= 300 : "The text is too long"
                 vault.balance == 50.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             destroy vault
@@ -280,10 +283,11 @@ pub contract Flovatar: NonFungibleToken {
 
         // This will unlock the 3D files for a Flovatar.
         // $DUST vault must contain 50 tokens that will be burned in the process
-        pub fun unlock3DFile(vault: @FlovatarDustToken.Vault) {
+        pub fun unlock3DFile(vault: @FungibleToken.Vault) {
             pre {
                 self.bio["3d"] == nil : "The 3D File has been already unlocked"
                 vault.balance == 150.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             destroy vault
@@ -296,18 +300,19 @@ pub contract Flovatar: NonFungibleToken {
         // This will allow to set the GPS location of a Flovatar
         // It can be run multiple times and each time it will override the previous state
         // $DUST vault must contain 10 tokens that will be burned in the process
-        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FlovatarDustToken.Vault): String {
+        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FungibleToken.Vault): String {
             pre {
                 latitude >= -90.0 : "The latitude is out of range"
                 latitude <= 90.0 : "The latitude is out of range"
                 longitude >= -180.0 : "The longitude is out of range"
                 longitude <= 180.0 : "The longitude is out of range"
                 vault.balance == 10.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             destroy vault
             let position: String = latitude.toString().concat(",").concat(longitude.toString())
-            self.bio.insert(key: "gps", position)
+            self.bio.insert(key: "position", position)
 
             emit PositionChanged(id: self.id, position: position)
 

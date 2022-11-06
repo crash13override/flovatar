@@ -14,23 +14,25 @@ import FlovatarInbox from "../../contracts/FlovatarInbox.cdc"
 transaction() {
 
     let flovatarCollection: &Flovatar.Collection
-    let address: String
+    let address: Address
 
     prepare(account: AuthAccount) {
         self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
         self.address = account.address
-    }
 
-    execute {
 
-        let dustTokenCap = account.getCapability<&FlovatarDustToken.Vault{FlovatarDustToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
+        let dustTokenCap = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
         if(!dustTokenCap.check()) {
             let vault <- FlovatarDustToken.createEmptyVault()
             // Store the vault in the account storage
             account.save<@FlovatarDustToken.Vault>(<-vault, to: FlovatarDustToken.VaultStoragePath)
             // Create a public Receiver capability to the Vault
-            let ReceiverRef = account.link<&FlovatarDustToken.Vault{FlovatarDustToken.Receiver, FlovatarDustToken.Balance}>(FlovatarDustToken.VaultReceiverPath, target: FlovatarDustToken.VaultStoragePath)
+            let ReceiverRef = account.link<&FlovatarDustToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(FlovatarDustToken.VaultReceiverPath, target: FlovatarDustToken.VaultStoragePath)
         }
+    }
+
+    execute {
+
 
         FlovatarInbox.withdrawWalletComponent(address: self.address)
         FlovatarInbox.withdrawWalletDust(address: self.address)

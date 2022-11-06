@@ -16,7 +16,7 @@ transaction(
     ) {
 
     let flovatarCollection: &Flovatar.Collection
-    let vaultCap: Capability<&FlowToken.Vault{FungibleToken.Receiver}>
+    let vaultCap: Capability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>
     let temporaryVault: @FungibleToken.Vault
 
     prepare(account: AuthAccount) {
