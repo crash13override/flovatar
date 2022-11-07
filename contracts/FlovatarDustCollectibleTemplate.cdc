@@ -20,6 +20,8 @@ pub contract FlovatarDustCollectibleTemplate {
     pub var totalSeriesSupply: UInt64
     //These counters will keep track of how many Components were minted for each Template
     access(contract) let totalMintedComponents: { UInt64: UInt64 }
+    access(contract) let totalMintedCollectibles: { UInt64: UInt64 }
+    access(contract) let templatesCurrentPrice: { UInt64: UFix64 }
     access(contract) let lastComponentMintedAt: { UInt64: UFix64 }
 
     // Event to notify about the Template creation
@@ -27,19 +29,33 @@ pub contract FlovatarDustCollectibleTemplate {
     pub event Created(id: UInt64, name: String, series: UInt64, layer: UInt32, maxMintableComponents: UInt64)
     pub event CreatedSeries(id: UInt64, name: String, maxMintable: UInt64)
 
+    pub struct Layer{
+        pub let id: UInt32
+        pub let name: String
+        pub let isAccessory: Bool
+
+        //can be percentage
+        pub let type: RoyaltyType
+
+        init(id: UInt32, name: String, isAccessory: Bool){
+            self.id = id
+            self.name = name
+            self.isAccessory = isAccessory
+        }
+    }
+
     pub resource interface PublicSeries {
         pub let id: UInt64
         pub let name: String
         pub let description: String
         pub let svgPrefix: String
         pub let svgSuffix: String
-        access(contract) let coreLayers: {UInt32: String}
-        access(contract) let accessoryLayers: {UInt32: String}
+        pub let priceIncrease: UFix64
+        access(contract) let layers: {UInt32: Layer}
         access(contract) let colors: {UInt32: String}
         access(contract) let metadata: {String: String}
         pub let maxMintable: UInt64
-        pub fun getCoreLayers(): {UInt32: String}
-        pub fun getAccessoryLayers(): {UInt32: String}
+        pub fun getLayers(): {UInt32: String}
         pub fun getColors(): {UInt32: String}
         pub fun getMetadata(): {String: String}
     }
@@ -51,17 +67,14 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let description: String
         pub let svgPrefix: String
         pub let svgSuffix: String
-        access(contract) let coreLayers: {UInt32: String}
-        access(contract) let accessoryLayers: {UInt32: String}
+        pub let priceIncrease: UFix64
+        access(contract) let layers: {UInt32: Layer}
         access(contract) let colors: {UInt32: String}
         access(contract) let metadata: {String: String}
         pub let maxMintable: UInt64
 
-        pub fun getCoreLayers(): {UInt32: String} {
-            return self.coreLayers
-        }
-        pub fun getAccessoryLayers(): {UInt32: String} {
-            return self.accessoryLayers
+        pub fun getLayers(): {UInt32: String} {
+            return self.layers
         }
         pub fun getColors(): {UInt32: String} {
             return self.colors
@@ -75,8 +88,8 @@ pub contract FlovatarDustCollectibleTemplate {
             description: String,
             svgPrefix: String,
             svgSuffix: String,
-            coreLayers: {UInt32: String},
-            accessoryLayers: {UInt32: String},
+            priceIncrease: UFix64,
+            layers: {UInt32: Layer},
             colors: {UInt32: String},
             metadata: {String: String},
             maxMintable: UInt64
@@ -88,8 +101,8 @@ pub contract FlovatarDustCollectibleTemplate {
             self.description = description
             self.svgPrefix = svgPrefix
             self.svgSuffix = svgSuffix
-            self.coreLayers = coreLayers
-            self.accessoryLayers = accessoryLayers
+            self.priceIncrease = priceIncrease
+            self.layers = layers
             self.colors = colors
             self.metadata = metadata
             self.maxMintable = maxMintable
@@ -97,18 +110,17 @@ pub contract FlovatarDustCollectibleTemplate {
    }
 
     // The public interface providing the SVG and all the other 
-    // metadata like name, category, color, series, description and 
-    // the maximum mintable Components
+    // metadata like name, series, layer, etc.
     pub resource interface Public {
         pub let id: UInt64
         pub let name: String
         pub let description: String
         pub let series: UInt64
         pub let layer: UInt32
-        pub let isCore: Bool
         access(contract) let metadata: {String: String}
         pub let rarity: String
-        pub let svg: String?
+        pub let basePrice: UFix64
+        pub let svg: String
         pub let maxMintableComponents: UInt64
 
         pub fun getMetadata(): {String: String} {
@@ -116,17 +128,17 @@ pub contract FlovatarDustCollectibleTemplate {
         }
     }
 
-    // The Component resource implementing the public interface as well
+    // The Template resource implementing the public interface as well
     pub resource CollectibleTemplate: Public {
         pub let id: UInt64
         pub let name: String
         pub let description: String
         pub let series: UInt64
         pub let layer: UInt32
-        pub let isCore: Bool
         access(contract) let metadata: {String: String}
         pub let rarity: String
-        pub let svg: String?
+        pub let basePrice: UFix64
+        pub let svg: String
         pub let maxMintableComponents: UInt64
 
         // Initialize a Template with all the necessary data
@@ -135,10 +147,10 @@ pub contract FlovatarDustCollectibleTemplate {
             description: String,
             series: UInt64,
             layer: UInt32,
-            isCore: Bool,
             metadata: {String: String},
             rarity: String,
-            svg: String?,
+            basePrice: UFix64,
+            svg: String,
             maxMintableComponents: UInt64
         ) {
             // increments the counter and stores it as the ID
@@ -148,9 +160,9 @@ pub contract FlovatarDustCollectibleTemplate {
             self.description = description
             self.series = series
             self.layer = layer
-            self.isCore = isCore
             self.metadata = metadata
             self.rarity = rarity
+            self.basePrice = basePrice
             self.svg = svg
             self.maxMintableComponents = maxMintableComponents
         }
@@ -255,8 +267,8 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let description: String
         pub let svgPrefix: String
         pub let svgSuffix: String
-        pub let coreLayers: {UInt32: String}
-        pub let accessoryLayers: {UInt32: String}
+        pub let priceIncrease: UFix64
+        pub let layers: {UInt32: Layer}
         pub let colors: {UInt32: String}
         pub let metadata: {String: String}
         pub let maxMintable: UInt64
@@ -267,8 +279,8 @@ pub contract FlovatarDustCollectibleTemplate {
             description: String,
             svgPrefix: String,
             svgSuffix: String,
-            coreLayers: {UInt32: String},
-            accessoryLayers: {UInt32: String},
+            priceIncrease: UFix64,
+            layers: {UInt32: Layer},
             colors: {UInt32: String},
             metadata: {String: String},
             maxMintable: UInt64
@@ -278,8 +290,8 @@ pub contract FlovatarDustCollectibleTemplate {
             self.description = description
             self.svgPrefix = svgPrefix
             self.svgSuffix = svgSuffix
-            self.coreLayers = coreLayers
-            self.accessoryLayers = accessoryLayers
+            self.priceIncrease = priceIncrease
+            self.layers = layers
             self.colors = colors
             self.metadata = metadata
             self.maxMintable = maxMintable
@@ -294,12 +306,14 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let description: String
         pub let series: UInt64
         pub let layer: UInt32
-        pub let isCore: Bool
         access(self) let metadata: {String: String}
         pub let rarity: String
+        pub let basePrice: UFix64
         pub let svg: String?
         pub let maxMintableComponents: UInt64
         pub let totalMintedComponents: UInt64
+        pub let totalMintedCollectibles: UInt64
+        pub let currentPrice: UFix64
         pub let lastComponentMintedAt: UFix64
 
         init(
@@ -308,9 +322,9 @@ pub contract FlovatarDustCollectibleTemplate {
             description: String,
             series: UInt64,
             layer: UInt32,
-            isCore: Bool,
             metadata: {String: String},
             rarity: String,
+            basePrice: UFix64,
             svg: String?,
             maxMintableComponents: UInt64
         ) {
@@ -319,12 +333,14 @@ pub contract FlovatarDustCollectibleTemplate {
             self.description = description
             self.series = series
             self.layer = layer
-            self.isCore = isCore
             self.metadata = metadata
             self.rarity = rarity
+            self.basePrice = basePrice
             self.svg = svg
             self.maxMintableComponents = maxMintableComponents
             self.totalMintedComponents = FlovatarDustCollectibleTemplate.getTotalMintedComponents(id: id)!
+            self.totalMintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)!
+            self.currentPrice = FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: id)!
             self.lastComponentMintedAt = FlovatarDustCollectibleTemplate.getLastComponentMintedAt(id: id)!
         }
     }
@@ -343,9 +359,9 @@ pub contract FlovatarDustCollectibleTemplate {
                     description: collectibleTemplate!.description,
                     series: collectibleTemplate!.series,
                     layer: collectibleTemplate!.layer,
-                    isCore: collectibleTemplate!.isCore,
                     metadata: collectibleTemplate!.metadata,
                     rarity: collectibleTemplate!.rarity,
+                    basePrice: collectibleTemplate!.basePrice,
                     svg: nil,
                     maxMintableComponents: collectibleTemplate!.maxMintableComponents
                     ))
@@ -369,8 +385,8 @@ pub contract FlovatarDustCollectibleTemplate {
                     description: collectibleSeries!.description,
                     svgPrefix: collectibleSeries!.svgPrefix,
                     svgSuffix: collectibleSeries!.svgSuffix,
-                    coreLayers: collectibleSeries!.coreLayers,
-                    accessoryLayers: collectibleSeries!.accessoryLayers,
+                    priceIncrease: collectibleSeries!.priceIncrease,
+                    layers: collectibleSeries!.layers,
                     colors: collectibleSeries!.colors,
                     metadata: collectibleSeries!.metadata,
                     maxMintable: collectibleSeries!.maxMintable
@@ -390,9 +406,9 @@ pub contract FlovatarDustCollectibleTemplate {
                     description: collectibleTemplate!.description,
                     series: collectibleTemplate!.series,
                     layer: collectibleTemplate!.layer,
-                    isCore: collectibleTemplate!.isCore,
                     metadata: collectibleTemplate!.metadata,
                     rarity: collectibleTemplate!.rarity,
+                    basePrice: collectibleTemplate!.basePrice,
                     svg: collectibleTemplate!.svg,
                     maxMintableComponents: collectibleTemplate!.maxMintableComponents
                     )
@@ -401,8 +417,18 @@ pub contract FlovatarDustCollectibleTemplate {
         return nil
     }
 
+    // Gets the SVG of a specific Template from its ID
+    pub fun getCollectibleTemplateSvg(id: UInt64) : String? {
+        if let collectibleTemplateCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleTemplate.CollectionPublic}>()  {
+            if let collectibleTemplate = collectibleTemplateCollection.borrowCollectibleTemplate(id: id) {
+                return collectibleTemplate!.svg
+            }
+        }
+        return nil
+    }
 
-    // Gets a specific Template from its ID
+
+    // Gets a specific Series from its ID
     pub fun getCollectibleSeries(id: UInt64) : CollectibleSeriesData? {
         if let collectibleTemplateCollection = self.account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleTemplate.CollectionPublic}>()  {
             if let collectibleSeries = collectibleTemplateCollection.borrowCollectibleSeries(id: id) {
@@ -412,8 +438,8 @@ pub contract FlovatarDustCollectibleTemplate {
                     description: collectibleSeries!.description,
                     svgPrefix: collectibleSeries!.svgPrefix,
                     svgSuffix: collectibleSeries!.svgSuffix,
-                    coreLayers: collectibleSeries!.coreLayers,
-                    accessoryLayers: collectibleSeries!.accessoryLayers,
+                    priceIncrease: collectibleSeries!.priceIncrease,
+                    layers: collectibleSeries!.layers,
                     colors: collectibleSeries!.colors,
                     metadata: collectibleSeries!.metadata,
                     maxMintable: collectibleSeries!.maxMintable
@@ -423,10 +449,29 @@ pub contract FlovatarDustCollectibleTemplate {
         return nil
     }
 
+    pub fun isCollectibleLayerAccessory(layer: UInt32, series: UInt64): Bool {
+        let series = FlovatarDustCollectibleTemplate.getCollectibleSeries(id: series)!
+        if(let layer = series.layers[layer]){
+            if(layer.isAccessory){
+                return true
+            }
+        }
+        return false
+    }
+
     // Returns the amount of minted Components for a specific Template
     pub fun getTotalMintedComponents(id: UInt64) : UInt64? {
         return FlovatarDustCollectibleTemplate.totalMintedComponents[id]
     }
+    // Returns the amount of minted Collectibles for a specific Series
+    pub fun getTotalMintedCollectibles(series: UInt64) : UInt64? {
+        return FlovatarDustCollectibleTemplate.totalMintedCollectibles[series]
+    }
+    // Returns the current price for a specific Template
+    pub fun getTemplateCurrentPrice(id: UInt64) : UFix64? {
+        return FlovatarDustCollectibleTemplate.templatesCurrentPrice[id]
+    }
+
     // Returns the timestamp of the last time a Component for a specific Template was minted
     pub fun getLastComponentMintedAt(id: UInt64) : UFix64? {
         return FlovatarDustCollectibleTemplate.lastComponentMintedAt[id]
@@ -435,6 +480,14 @@ pub contract FlovatarDustCollectibleTemplate {
     // This function is used within the contract to set the new counter for each Template
     access(account) fun setTotalMintedComponents(id: UInt64, value: UInt64) {
         FlovatarDustCollectibleTemplate.totalMintedComponents[id] = value
+    }
+    // This function is used within the contract to set the new counter for each Series
+    access(account) fun setTotalMintedCollectibles(series: UInt64, value: UInt64) {
+        FlovatarDustCollectibleTemplate.totalMintedCollectibles[series] = value
+    }
+    // This function is used within the contract to set the new counter for each Template
+    access(account) fun setTemplatesCurrentPrice(id: UInt64, value: UFix64) {
+        FlovatarDustCollectibleTemplate.templatesCurrentPrice[id] = value
     }
     // This function is used within the contract to set the timestamp 
     // when a Component for a specific Template was minted
@@ -448,9 +501,9 @@ pub contract FlovatarDustCollectibleTemplate {
         description: String,
         series: UInt64,
         layer: UInt32,
-        isCore: Bool,
         metadata: {String: String},
         rarity: String,
+        basePrice: UFix64,
         svg: String,
         maxMintableComponents: UInt64
     ) : @FlovatarDustCollectibleTemplate.CollectibleTemplate {
@@ -460,9 +513,9 @@ pub contract FlovatarDustCollectibleTemplate {
             description: description,
             series: series,
             layer: layer,
-            isCore: isCore,
             metadata: metadata,
             rarity: rarity,
+            basePrice: basePrice,
             svg: svg,
             maxMintableComponents: maxMintableComponents
         )
@@ -472,6 +525,7 @@ pub contract FlovatarDustCollectibleTemplate {
 
         // Set the counter for the minted Components of this Template to 0
         FlovatarDustCollectibleTemplate.setTotalMintedComponents(id: newCollectibleTemplate.id, value: UInt64(0))
+        FlovatarDustCollectibleTemplate.setTemplatesCurrentPrice(id: newCollectibleTemplate.id, value: basePrice)
         FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: newCollectibleTemplate.id, value: UFix64(0))
 
         return <- newCollectibleTemplate
@@ -482,8 +536,8 @@ pub contract FlovatarDustCollectibleTemplate {
         description: String,
         svgPrefix: String,
         svgSuffix: String,
-        coreLayers: {UInt32: String},
-        accessoryLayers: {UInt32: String},
+        priceIncrease: UFix64,
+        layers: {UInt32: Layer},
         colors: {UInt32: String},
         metadata: {String: String},
         maxMintable: UInt64
@@ -494,8 +548,8 @@ pub contract FlovatarDustCollectibleTemplate {
             description: description,
             svgPrefix: svgPrefix,
             svgSuffix: svgSuffix,
-            coreLayers: coreLayers,
-            accessoryLayers: accessoryLayers,
+            priceIncrease: priceIncrease,
+            layers: layers,
             colors: colors,
             metadata: metadata,
             maxMintable: maxMintable
@@ -514,6 +568,8 @@ pub contract FlovatarDustCollectibleTemplate {
         self.totalSupply = 0
         self.totalSeriesSupply = 0
         self.totalMintedComponents = {}
+        self.totalMintedCollectibles = {}
+        self.templatesCurrentPrice = {}
         self.lastComponentMintedAt = {}
 
         self.account.save<@FlovatarDustCollectibleTemplate.Collection>(<- FlovatarDustCollectibleTemplate.createEmptyCollection(), to: FlovatarDustCollectibleTemplate.CollectionStoragePath)

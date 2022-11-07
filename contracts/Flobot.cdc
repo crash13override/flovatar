@@ -292,7 +292,6 @@ pub contract Flobot: NonFungibleToken {
             svg = svg.concat(headTemplate.svg!)
             svg = svg.concat(faceTemplate.svg!)
 
-            svg = svg.concat("</svg>")
 
             return svg
 
