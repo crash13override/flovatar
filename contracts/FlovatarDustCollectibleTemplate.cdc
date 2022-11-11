@@ -505,7 +505,8 @@ pub contract FlovatarDustCollectibleTemplate {
         let currentPrice: UFix64? = FlovatarDustCollectibleTemplate.templatesCurrentPrice[id]
         if(currentPrice != nil){
             let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: id)
-            FlovatarDustCollectibleTemplate.templatesCurrentPrice[id] = currentPrice! + template!.basePrice
+            let series = FlovatarDustCollectibleTemplate.getCollectibleSeries(id: template!.series)
+            FlovatarDustCollectibleTemplate.templatesCurrentPrice[id] = currentPrice! * (UFix64(1.0) + series!.priceIncrease)
         }
     }
     // This function is used within the contract to set the timestamp 
@@ -561,7 +562,7 @@ pub contract FlovatarDustCollectibleTemplate {
         metadata: {String: String},
         maxMintable: UInt64
     ) : @FlovatarDustCollectibleTemplate.CollectibleSeries {
-
+    
         var newCollectibleSeries <- create CollectibleSeries(
             name: name,
             description: description,

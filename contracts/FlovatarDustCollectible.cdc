@@ -137,6 +137,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             creatorAddress: Address,
             royalties: Royalties) {
             FlovatarDustCollectible.totalSupply = FlovatarDustCollectible.totalSupply + UInt64(1)
+            FlovatarDustCollectibleTemplate.increaseTotalMintedCollectibles(series: series)
             let coreLayers: {UInt32: UInt64} = FlovatarDustCollectible.getCoreLayers(series: series, layers: layers)
 
             self.id = FlovatarDustCollectible.totalSupply
@@ -811,8 +812,6 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             cut: FlovatarDustCollectible.getMarketplaceCut(),
             type: RoyaltyType.percentage
         ))
-
-        FlovatarDustCollectibleTemplate.increaseTotalMintedCollectibles(series: series)
 
         // Mint the new Flovatar NFT by passing the metadata to it
         var newNFT <- create NFT(series: series, layers: fullLayers, creatorAddress: address, royalties: Royalties(royalty: royalties))
