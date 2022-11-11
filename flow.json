@@ -15,6 +15,7 @@
     "FlovatarInbox": "./contracts/FlovatarInbox.cdc",
     "FlovatarDustCollectible": "./contracts/FlovatarDustCollectible.cdc",
     "FlovatarDustCollectibleTemplate": "./contracts/FlovatarDustCollectibleTemplate.cdc",
+    "FlovatarDustCollectibleAccessory": "./contracts/FlovatarDustCollectibleAccessory.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {
@@ -111,7 +112,9 @@
         "FlovatarInbox",
         "NonFungibleToken",
         "FlowUtilityToken",
-        "FlovatarDustCollectibleTemplate"
+        "FlovatarDustCollectibleTemplate",
+        "FlovatarDustCollectibleAccessory",
+        "FlovatarDustCollectible"
       ]
     }
   }

@@ -8,6 +8,7 @@ import FungibleToken from "./FungibleToken.cdc"
 import NonFungibleToken from "./NonFungibleToken.cdc"
 import FlowToken from "./FlowToken.cdc"
 import FlovatarDustCollectibleTemplate from "./FlovatarDustCollectibleTemplate.cdc"
+import FlovatarDustCollectibleAccessory from "./FlovatarDustCollectibleAccessory.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 import FlovatarDustToken from "./FlovatarDustToken.cdc"
 
@@ -40,8 +41,9 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, metadata: Metadata)
+    pub event Created(id: UInt64, mint: UInt64, series: UInt64)
     pub event Updated(id: UInt64)
+    pub event Destroyed(id: UInt64)
     pub event NameSet(id: UInt64, name: String)
     pub event PositionChanged(id: UInt64, position: String)
     pub event StoryAdded(id: UInt64, story: String)
@@ -97,7 +99,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun getBio(): {String: String}
         pub fun getMetadata(): {String: String}
         pub fun getLayers(): {UInt32: UInt64?}
-        pub fun getAccessories(): [UInt64]
+        //pub fun getAccessories(): [UInt64]
         pub fun getSeries(): FlovatarDustCollectibleTemplate.CollectibleSeriesData?
     }
 
@@ -107,8 +109,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun setName(name: String, vault: @FlovatarDustToken.Vault): String
         pub fun addStory(text: String, vault: @FlovatarDustToken.Vault): String
         pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FlovatarDustToken.Vault): String
-        pub fun setAccessory(layer: UInt32, accessory: @FlovatarDustCollectibleAccessory.NFT): @FlovatarDustCollectibleAccessory.NFT?
-        pub fun removeAccessory(layer: UInt32): @FlovatarDustCollectibleAccessory.NFT?
+        //pub fun setAccessory(layer: UInt32, accessory: @FlovatarDustCollectibleAccessory.NFT): @FlovatarDustCollectibleAccessory.NFT?
+        //pub fun removeAccessory(layer: UInt32): @FlovatarDustCollectibleAccessory.NFT?
     }
 
     //The NFT resource that implements both Private and Public interfaces
@@ -126,32 +128,35 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         access(self) let bio: {String: String}
         access(self) let metadata: {String: String}
         access(self) let layers: {UInt32: UInt64?}
-        access(self) let accessories: @{UInt64: FlovatarDustCollectibleAccessory.NFT}
+        //access(self) let accessories: @{UInt64: FlovatarDustCollectibleAccessory.NFT}
 
         init(series: UInt64,
-            combination: String,
             layers: {UInt32: UInt64?},
             creatorAddress: Address,
             royalties: Royalties) {
             FlovatarDustCollectible.totalSupply = FlovatarDustCollectible.totalSupply + UInt64(1)
+            let coreLayers: {UInt32: UInt64} = FlovatarDustCollectible.getCoreLayers(series: series, layers: layers)
 
             self.id = FlovatarDustCollectible.totalSupply
+            //TODO Update to keep track of mints per series
+            self.mint = FlovatarDustCollectible.totalSupply
             self.series = series
-            self.combination = FlovatarDustCollectible.getCombinationString()
+            self.combination = FlovatarDustCollectible.getCombinationString(series: series, layers: coreLayers)
             self.creatorAddress = creatorAddress
-            self.metadata = metadata
             self.royalties = royalties
 
             self.schema = nil
             self.name = ""
             self.description = ""
             self.bio = {}
+            self.metadata = {}
             self.layers = layers
-            self.accessories = {}
+            //self.accessories = {}
         }
 
         destroy() {
-            destroy self.accessories
+            //destroy self.accessories
+            emit Destroyed(id: self.id)
         }
 
         pub fun getID(): UInt64 {
@@ -175,7 +180,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         }
 
         pub fun getSeries(): FlovatarDustCollectibleTemplate.CollectibleSeriesData? {
-            return FlovatarDustCollectibleTemplate.getCollectibleSeries(self.series)
+            return FlovatarDustCollectibleTemplate.getCollectibleSeries(id: self.series)
         }
 
         // This will allow to change the Name of the Flovatar only once.
@@ -192,7 +197,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             }
 
             // Makes sure that the name is available and not taken already
-            if(Flovatar.checkNameAvailable(name: name) == false){
+            if(FlovatarDustCollectible.checkNameAvailable(name: name) == false){
                 panic("This name has already been taken")
             }
 
@@ -201,7 +206,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
 
             // Adds the name to the array to remember it
-            Flovatar.addMintedName(name: name)
+            FlovatarDustCollectible.addMintedName(name: name)
             emit NameSet(id: self.id, name: name)
 
             return self.name
@@ -256,6 +261,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             return self.layers
         }
 
+        /*
         pub fun getAccessories(): [UInt64] {
             return self.accessories.keys
         }
@@ -289,7 +295,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             panic("The Layer is out of range or it's not an accessory")
         }
-
+        */
 
         // This function will return the full SVG of the Flovatar. It will take the
         // optional components (Accessory, Hat, Eyeglasses and Background) from their
@@ -298,16 +304,19 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun getSvg(): String {
             let series = FlovatarDustCollectibleTemplate.getCollectibleSeries(id: self.series)
 
-            var svg: String = series.svgPrefix
+            var svg: String = series!.svgPrefix
 
             for k in self.layers.keys {
                 if(self.layers[k] != nil){
-                    let tempSvg = FlovatarDustCollectibleTemplate.getCollectibleTemplateSvg(id: self.layers[k]!)
-                    svg = svg.concat(tempSvg!)
+                    let layer = self.layers[k]!
+                    if(layer != nil){
+                        let tempSvg = FlovatarDustCollectibleTemplate.getCollectibleTemplateSvg(id: layer!)
+                        svg = svg.concat(tempSvg!)
+                    }
                 }
             }
 
-            svg = svg.concat(series.svgSuffix)
+            svg = svg.concat(series!.svgSuffix)
 
             return svg
 
@@ -348,7 +357,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             if type ==  Type<MetadataViews.Editions>() {
                 let series = self.getSeries()
-                let editionInfo = MetadataViews.Edition(name: "Flovatar Stardust Collectible Series ".concat(self.series.toString()), number: self.mint, max: series.maxMintableComponents)
+                let editionInfo = MetadataViews.Edition(name: "Flovatar Stardust Collectible Series ".concat(self.series.toString()), number: self.mint, max: series!.maxMintable)
                 let editionList: [MetadataViews.Edition] = [editionInfo]
                 return MetadataViews.Editions(
                     editionList
@@ -385,13 +394,13 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             if type == Type<MetadataViews.NFTCollectionData>() {
                 return MetadataViews.NFTCollectionData(
-                storagePath: Flovatar.CollectionStoragePath,
-                publicPath: Flovatar.CollectionPublicPath,
-                providerPath: /private/FlovatarCollection,
-                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
+                storagePath: FlovatarDustCollectible.CollectionStoragePath,
+                publicPath: FlovatarDustCollectible.CollectionPublicPath,
+                providerPath: /private/FlovatarDustCollectibleCollection,
+                publicCollection: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                publicLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                providerLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarDustCollectible.createEmptyCollection()}
                 )
             }
 
@@ -412,11 +421,14 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
                 for k in self.layers.keys {
                     if(self.layers[k] != nil){
-                        let layer = series.layers[k]!
+                        let layer = series!.layers[k]!
                         if(self.layers[k] != nil){
-                            let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: self.layers[k])
-                            let trait = MetadataViews.Trait(name: layer.name, value: template.name, displayType:"String", rarity: MetadataViews.Rarity(score:nil, max:nil, description: template.rarity))
-                            traits.append(trait)
+                            let layerSelf = self.layers[k]!
+                            if(layer != nil){
+                                let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: layerSelf!)
+                                let trait = MetadataViews.Trait(name: layer!.name, value: template!.name, displayType:"String", rarity: MetadataViews.Rarity(score:nil, max:nil, description: template!.rarity))
+                                traits.append(trait)
+                            }
                         }
                     }
                 }
@@ -467,7 +479,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         // deposit takes a NFT and adds it to the collections dictionary
         // and adds the ID to the id array
         pub fun deposit(token: @NonFungibleToken.NFT) {
-            let token <- token as! @Flovatar.NFT
+            let token <- token as! @FlovatarDustCollectible.NFT
 
             let id: UInt64 = token.id
 
@@ -579,16 +591,16 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         if let collectibleCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic}>()  {
             if let collectible = collectibleCollection.borrowDustCollectible(id: collectibleId) {
                 return FlovatarDustCollectibleData(
-                    id: flovatarId,
+                    id: collectibleId,
                     mint: collectible!.mint,
-                    series; collectible!.series,
+                    series: collectible!.series,
                     name: collectible!.getName(),
                     svg: collectible!.getSvg(),
-                    combination; collectible!.combination,
-                    creatorAddress; collectible!.creatorAddress,
+                    combination: collectible!.combination,
+                    creatorAddress: collectible!.creatorAddress,
                     layers: collectible!.getLayers(),
-                    metadata: collectible!.getMetadata(),
-                    bio: collectible!.getBio()
+                    bio: collectible!.getBio(),
+                    metadata: collectible!.getMetadata()
                 )
             }
         }
@@ -604,17 +616,17 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         if let collectibleCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic}>()  {
             for id in collectibleCollection.getIDs() {
                 if let collectible = collectibleCollection.borrowDustCollectible(id: id) {
-                    flovatarData.append(FlovatarDustCollectibleData(
-                        id: flovatarId,
+                    dustCollectibleData.append(FlovatarDustCollectibleData(
+                        id: id,
                         mint: collectible!.mint,
-                        series; collectible!.series,
+                        series: collectible!.series,
                         name: collectible!.getName(),
                         svg: nil,
-                        combination; collectible!.combination,
-                        creatorAddress; collectible!.creatorAddress,
+                        combination: collectible!.combination,
+                        creatorAddress: collectible!.creatorAddress,
                         layers: collectible!.getLayers(),
-                        metadata: collectible!.getMetadata(),
-                        bio: collectible!.getBio()
+                        bio: collectible!.getBio(),
+                        metadata: collectible!.getMetadata()
                     ))
                 }
             }
@@ -641,6 +653,25 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         FlovatarDustCollectible.mintedNames.insert(key: name, true)
     }
 
+    pub fun getCoreLayers(series: UInt64, layers: {UInt32: UInt64?}): {UInt32: UInt64}{
+        let coreLayers: {UInt32: UInt64} = {}
+        for k in layers.keys {
+            if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: k, series: series)){
+                let templateId = layers[k]!
+                let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: templateId!)!
+                if(template.series != series){
+                    panic("Template belonging to the wrong Dust Collectible Series")
+                }
+                if(template.layer != k){
+                    panic("Template belonging to the wrong Layer")
+                }
+                coreLayers[k] = templateId!
+            }
+        }
+
+        return coreLayers
+    }
+
     // This helper function will generate a string from a list of components,
     // to be used as a sort of barcode to keep the inventory of the minted
     // Flovatars and to avoid duplicates
@@ -648,13 +679,12 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         series: UInt64,
         layers: {UInt32: UInt64}
     ) : String {
-        let combination = "S".concat(series.toString())
+        var combination = "S".concat(series.toString())
 
-        for k in self.layers.keys {
-            if(self.layers[k] != nil){
-                let layerId = self.layers[k]!
-                if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: layerId, series: series)){
-                combination = combination.concat("-L").concat(k).concat("_").concat(layerId.toString())
+        for k in layers.keys {
+            if(layers[k] != nil){
+                let layerId = layers[k]!
+                combination = combination.concat("-L").concat(k.toString()).concat("_").concat(layerId.toString())
             }
         }
 
@@ -689,288 +719,98 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
     // In order to use special rare components a boost of the same rarity will be needed
     // for each component used
     pub fun createDustCollectible(
-        spark: @FlovatarComponent.NFT,
-        body: UInt64,
-        hair: UInt64,
-        facialHair: UInt64?,
-        eyes: UInt64,
-        nose: UInt64,
-        mouth: UInt64,
-        clothing: UInt64,
-        accessory: @FlovatarComponent.NFT?,
-        hat: @FlovatarComponent.NFT?,
-        eyeglasses: @FlovatarComponent.NFT?,
-        background: @FlovatarComponent.NFT?,
-        rareBoost: @[FlovatarComponent.NFT],
-        epicBoost: @[FlovatarComponent.NFT],
-        legendaryBoost: @[FlovatarComponent.NFT],
-        address: Address
-    ) : @Flovatar.NFT {
-
+        series: UInt64,
+        layers: [UInt64?],
+        address: Address,
+        vault: @FungibleToken.Vault
+    ) : @FlovatarDustCollectible.NFT {
         pre {
-            // Make sure that the spark component belongs to the correct category
-            spark.getCategory() == "spark" : "The spark component belongs to the wrong category"
+            vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
         }
 
-        let bodyTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: body)!
-        let hairTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: hair)!
-        let eyesTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: eyes)!
-        let noseTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: nose)!
-        let mouthTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: mouth)!
-        let clothingTemplate: FlovatarComponentTemplate.ComponentTemplateData = FlovatarComponentTemplate.getComponentTemplate(id: clothing)!
+        let seriesData = FlovatarDustCollectibleTemplate.getCollectibleSeries(id: series)
+        if(seriesData == nil){
+            panic("Dust Collectible Series not found!")
+        }
+        if(seriesData!.layers.length != layers.length){
+            panic("The amount of layers is not matching!")
+        }
 
+        let templates: [FlovatarDustCollectibleTemplate.CollectibleTemplateData] = []
+        var totalPrice: UFix64 = 0.0
+        let coreLayers: {UInt32: UInt64} = {}
+        let fullLayers: {UInt32: UInt64?} = {}
 
-        // Make sure that all components belong to the correct category
-        if(bodyTemplate.category != "body") { panic("The body component belongs to the wrong category") }
-        if(hairTemplate.category != "hair") { panic("The hair component belongs to the wrong category") }
-        if(eyesTemplate.category != "eyes") { panic("The eyes component belongs to the wrong category") }
-        if(noseTemplate.category != "nose") { panic("The nose component belongs to the wrong category") }
-        if(mouthTemplate.category != "mouth") { panic("The mouth component belongs to the wrong category") }
-        if(clothingTemplate.category != "clothing") { panic("The clothing component belongs to the wrong category") }
-
-        let sparkSeries = spark.getSeries();
-        // Make sure that all the components belong to the same series like the spark
-        if(bodyTemplate.series != sparkSeries) { panic("The body doesn't belong to the correct series") }
-        if(hairTemplate.series != sparkSeries) { panic("The hair doesn't belong to the correct series") }
-        if(eyesTemplate.series != sparkSeries) { panic("The eyes doesn't belong to the correct series") }
-        if(noseTemplate.series != sparkSeries) { panic("The nose doesn't belong to the correct series") }
-        if(mouthTemplate.series != sparkSeries) { panic("The mouth doesn't belong to the correct series") }
-        if(clothingTemplate.series != sparkSeries) { panic("The clothing doesn't belong to the correct series") }
-
-        // Make more checks for the additional components to check for the right category and uniqueness
-        var facialHairTemplate: FlovatarComponentTemplate.ComponentTemplateData? = nil
-        if(facialHair != nil){
-            facialHairTemplate = FlovatarComponentTemplate.getComponentTemplate(id: facialHair!)
-            if(facialHairTemplate?.category != "facialHair"){
-                panic("The facial hair component belongs to the wrong category")
+        var i: UInt32 = UInt32(layers.length)
+        while(i <  UInt32(layers.length)){
+            if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: i, series: series)){
+                if(layers[i] == nil){
+                    panic("Core Layer missing")
+                }
+                let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: layers[i]!)!
+                if(template.series != series){
+                    panic("Template belonging to the wrong Dust Collectible Series")
+                }
+                if(template.layer != i){
+                    panic("Template belonging to the wrong Layer")
+                }
+                coreLayers[i] = template.id
+                fullLayers[i] = template.id
+                templates.append(template)
+                totalPrice = totalPrice + FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: layers[i]!)!
+            } else {
+                fullLayers[i] = nil
             }
-            if(facialHairTemplate?.series != sparkSeries){
-                panic("The facial hair doesn't belong to the correct series")
-            }
+
+            i = i + UInt32(1)
         }
 
-
-        if(accessory != nil){
-            if(!(accessory?.checkCategorySeries(category: "accessory", series: sparkSeries)!)){
-                panic("The accessory component belongs to the wrong category or the wrong series")
-            }
+        if(totalPrice > vault.balance){
+            panic("Not enough tokens provided")
         }
-
-        if(hat != nil){
-            if(!(hat?.checkCategorySeries(category: "hat", series: sparkSeries)!)){
-                panic("The hat component belongs to the wrong category or the wrong series")
-            }
-        }
-
-        if(eyeglasses != nil){
-            if(!(eyeglasses?.checkCategorySeries(category: "eyeglasses", series: sparkSeries)!)){
-                panic("The eyeglasses component belongs to the wrong category or the wrong series")
-            }
-        }
-
-        if(background != nil){
-            if(!(background?.checkCategorySeries(category: "background", series: sparkSeries)!)){
-                panic("The background component belongs to the wrong category or the wrong series")
-            }
-        }
-
-
-        //Make sure that all the Rarity Boosts are from the correct category
-        var i: Int = 0
-        while( i < rareBoost.length) {
-            if(!rareBoost[i].isBooster(rarity: "rare")) {
-                panic("The rare boost belongs to the wrong category")
-            }
-            if(rareBoost[i].getSeries() != sparkSeries) {
-                panic("The rare boost doesn't belong to the correct series")
-            }
-            i = i + 1
-        }
-        i = 0
-        while( i < epicBoost.length) {
-            if(!epicBoost[i].isBooster(rarity: "epic")) {
-                panic("The epic boost belongs to the wrong category")
-            }
-            if(epicBoost[i].getSeries() != sparkSeries) {
-                panic("The epic boost doesn't belong to the correct series")
-            }
-            i = i + 1
-        }
-        i = 0
-        while( i < legendaryBoost.length) {
-            if(!legendaryBoost[i].isBooster(rarity: "legendary")) {
-                panic("The legendary boost belongs to the wrong category")
-            }
-            if(legendaryBoost[i].getSeries() != sparkSeries) {
-                panic("The legendary boost doesn't belong to the correct series")
-            }
-            i = i + 1
-        }
-
-        //Keep count of the necessary rarity boost for the selected templates
-        var rareCount: UInt8 = 0
-        var epicCount: UInt8 = 0
-        var legendaryCount: UInt8 = 0
-
-        if(bodyTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-        if(hairTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-        if(eyesTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-        if(noseTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-        if(mouthTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-        if(clothingTemplate.rarity == "rare"){ rareCount = rareCount + 1 }
-
-        if(bodyTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-        if(hairTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-        if(eyesTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-        if(noseTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-        if(mouthTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-        if(clothingTemplate.rarity == "epic"){ epicCount = epicCount + 1 }
-
-        if(bodyTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-        if(hairTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-        if(eyesTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-        if(noseTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-        if(mouthTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-        if(clothingTemplate.rarity == "legendary"){ legendaryCount = legendaryCount + 1 }
-
-
-        if(facialHairTemplate != nil){
-            if(facialHairTemplate?.rarity == "rare"){ rareCount = rareCount + 1}
-            if(facialHairTemplate?.rarity == "epic"){ epicCount = epicCount + 1}
-            if(facialHairTemplate?.rarity == "legendary"){ legendaryCount = legendaryCount + 1}
-        }
-
-        if(Int(rareCount) != rareBoost.length){
-            panic("The rare boosts are not equal the ones needed")
-        }
-        if(Int(epicCount) != epicBoost.length){
-            panic("The epic boosts are not equal the ones needed")
-        }
-        if(Int(legendaryCount) != legendaryBoost.length){
-            panic("The epic boosts are not equal the ones needed")
-        }
-
-
 
 
         // Generates the combination string to check for uniqueness.
         // This is like a barcode that defines exactly which components were used
         // to create the Flovatar
-        let combinationString = Flovatar.getCombinationString(
-            body: body,
-            hair: hair,
-            facialHair: facialHair,
-            eyes: eyes,
-            nose: nose,
-            mouth: mouth,
-            clothing: clothing)
+        let combinationString = FlovatarDustCollectible.getCombinationString(
+            series: series,
+            layers: coreLayers
+            )
 
         // Makes sure that the combination is available and not taken already
-        if(Flovatar.mintedCombinations.containsKey(combinationString) == true) {
+        if(FlovatarDustCollectible.mintedCombinations.containsKey(combinationString) == true) {
             panic("This combination has already been taken")
         }
-
-        let facialHairSvg:String  = facialHairTemplate != nil ? facialHairTemplate?.svg! : ""
-        let svg = (bodyTemplate.svg!).concat(clothingTemplate.svg!).concat(hairTemplate.svg!).concat(eyesTemplate.svg!).concat(noseTemplate.svg!).concat(mouthTemplate.svg!).concat(facialHairSvg)
-
-        // TODO fix this with optional if possible. If I define it as UInt64?
-        // instead of UInt64 it's throwing an error even if it's defined in Metadata struct
-        let facialHairId: UInt64 = facialHair != nil ? facialHair! : 0
-
-        // Creates the metadata for the new Flovatar
-        let metadata = Metadata(
-            mint: Flovatar.totalSupply + UInt64(1),
-            series: spark.getSeries(),
-            svg: svg,
-            combination: combinationString,
-            creatorAddress: address,
-            components: {
-                "body": body,
-                "hair": hair,
-                "facialHair": facialHairId,
-                "eyes": eyes,
-                "nose": nose,
-                "mouth": mouth,
-                "clothing": clothing
-            },
-            rareCount: rareCount,
-            epicCount: epicCount,
-            legendaryCount: legendaryCount
-        )
 
         let royalties: [Royalty] = []
 
         let creatorAccount = getAccount(address)
         royalties.append(Royalty(
             wallet: creatorAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver),
-            cut: Flovatar.getRoyaltyCut(),
+            cut: FlovatarDustCollectible.getRoyaltyCut(),
             type: RoyaltyType.percentage
         ))
 
         royalties.append(Royalty(
             wallet: self.account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver),
-            cut: Flovatar.getMarketplaceCut(),
+            cut: FlovatarDustCollectible.getMarketplaceCut(),
             type: RoyaltyType.percentage
         ))
 
         // Mint the new Flovatar NFT by passing the metadata to it
-        var newNFT <- create NFT(metadata: metadata, royalties: Royalties(royalty: royalties))
+        var newNFT <- create NFT(series: series, layers: fullLayers, creatorAddress: address, royalties: Royalties(royalty: royalties))
 
         // Adds the combination to the arrays to remember it
-        Flovatar.addMintedCombination(combination: combinationString)
+        FlovatarDustCollectible.addMintedCombination(combination: combinationString)
 
-
-        // Checks for any additional optional component (accessory, hat,
-        // eyeglasses, background) and assigns it to the Flovatar if present.
-        if(accessory != nil){
-            let temp <- newNFT.setAccessory(component: <-accessory!)
-            destroy temp
-        } else {
-            destroy accessory
-        }
-        if(hat != nil){
-            let temp <- newNFT.setHat(component: <-hat!)
-            destroy temp
-        } else {
-            destroy hat
-        }
-        if(eyeglasses != nil){
-            let temp <- newNFT.setEyeglasses(component: <-eyeglasses!)
-            destroy temp
-        } else {
-            destroy eyeglasses
-        }
-        if(background != nil){
-            let temp <- newNFT.setBackground(component: <-background!)
-            destroy temp
-        } else {
-            destroy background
-        }
 
         // Emits the Created event to notify about its existence
-        emit Created(id: newNFT.id, metadata: metadata)
+        emit Created(id: newNFT.id, mint: newNFT.mint, series: newNFT.series)
 
-        // Destroy all the spark and the rarity boost since they are not needed anymore.
+        //TODO: Increase counter and price for template!!!
 
-        destroy spark
-
-        while(rareBoost.length > 0){
-            let boost <- rareBoost.remove(at: 0)
-            destroy boost
-        }
-        destroy rareBoost
-
-        while(epicBoost.length > 0){
-            let boost <- epicBoost.remove(at: 0)
-            destroy boost
-        }
-        destroy epicBoost
-
-        while(legendaryBoost.length > 0){
-            let boost <- legendaryBoost.remove(at: 0)
-            destroy boost
-        }
-        destroy legendaryBoost
+        destroy vault
 
         return <- newNFT
     }
@@ -1005,36 +845,38 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         // contains all the SVG and basic informations to represent
         // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
         // More info in the FlovatarComponentTemplate.cdc file
-        pub fun createComponentTemplate(
-            name: String,
-            category: String,
-            color: String,
-            description: String,
-            svg: String,
-            series: UInt32,
-            maxMintableComponents: UInt64,
-            rarity: String
-        ) : @FlovatarComponentTemplate.ComponentTemplate {
-            return <- FlovatarComponentTemplate.createComponentTemplate(
+        pub fun createCollectibleTemplate(
+                        name: String,
+                        description: String,
+                        series: UInt64,
+                        layer: UInt32,
+                        metadata: {String: String},
+                        rarity: String,
+                        basePrice: UFix64,
+                        svg: String,
+                        maxMintableComponents: UInt64
+                    ) : @FlovatarDustCollectibleTemplate.CollectibleTemplate {
+            return <- FlovatarDustCollectibleTemplate.createCollectibleTemplate(
                 name: name,
-                category: category,
-                color: color,
                 description: description,
-                svg: svg,
                 series: series,
-                maxMintableComponents: maxMintableComponents,
-                rarity: rarity
+                layer: layer,
+                metadata: metadata,
+                rarity: rarity,
+                basePrice: basePrice,
+                svg: svg,
+                maxMintableComponents: maxMintableComponents
             )
         }
 
         // This will mint a new Component based from a selected Template
-        pub fun createComponent(templateId: UInt64) : @FlovatarComponent.NFT {
-            return <- FlovatarComponent.createComponent(templateId: templateId)
-        }
+        //pub fun createCollectible(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
+        //    return <- FlovatarDustCollectibleAccessory.createAccessory(templateId: templateId)
+        //}
         // This will mint Components in batch and return a Collection instead of the single NFT
-        pub fun batchCreateComponents(templateId: UInt64, quantity: UInt64) : @FlovatarComponent.Collection {
-            return <- FlovatarComponent.batchCreateComponents(templateId: templateId, quantity: quantity)
-        }
+        //pub fun batchCreateCollectibles(templateId: UInt64, quantity: UInt64) : @FlovatarDustCollectibleAccessory.Collection {
+        //    return <- FlovatarDustCollectibleAccessory.batchCreateAccessory(templateId: templateId, quantity: quantity)
+        //}
 
 
         // With this function you can generate a new Admin resource

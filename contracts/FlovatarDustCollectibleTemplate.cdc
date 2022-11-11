@@ -34,9 +34,6 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let name: String
         pub let isAccessory: Bool
 
-        //can be percentage
-        pub let type: RoyaltyType
-
         init(id: UInt32, name: String, isAccessory: Bool){
             self.id = id
             self.name = name
@@ -55,7 +52,7 @@ pub contract FlovatarDustCollectibleTemplate {
         access(contract) let colors: {UInt32: String}
         access(contract) let metadata: {String: String}
         pub let maxMintable: UInt64
-        pub fun getLayers(): {UInt32: String}
+        pub fun getLayers(): {UInt32: Layer}
         pub fun getColors(): {UInt32: String}
         pub fun getMetadata(): {String: String}
     }
@@ -73,7 +70,7 @@ pub contract FlovatarDustCollectibleTemplate {
         access(contract) let metadata: {String: String}
         pub let maxMintable: UInt64
 
-        pub fun getLayers(): {UInt32: String} {
+        pub fun getLayers(): {UInt32: Layer} {
             return self.layers
         }
         pub fun getColors(): {UInt32: String} {
@@ -306,7 +303,7 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let description: String
         pub let series: UInt64
         pub let layer: UInt32
-        access(self) let metadata: {String: String}
+        pub let metadata: {String: String}
         pub let rarity: String
         pub let basePrice: UFix64
         pub let svg: String?
@@ -451,7 +448,7 @@ pub contract FlovatarDustCollectibleTemplate {
 
     pub fun isCollectibleLayerAccessory(layer: UInt32, series: UInt64): Bool {
         let series = FlovatarDustCollectibleTemplate.getCollectibleSeries(id: series)!
-        if(let layer = series.layers[layer]){
+        if let layer = series.layers[layer] {
             if(layer.isAccessory){
                 return true
             }
