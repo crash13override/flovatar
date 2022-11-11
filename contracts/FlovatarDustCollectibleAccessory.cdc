@@ -428,7 +428,7 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
     }
 
     // This function will batch create multiple Components and pass them back as a Collection
-    access(account) fun batchCreateComponents(templateId: UInt64, quantity: UInt64): @Collection {
+    access(account) fun batchCreateCollectibleAccessory(templateId: UInt64, quantity: UInt64): @Collection {
         let newCollection <- create Collection()
 
         var i: UInt64 = 0

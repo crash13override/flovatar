@@ -86,6 +86,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub let series: UInt64
         pub let combination: String
         pub let creatorAddress: Address
+        pub let createdAt: UFix64
         access(contract) let royalties: Royalties
 
         // these three are added because I think they will be in the standard. At least Dieter thinks it will be needed
@@ -99,7 +100,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun getBio(): {String: String}
         pub fun getMetadata(): {String: String}
         pub fun getLayers(): {UInt32: UInt64?}
-        //pub fun getAccessories(): [UInt64]
+        pub fun getAccessories(): [UInt64]
         pub fun getSeries(): FlovatarDustCollectibleTemplate.CollectibleSeriesData?
     }
 
@@ -109,8 +110,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun setName(name: String, vault: @FlovatarDustToken.Vault): String
         pub fun addStory(text: String, vault: @FlovatarDustToken.Vault): String
         pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FlovatarDustToken.Vault): String
-        //pub fun setAccessory(layer: UInt32, accessory: @FlovatarDustCollectibleAccessory.NFT): @FlovatarDustCollectibleAccessory.NFT?
-        //pub fun removeAccessory(layer: UInt32): @FlovatarDustCollectibleAccessory.NFT?
+        pub fun setAccessory(layer: UInt32, accessory: @FlovatarDustCollectibleAccessory.NFT): @FlovatarDustCollectibleAccessory.NFT?
+        pub fun removeAccessory(layer: UInt32): @FlovatarDustCollectibleAccessory.NFT?
     }
 
     //The NFT resource that implements both Private and Public interfaces
@@ -120,6 +121,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub let series: UInt64
         pub let combination: String
         pub let creatorAddress: Address
+        pub let createdAt: UFix64
         access(contract) let royalties: Royalties
 
         access(contract) var name: String
@@ -128,7 +130,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         access(self) let bio: {String: String}
         access(self) let metadata: {String: String}
         access(self) let layers: {UInt32: UInt64?}
-        //access(self) let accessories: @{UInt64: FlovatarDustCollectibleAccessory.NFT}
+        access(self) let accessories: @{UInt32: FlovatarDustCollectibleAccessory.NFT}
 
         init(series: UInt64,
             layers: {UInt32: UInt64?},
@@ -139,10 +141,11 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             self.id = FlovatarDustCollectible.totalSupply
             //TODO Update to keep track of mints per series
-            self.mint = FlovatarDustCollectible.totalSupply
+            self.mint = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)!
             self.series = series
             self.combination = FlovatarDustCollectible.getCombinationString(series: series, layers: coreLayers)
             self.creatorAddress = creatorAddress
+            self.createdAt = getCurrentBlock().timestamp
             self.royalties = royalties
 
             self.schema = nil
@@ -151,11 +154,11 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             self.bio = {}
             self.metadata = {}
             self.layers = layers
-            //self.accessories = {}
+            self.accessories <- {}
         }
 
         destroy() {
-            //destroy self.accessories
+            destroy self.accessories
             emit Destroyed(id: self.id)
         }
 
@@ -261,9 +264,16 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             return self.layers
         }
 
-        /*
+
         pub fun getAccessories(): [UInt64] {
-            return self.accessories.keys
+            let accessoriesIds: [UInt64] = []
+            for k in self.accessories.keys {
+                let accessoryId = self.accessories[k]?.id
+                if(accessoryId != nil){
+                    accessoriesIds.append(accessoryId!)
+                }
+            }
+            return accessoriesIds
         }
         // This will allow to change the Accessory of the Flovatar any time.
         // It checks for the right category and series before executing.
@@ -285,7 +295,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         }
 
         // This will allow to remove the Accessory of the Flovatar any time.
-        pub fun removeAccessory(layer: UInt32): @FlovatarComponent.NFT? {
+        pub fun removeAccessory(layer: UInt32): @FlovatarDustCollectibleAccessory.NFT? {
             if(FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: layer, series: self.series)){
                 emit Updated(id: self.id)
                 self.layers[layer] = nil
@@ -295,7 +305,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             panic("The Layer is out of range or it's not an accessory")
         }
-        */
+
 
         // This function will return the full SVG of the Flovatar. It will take the
         // optional components (Accessory, Hat, Eyeglasses and Background) from their
@@ -757,7 +767,11 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 coreLayers[i] = template.id
                 fullLayers[i] = template.id
                 templates.append(template)
-                totalPrice = totalPrice + FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: layers[i]!)!
+                totalPrice = totalPrice + FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: template.id)!
+
+                FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: template.id)
+                FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: template.id)
+                FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: template.id, value: getCurrentBlock().timestamp)
             } else {
                 fullLayers[i] = nil
             }
@@ -797,6 +811,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             cut: FlovatarDustCollectible.getMarketplaceCut(),
             type: RoyaltyType.percentage
         ))
+
+        FlovatarDustCollectibleTemplate.increaseTotalMintedCollectibles(series: series)
 
         // Mint the new Flovatar NFT by passing the metadata to it
         var newNFT <- create NFT(series: series, layers: fullLayers, creatorAddress: address, royalties: Royalties(royalty: royalties))
@@ -869,14 +885,14 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             )
         }
 
-        // This will mint a new Component based from a selected Template
-        //pub fun createCollectible(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
-        //    return <- FlovatarDustCollectibleAccessory.createAccessory(templateId: templateId)
-        //}
-        // This will mint Components in batch and return a Collection instead of the single NFT
-        //pub fun batchCreateCollectibles(templateId: UInt64, quantity: UInt64) : @FlovatarDustCollectibleAccessory.Collection {
-        //    return <- FlovatarDustCollectibleAccessory.batchCreateAccessory(templateId: templateId, quantity: quantity)
-        //}
+        //This will mint a new Component based from a selected Template
+        pub fun createCollectible(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
+            return <- FlovatarDustCollectibleAccessory.createCollectibleAccessory(templateId: templateId)
+        }
+        //This will mint Components in batch and return a Collection instead of the single NFT
+        pub fun batchCreateCollectibles(templateId: UInt64, quantity: UInt64) : @FlovatarDustCollectibleAccessory.Collection {
+            return <- FlovatarDustCollectibleAccessory.batchCreateCollectibleAccessory(templateId: templateId, quantity: quantity)
+        }
 
 
         // With this function you can generate a new Admin resource

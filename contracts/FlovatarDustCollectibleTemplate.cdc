@@ -478,13 +478,35 @@ pub contract FlovatarDustCollectibleTemplate {
     access(account) fun setTotalMintedComponents(id: UInt64, value: UInt64) {
         FlovatarDustCollectibleTemplate.totalMintedComponents[id] = value
     }
+    // This function is used within the contract to set the new counter for each Template
+    access(account) fun increaseTotalMintedComponents(id: UInt64) {
+        let totMintedComponents: UInt64? = FlovatarDustCollectibleTemplate.totalMintedComponents[id]
+        if(totMintedComponents != nil){
+            FlovatarDustCollectibleTemplate.totalMintedComponents[id] = totMintedComponents! + UInt64(1)
+        }
+    }
     // This function is used within the contract to set the new counter for each Series
     access(account) fun setTotalMintedCollectibles(series: UInt64, value: UInt64) {
         FlovatarDustCollectibleTemplate.totalMintedCollectibles[series] = value
     }
     // This function is used within the contract to set the new counter for each Template
+    access(account) fun increaseTotalMintedCollectibles(series: UInt64) {
+        let totMintedCollectibles: UInt64? = FlovatarDustCollectibleTemplate.totalMintedCollectibles[series]
+        if(totMintedCollectibles != nil){
+            FlovatarDustCollectibleTemplate.totalMintedCollectibles[series] = totMintedCollectibles! + UInt64(1)
+        }
+    }
+    // This function is used within the contract to set the new counter for each Template
     access(account) fun setTemplatesCurrentPrice(id: UInt64, value: UFix64) {
         FlovatarDustCollectibleTemplate.templatesCurrentPrice[id] = value
+    }
+    // This function is used within the contract to set the new counter for each Template
+    access(account) fun increaseTemplatesCurrentPrice(id: UInt64) {
+        let currentPrice: UFix64? = FlovatarDustCollectibleTemplate.templatesCurrentPrice[id]
+        if(currentPrice != nil){
+            let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: id)
+            FlovatarDustCollectibleTemplate.templatesCurrentPrice[id] = currentPrice! + template!.basePrice
+        }
     }
     // This function is used within the contract to set the timestamp 
     // when a Component for a specific Template was minted
