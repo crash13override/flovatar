@@ -562,7 +562,7 @@ pub contract FlovatarDustCollectibleTemplate {
         metadata: {String: String},
         maxMintable: UInt64
     ) : @FlovatarDustCollectibleTemplate.CollectibleSeries {
-    
+
         var newCollectibleSeries <- create CollectibleSeries(
             name: name,
             description: description,

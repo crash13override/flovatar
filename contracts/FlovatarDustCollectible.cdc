@@ -141,7 +141,6 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
             let coreLayers: {UInt32: UInt64} = FlovatarDustCollectible.getCoreLayers(series: series, layers: layers)
 
             self.id = FlovatarDustCollectible.totalSupply
-            //TODO Update to keep track of mints per series
             self.mint = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)!
             self.series = series
             self.combination = FlovatarDustCollectible.getCombinationString(series: series, layers: coreLayers)
@@ -746,6 +745,12 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         if(seriesData!.layers.length != layers.length){
             panic("The amount of layers is not matching!")
         }
+        let mintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)
+        if(mintedCollectibles != nil){
+            if(mintedCollectibles! >= seriesData!.maxMintable){
+                panic("Reached the maximum mint number for this Series!")
+            }
+        }
 
         let templates: [FlovatarDustCollectibleTemplate.CollectibleTemplateData] = []
         var totalPrice: UFix64 = 0.0
@@ -822,8 +827,6 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
         // Emits the Created event to notify about its existence
         emit Created(id: newNFT.id, mint: newNFT.mint, series: newNFT.series)
-
-        //TODO: Increase counter and price for template!!!
 
         destroy vault
 

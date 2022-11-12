@@ -80,6 +80,7 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
             // Increments the counter and stores the timestamp
             FlovatarDustCollectibleTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
             FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
+            FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
         }
 
         pub fun getID(): UInt64 {
