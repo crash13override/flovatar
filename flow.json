@@ -16,6 +16,7 @@
     "FlovatarDustCollectible": "./contracts/FlovatarDustCollectible.cdc",
     "FlovatarDustCollectibleTemplate": "./contracts/FlovatarDustCollectibleTemplate.cdc",
     "FlovatarDustCollectibleAccessory": "./contracts/FlovatarDustCollectibleAccessory.cdc",
+    "FlovatarComponentUpgrader": "./contracts/FlovatarComponentUpgrader.cdc",
     "Profile": {
       "source": "./contracts/Profile.cdc",
       "aliases": {
@@ -114,7 +115,8 @@
         "FlowUtilityToken",
         "FlovatarDustCollectibleTemplate",
         "FlovatarDustCollectibleAccessory",
-        "FlovatarDustCollectible"
+        "FlovatarDustCollectible",
+        "FlovatarComponentUpgrader"
       ]
     }
   }

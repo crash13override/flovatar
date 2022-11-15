@@ -38,34 +38,126 @@ pub contract FlovatarComponentUpgrader {
     pub event FlovatarComponentUpgraded(newId: UInt64, rarity: String, category: String, burnedIds: [UInt64])
 
 
+
+    //Randomize code gently provided by @bluesign
+    pub struct RandomInt{
+        priv var value : UInt64?
+        priv let seedHeight : UInt64
+        priv let maxValue: UInt64
+        priv let minValue: UInt64
+        priv let field: String
+        priv let uuid: UInt64
+
+        pub init(uuid: UInt64, field: String, minValue: UInt64, maxValue: UInt64){
+                self.uuid = uuid
+                self.field = field
+                self.minValue = minValue
+                self.maxValue = maxValue
+                self.seedHeight = getCurrentBlock().height
+                self.value = nil
+        }
+
+        pub fun getValue() : UInt64{
+                pre{
+                    //TODO: Add user in queue to be processed at the next block to avoid
+                    //getCurrentBlock().height>self.seedHeight: "cannot get value now, wait a block"
+                }
+                if let value = self.value {
+                    return value
+                }
+                let h: [UInt8] = HashAlgorithm.SHA3_256.hash(self.uuid.toBigEndianBytes())
+                let f: [UInt8] = HashAlgorithm.SHA3_256.hash(self.field.utf8)
+
+                var id =  getBlock(at: self.seedHeight+1)!.id
+                var random:UInt64 = 0
+                var i = 0
+                while i<8{
+                    random = random + (UInt64(id[i]) ^ UInt64(h[i]) ^ UInt64(f[i]))
+                    random = random << 8
+                    i=i+1
+                }
+                self.value = random
+                return self.minValue + random % (self.maxValue - self.minValue)
+        }
+    }
+
     pub resource interface CollectionPublic {
         pub fun depositComponent(component: @FlovatarComponent.NFT)
         pub fun withdrawComponent(id: UInt64) : @FlovatarComponent.NFT
+        pub fun withdrawRandomComponent(series: UInt32, rarity: String, category: String?) : @FlovatarComponent.NFT
     }
+
+
 
     // The main Collection that manages the Containers
     pub resource Collection: CollectionPublic {
 
         access(contract) let flovatarComponents: @{UInt64: FlovatarComponent.NFT}
+        access(contract) let rarityLookup: {UInt32: {String: {String: {UInt64: UInt64}}}}
 
 
         init () {
             self.flovatarComponents <- {}
+            self.rarityLookup = {}
         }
 
         pub fun depositComponent(component: @FlovatarComponent.NFT) {
+            if(!self.rarityLookup.containsKey(component.getSeries())){
+                self.rarityLookup.insert(key: component.getSeries(), {} as {String: {String: {UInt64: UInt64}}})
+            }
+            if(!self.rarityLookup[component.getSeries()]!.containsKey(component.getRarity())){
+                self.rarityLookup[component.getSeries()]!.insert(key: component.getRarity(), {} as {String: {UInt64: UInt64}})
+                self.rarityLookup[component.getSeries()]![component.getRarity()]!.insert(key: "all", {} as {UInt64: UInt64})
+            }
+            if(!self.rarityLookup[component.getSeries()]![component.getRarity()]!.containsKey(component.getCategory())){
+                self.rarityLookup[component.getSeries()]![component.getRarity()]!.insert(key: component.getCategory(), {} as {UInt64: UInt64})
+            }
+            self.rarityLookup[component.getSeries()]![component.getRarity()]!["all"]!.insert(key: component.id, component.id)
+            self.rarityLookup[component.getSeries()]![component.getRarity()]![component.getCategory()]!.insert(key: component.id, component.id)
+
             let oldComponent <- self.flovatarComponents[component.id] <- component
             destroy oldComponent
         }
 
         pub fun withdrawComponent(id: UInt64) : @FlovatarComponent.NFT {
-            let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
-            return <- token
+            let component <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
+
+            self.rarityLookup[component.getSeries()]![component.getRarity()]!["all"]!.remove(key: component.id)
+            self.rarityLookup[component.getSeries()]![component.getRarity()]![component.getCategory()]!.remove(key: component.id)
+
+            return <- component
         }
-        pub fun withdrawRandomComponent(series: UInt32, rarity: String) : @FlovatarComponent.NFT {
+        pub fun withdrawRandomComponent(series: UInt32, rarity: String, category: String?) : @FlovatarComponent.NFT {
             //TODO FILTER BY SERIES AND RARITY AND THEN RANDOMIZE AND PICK ONE
-            let token <- self.flovatarComponents.remove(key: 0) ?? panic("missing NFT")
-            return <- token
+            var components: [UInt64] = []
+            if(self.rarityLookup[series] == nil){
+                panic("No Components found for the provided Series")
+            }
+            if(self.rarityLookup[series]![rarity] == nil){
+                panic("No Components found for the provided Rarity")
+            }
+            if(category != nil){
+                if(self.rarityLookup[series]![rarity]![category!] == nil){
+                    panic("No Components found for the provided Category")
+                }
+                components = self.rarityLookup[series]![rarity]![category!]!.keys
+            } else {
+                components = self.rarityLookup[series]![rarity]!["all"]!.keys
+            }
+
+            if(components.length < 1){
+                panic("No Components found!")
+            }
+
+            let randInt: UInt64 = unsafeRandom()
+            var fieldString: String = series.toString().concat(rarity)
+            if(category != nil){
+                fieldString = fieldString.concat(category!)
+            }
+            let randomPos: RandomInt = RandomInt(uuid: unsafeRandom(), field: fieldString, minValue: UInt64(0), maxValue: UInt64(components.length - Int(1)))
+
+            let component <- self.withdrawComponent(id: components[randomPos.getValue()])
+            return <- component
         }
 
         pub fun getComponentIDs(): [UInt64] {
@@ -92,13 +184,13 @@ pub contract FlovatarComponentUpgrader {
         	self.upgradeEnabled : "Upgrade is not enabled!"
             vault.balance == 20.0 : "The amount of $DUST is not correct"
             vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
-            components.length == 20 : "You need to provide exactly 10 Flobits for the upgrade"
+            components.length == 10 : "You need to provide exactly 10 Flobits for the upgrade"
         }
         if let inboxCollection = self.account.borrow<&FlovatarComponentUpgrader.Collection>(from: self.CollectionStoragePath) {
 
             var componentSeries: UInt32 = 0
             var checkCategory: Bool = true
-            var componentCategory: String = ""
+            var componentCategory: String? = nil
             var componentRarity: String = ""
             var outputRarity: String = ""
 
@@ -106,7 +198,7 @@ pub contract FlovatarComponentUpgrader {
 
             while (i < UInt32(components.length)) {
 
-                let template = FlovatarComponentTemplate.getComponentTemplate(id: components[i]!.templateId)!
+                let template = FlovatarComponentTemplate.getComponentTemplate(id: components[i].templateId)!
 
                 if(i == UInt32(0)){
                     componentSeries = template.series
@@ -137,11 +229,20 @@ pub contract FlovatarComponentUpgrader {
                 panic("Rarity needs to be Common, Rare or Epic")
             }
 
-            let component <- inboxCollection.withdrawRandomComponent(series: componentSeries, rarity: outputRarity)
+            if(!checkCategory){
+                componentCategory = nil
+            }
+
+            let component <- inboxCollection.withdrawRandomComponent(series: componentSeries, rarity: outputRarity, category: componentCategory)
 
             destroy components
+            destroy vault
+
+            return <- component
 
         }
+
+        panic("Can't borrow the Upgrader Collection")
     }
 
 
