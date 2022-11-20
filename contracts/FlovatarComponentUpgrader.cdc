@@ -76,7 +76,7 @@ pub contract FlovatarComponentUpgrader {
                     random = random << 8
                     i=i+1
                 }
-                self.value = random
+                self.value = self.minValue + random % (self.maxValue - self.minValue)
                 return self.minValue + random % (self.maxValue - self.minValue)
         }
     }
