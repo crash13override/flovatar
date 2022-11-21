@@ -85,19 +85,25 @@ pub contract FlovatarInbox {
     pub resource Container {
         access(contract) let dustVault: @FlovatarDustToken.Vault
         access(contract) let flovatarComponents: @{UInt64: FlovatarComponent.NFT}
+        access(self) var blockHeight : UInt64
 
         // Initialize a Template with all the necessary data
         init() {
             self.dustVault <- FlovatarDustToken.createEmptyVault()
             self.flovatarComponents <- {}
+            self.blockHeight = getCurrentBlock().height
         }
 
         pub fun insertComponent(component: @FlovatarComponent.NFT) {
             let oldComponent <- self.flovatarComponents[component.id] <- component
             destroy oldComponent
+            self.blockHeight = getCurrentBlock().height
         }
 
         pub fun withdrawComponent(id: UInt64) : @FlovatarComponent.NFT{
+            pre{
+                self.blockHeight <= getCurrentBlock().height : "You need to wait at least one Block to withdraw the NFT"
+            }
             let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
             return <- token
         }

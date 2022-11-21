@@ -13,6 +13,7 @@ import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
 import FlovatarComponent from "./FlovatarComponent.cdc"
 import FlovatarPack from "./FlovatarPack.cdc"
 import FlovatarDustToken from "./FlovatarDustToken.cdc"
+import FlovatarInbox from "./FlovatarInbox.cdc"
 import Flovatar from "./Flovatar.cdc"
 
 /*
@@ -38,11 +39,9 @@ pub contract FlovatarComponentUpgrader {
     pub event FlovatarComponentUpgraded(newId: UInt64, rarity: String, category: String, burnedIds: [UInt64])
 
 
-
     //Randomize code gently provided by @bluesign
     pub struct RandomInt{
         priv var value : UInt64?
-        priv let seedHeight : UInt64
         priv let maxValue: UInt64
         priv let minValue: UInt64
         priv let field: String
@@ -53,22 +52,17 @@ pub contract FlovatarComponentUpgrader {
                 self.field = field
                 self.minValue = minValue
                 self.maxValue = maxValue
-                self.seedHeight = getCurrentBlock().height
                 self.value = nil
         }
 
         pub fun getValue() : UInt64{
-                pre{
-                    //TODO: Add user in queue to be processed at the next block to avoid
-                    //getCurrentBlock().height>self.seedHeight: "cannot get value now, wait a block"
-                }
                 if let value = self.value {
                     return value
                 }
                 let h: [UInt8] = HashAlgorithm.SHA3_256.hash(self.uuid.toBigEndianBytes())
                 let f: [UInt8] = HashAlgorithm.SHA3_256.hash(self.field.utf8)
 
-                var id =  getBlock(at: self.seedHeight+1)!.id
+                var id =  getBlock(at: getCurrentBlock().height)!.id
                 var random:UInt64 = 0
                 var i = 0
                 while i<8{
@@ -179,14 +173,14 @@ pub contract FlovatarComponentUpgrader {
 
 
     // This function withdraws all the Components assigned to a Flovatar and sends them to the Owner's address
-    pub fun upgradeFlovatarComponent(components: @[FlovatarComponent.NFT], vault: @FungibleToken.Vault) : @FlovatarComponent.NFT {
+    pub fun upgradeFlovatarComponent(components: @[FlovatarComponent.NFT], vault: @FungibleToken.Vault, address: Address) {
         pre {
         	self.upgradeEnabled : "Upgrade is not enabled!"
             vault.balance == 20.0 : "The amount of $DUST is not correct"
             vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             components.length == 10 : "You need to provide exactly 10 Flobits for the upgrade"
         }
-        if let inboxCollection = self.account.borrow<&FlovatarComponentUpgrader.Collection>(from: self.CollectionStoragePath) {
+        if let upgraderCollection = self.account.borrow<&FlovatarComponentUpgrader.Collection>(from: self.CollectionStoragePath) {
 
             var componentSeries: UInt32 = 0
             var checkCategory: Bool = true
@@ -233,18 +227,21 @@ pub contract FlovatarComponentUpgrader {
                 componentCategory = nil
             }
 
-            let component <- inboxCollection.withdrawRandomComponent(series: componentSeries, rarity: outputRarity, category: componentCategory)
+            let component <- upgraderCollection.withdrawRandomComponent(series: componentSeries, rarity: outputRarity, category: componentCategory)
 
             destroy components
             destroy vault
 
-            return <- component
+            if let inboxCollection = self.account.borrow<&FlovatarInbox.Collection>(from: FlovatarInbox.CollectionStoragePath) {
+                inboxCollection.depositComponentToWallet(address: address, component: <- component)
+            } else {
+                panic("Couldn't borrow Flovatar Inbox Collection")
+            }
 
         }
 
         panic("Can't borrow the Upgrader Collection")
     }
-
 
     // Admin function to temporarly enable or disable the airdrop and reward withdraw so that
     // we can distribute them to everyone at the same time
