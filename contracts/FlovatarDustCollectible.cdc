@@ -69,9 +69,12 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub let type: RoyaltyType
 
         init(wallet:Capability<&{FungibleToken.Receiver}>, cut: UFix64, type: RoyaltyType ){
-            self.wallet=wallet
-            self.cut=cut
-            self.type=type
+            if(! wallet.check()){
+                panic("Capability not valid!")
+            }
+            self.wallet = wallet
+            self.cut = cut
+            self.type = type
         }
     }
 
@@ -757,7 +760,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         let coreLayers: {UInt32: UInt64} = {}
         let fullLayers: {UInt32: UInt64?} = {}
 
-        var i: UInt32 = UInt32(layers.length)
+        var i: UInt32 = UInt32(0)
         while(i <  UInt32(layers.length)){
             if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: i, series: series)){
                 if(layers[i] == nil){
@@ -770,6 +773,13 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 if(template.layer != i){
                     panic("Template belonging to the wrong Layer")
                 }
+
+                let totalMintedComponents: UInt64 = FlovatarDustCollectibleTemplate.getTotalMintedComponents(id: template.id)!
+                // Makes sure that the original minting limit set for each Template has not been reached
+                if(totalMintedComponents >= template.maxMintableComponents) {
+                    panic("Reached maximum mintable count for this trait")
+                }
+
                 coreLayers[i] = template.id
                 fullLayers[i] = template.id
                 templates.append(template)

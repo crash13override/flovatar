@@ -369,6 +369,9 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
     pub fun getSvgForComponent(address: Address, componentId: UInt64) : String? {
         let account = getAccount(address)
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
+            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
+                panic("The Collection instance does not belong to the correct type!")
+            }
             return componentCollection.borrowCollectibleAccessory(id: componentId)!.getSvg()
         }
         return nil
@@ -378,6 +381,9 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
     pub fun getAccessory(address: Address, componentId: UInt64) : CollectibleAccessoryData? {
         let account = getAccount(address)
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
+            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
+                panic("The Collection instance does not belong to the correct type!")
+            }
             if let component = componentCollection.borrowCollectibleAccessory(id: componentId) {
                 return CollectibleAccessoryData(
                     id: componentId,
@@ -396,6 +402,9 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
         let account = getAccount(address)
 
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
+            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
+                panic("The Collection instance does not belong to the correct type!")
+            }
             for id in componentCollection.getIDs() {
                 var component = componentCollection.borrowCollectibleAccessory(id: id)
                 componentData.append(CollectibleAccessoryData(

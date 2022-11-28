@@ -578,6 +578,9 @@ pub contract FlovatarDustCollectibleTemplate {
         // Emits the Created event to notify about the new Template
         emit CreatedSeries(id: newCollectibleSeries.id, name: newCollectibleSeries.name, maxMintable: newCollectibleSeries.maxMintable)
 
+        // Set the counter for the minted Collectibles of this Series to 0
+        FlovatarDustCollectibleTemplate.setTotalMintedCollectibles(series: newCollectibleSeries.id, value: UInt64(0))
+
         return <- newCollectibleSeries
     }
 	init() {

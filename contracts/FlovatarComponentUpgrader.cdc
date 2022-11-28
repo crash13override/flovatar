@@ -77,8 +77,6 @@ pub contract FlovatarComponentUpgrader {
 
     pub resource interface CollectionPublic {
         pub fun depositComponent(component: @FlovatarComponent.NFT)
-        pub fun withdrawComponent(id: UInt64) : @FlovatarComponent.NFT
-        pub fun withdrawRandomComponent(series: UInt32, rarity: String, category: String?) : @FlovatarComponent.NFT
     }
 
 
@@ -148,6 +146,12 @@ pub contract FlovatarComponentUpgrader {
             if(category != nil){
                 fieldString = fieldString.concat(category!)
             }
+
+            if (components.length == Int(1)) {
+                let component <- self.withdrawComponent(id: components[UInt64(0)])
+                return <- component
+            }
+
             let randomPos: RandomInt = RandomInt(uuid: unsafeRandom(), field: fieldString, minValue: UInt64(0), maxValue: UInt64(components.length - Int(1)))
 
             let component <- self.withdrawComponent(id: components[randomPos.getValue()])
