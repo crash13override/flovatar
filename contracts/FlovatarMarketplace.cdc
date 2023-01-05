@@ -178,7 +178,7 @@ pub contract FlovatarMarketplace {
             let creatorAmount = price * Flovatar.getRoyaltyCut()
             let tempCreatorWallet <- buyTokens.withdraw(amount: creatorAmount)
             creatorWallet.deposit(from: <-tempCreatorWallet)
-            
+
 
             let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
             let marketplaceAmount = price * Flovatar.getMarketplaceCut()
@@ -267,6 +267,25 @@ pub contract FlovatarMarketplace {
                 return nil
             }
         }
+        // Returns a MetadataViews Resolver reference to a Flovatar Sale
+        // so that it can be passed around and use for other implementations.
+        pub fun getFlovatarResolver(tokenId: UInt64): &{MetadataViews.Resolver}? {
+            if self.flovatarForSale[tokenId] != nil {
+                let ref = (&self.flovatarForSale[tokenId] as auth &NonFungibleToken.NFT?)!
+                return ref as! &Flovatar.NFT
+            } else {
+                return nil
+            }
+        }
+
+        pub fun getFlovatarComponentResolver(tokenId: UInt64): &{MetadataViews.Resolver}? {
+            if self.flovatarComponentForSale[tokenId] != nil {
+                let ref = (&self.flovatarComponentForSale[tokenId] as auth &NonFungibleToken.NFT?)!
+                return ref as! &FlovatarComponent.NFT
+            } else {
+                return nil
+            }
+        }
 
         destroy() {
             destroy self.flovatarForSale
@@ -306,7 +325,7 @@ pub contract FlovatarMarketplace {
         }
     }
 
-    // This struct is used to send a data representation of the Component Sales 
+    // This struct is used to send a data representation of the Component Sales
     // when retrieved using the contract helper methods outside the collection.
     pub struct FlovatarComponentSaleData {
         pub let id: UInt64
