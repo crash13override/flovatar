@@ -243,6 +243,13 @@ pub contract Flovatar: NonFungibleToken {
             return self.accessory?.templateId
         }
 
+        pub fun getAccessoryResolver(): &{MetadataViews.Resolver}? {
+            if let ref = &self.accessory as &FlovatarComponent.NFT? {
+                return ref
+			}
+			return nil
+        }
+
         // This will allow to change the Accessory of the Flovatar any time.
         // It checks for the right category and series before executing.
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
@@ -266,6 +273,13 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getHat(): UInt64? {
             return self.hat?.templateId
+        }
+
+        pub fun getHatResolver(): &{MetadataViews.Resolver}? {
+            if let ref = &self.hat as &FlovatarComponent.NFT? {
+                return ref
+			}
+			return nil
         }
 
         // This will allow to change the Hat of the Flovatar any time.
@@ -293,6 +307,13 @@ pub contract Flovatar: NonFungibleToken {
             return self.eyeglasses?.templateId
         }
 
+        pub fun getEyeglassesResolver(): &{MetadataViews.Resolver}? {
+            if let ref = &self.eyeglasses as &FlovatarComponent.NFT? {
+                return ref
+			}
+			return nil
+        }
+
         // This will allow to change the Eyeglasses of the Flovatar any time.
         // It checks for the right category and series before executing.
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
@@ -316,6 +337,13 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getBackground(): UInt64? {
             return self.background?.templateId
+        }
+
+        pub fun getBackgroundResolver(): &{MetadataViews.Resolver}? {
+            if let ref = &self.background as &FlovatarComponent.NFT? {
+                return ref
+			}
+			return nil
         }
 
         // This will allow to change the Background of the Flovatar any time.
