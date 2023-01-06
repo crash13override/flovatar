@@ -704,7 +704,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         // This is what we are proposing for nested resources on how they should expose sub-Items
-        pub fun borrowViewResolverColelction(id: UInt64): &AnyResource{MetadataViews.ResolverCollection}? {
+        pub fun borrowSubCollection(id: UInt64): &AnyResource{MetadataViews.ResolverCollection}? {
             if let let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?) {
                 let flovatarNFT = nft as! &Flovatar.NFT
                 return flovatarNFT
