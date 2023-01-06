@@ -45,6 +45,9 @@ pub contract Flovatar: NonFungibleToken {
     pub event Updated(id: UInt64)
     pub event NameSet(id: UInt64, name: String)
 
+    // Proposing a new event that will tells which Flovatar Component is equipped / linked to the containing NFT for better tracking.
+	pub event Equipped(id: UInt64, subId:UInt64, subSlot: String, resourceType: String, address:Address?, tags: {String: UFix64} , context: {String: String})
+	pub event Unequipped(id: UInt64, subId:UInt64, subSlot:String, resourceType: String, address:Address?, tags: {String: UFix64} , context: {String: String})
 
     pub struct Royalties{
         pub let royalty: [Royalty]
@@ -153,7 +156,7 @@ pub contract Flovatar: NonFungibleToken {
     }
 
     //The NFT resource that implements both Private and Public interfaces
-    pub resource NFT: NonFungibleToken.INFT, Public, Private, MetadataViews.Resolver {
+    pub resource NFT: NonFungibleToken.INFT, Public, Private, MetadataViews.Resolver , MetadataViews.ResolverCollection {
         pub let id: UInt64
         access(contract) let metadata: Metadata
         access(contract) let royalties: Royalties
@@ -194,6 +197,41 @@ pub contract Flovatar: NonFungibleToken {
 
         pub fun getID(): UInt64 {
             return self.id
+        }
+
+        // This returns a list of equipped Flovatar Component if they are there.
+        pub fun getIDs(): [UInt64] {
+            let array : [UInt64] = []
+            if id = self.accessory.id {
+                array.append(id)
+            }
+            if id = self.hat.id {
+                array.append(id)
+            }
+            if id = self.eyeglasses.id {
+                array.append(id)
+            }
+            if id = self.background.id {
+                array.append(id)
+            }
+            return self.id
+        }
+
+        // This will expose the Flovatar Component if the id is there.
+        pub fun borrowViewResolver(id: UInt64) : &{MetadataViews.Resolver} {
+            if let ref = &self.accessory as &FlovatarComponent.NFT? {
+                return ref
+            }
+            if let ref = &self.hat as &FlovatarComponent.NFT? {
+                return ref
+            }
+            if let ref = &self.eyeglasses as &FlovatarComponent.NFT? {
+                return ref
+            }
+            if let ref = &self.background as &FlovatarComponent.NFT? {
+                return ref
+            }
+            panic("Does not contain resource with ID : ".concat(id.toString()))
         }
 
         pub fun getMetadata(): Metadata {
@@ -243,13 +281,6 @@ pub contract Flovatar: NonFungibleToken {
             return self.accessory?.templateId
         }
 
-        pub fun getAccessoryResolver(): &{MetadataViews.Resolver}? {
-            if let ref = &self.accessory as &FlovatarComponent.NFT? {
-                return ref
-			}
-			return nil
-        }
-
         // This will allow to change the Accessory of the Flovatar any time.
         // It checks for the right category and series before executing.
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT? {
@@ -259,8 +290,12 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "accessory", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
 
             let compNFT <- self.accessory <- component
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <- compNFT
         }
 
@@ -268,18 +303,14 @@ pub contract Flovatar: NonFungibleToken {
         pub fun removeAccessory(): @FlovatarComponent.NFT? {
             emit Updated(id: self.id)
             let compNFT <- self.accessory <- nil
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
         pub fun getHat(): UInt64? {
             return self.hat?.templateId
-        }
-
-        pub fun getHatResolver(): &{MetadataViews.Resolver}? {
-            if let ref = &self.hat as &FlovatarComponent.NFT? {
-                return ref
-			}
-			return nil
         }
 
         // This will allow to change the Hat of the Flovatar any time.
@@ -291,8 +322,12 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "hat", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
 
             let compNFT <- self.hat <- component
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
@@ -300,18 +335,14 @@ pub contract Flovatar: NonFungibleToken {
         pub fun removeHat(): @FlovatarComponent.NFT? {
             emit Updated(id: self.id)
             let compNFT <- self.hat <- nil
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
         pub fun getEyeglasses(): UInt64? {
             return self.eyeglasses?.templateId
-        }
-
-        pub fun getEyeglassesResolver(): &{MetadataViews.Resolver}? {
-            if let ref = &self.eyeglasses as &FlovatarComponent.NFT? {
-                return ref
-			}
-			return nil
         }
 
         // This will allow to change the Eyeglasses of the Flovatar any time.
@@ -323,8 +354,12 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "eyeglasses", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
 
             let compNFT <- self.eyeglasses <-component
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
@@ -332,18 +367,14 @@ pub contract Flovatar: NonFungibleToken {
         pub fun removeEyeglasses(): @FlovatarComponent.NFT? {
             emit Updated(id: self.id)
             let compNFT <- self.eyeglasses <- nil
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
         pub fun getBackground(): UInt64? {
             return self.background?.templateId
-        }
-
-        pub fun getBackgroundResolver(): &{MetadataViews.Resolver}? {
-            if let ref = &self.background as &FlovatarComponent.NFT? {
-                return ref
-			}
-			return nil
         }
 
         // This will allow to change the Background of the Flovatar any time.
@@ -355,8 +386,12 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "background", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
 
             let compNFT <- self.background <- component
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
@@ -364,6 +399,9 @@ pub contract Flovatar: NonFungibleToken {
         pub fun removeBackground(): @FlovatarComponent.NFT? {
             emit Updated(id: self.id)
             let compNFT <- self.background <- nil
+            if compNFT != nil {
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+            }
             return <-compNFT
         }
 
@@ -663,6 +701,15 @@ pub contract Flovatar: NonFungibleToken {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
             let flovatarNFT = nft as! &Flovatar.NFT
             return flovatarNFT as &AnyResource{MetadataViews.Resolver}
+        }
+
+        // This is what we are proposing for nested resources on how they should expose sub-Items
+        pub fun borrowViewResolverColelction(id: UInt64): &AnyResource{MetadataViews.ResolverCollection}? {
+            if let let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?) {
+                let flovatarNFT = nft as! &Flovatar.NFT
+                return flovatarNFT
+            }
+            return nil
         }
     }
 
