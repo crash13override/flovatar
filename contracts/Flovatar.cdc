@@ -46,8 +46,8 @@ pub contract Flovatar: NonFungibleToken {
     pub event NameSet(id: UInt64, name: String)
 
     // Proposing a new event that will tells which Flovatar Component is equipped / linked to the containing NFT for better tracking.
-	pub event Equipped(id: UInt64, subId:UInt64, subSlot: String, resourceType: String, address:Address?, tags: {String: UFix64} , context: {String: String})
-	pub event Unequipped(id: UInt64, subId:UInt64, subSlot:String, resourceType: String, address:Address?, tags: {String: UFix64} , context: {String: String})
+	pub event Equipped(id: UInt64, subId:UInt64, subSlot: String, resourceType: String, address:Address?)
+	pub event Unequipped(id: UInt64, subId:UInt64, subSlot:String, resourceType: String, address:Address?)
 
     pub struct Royalties{
         pub let royalty: [Royalty]
@@ -290,11 +290,11 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
-	        emit Equipped(id: self.id, subId: component.id, subSlot: "accessory", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "accessory", resourceType: component.getType().identifier, address:self.owner?.address)
 
             let compNFT <- self.accessory <- component
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <- compNFT
         }
@@ -304,7 +304,7 @@ pub contract Flovatar: NonFungibleToken {
             emit Updated(id: self.id)
             let compNFT <- self.accessory <- nil
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "accessory", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -322,11 +322,11 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
-	        emit Equipped(id: self.id, subId: component.id, subSlot: "hat", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "hat", resourceType: component.getType().identifier, address:self.owner?.address)
 
             let compNFT <- self.hat <- component
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -336,7 +336,7 @@ pub contract Flovatar: NonFungibleToken {
             emit Updated(id: self.id)
             let compNFT <- self.hat <- nil
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "hat", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -354,11 +354,11 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
-	        emit Equipped(id: self.id, subId: component.id, subSlot: "eyeglasses", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "eyeglasses", resourceType: component.getType().identifier, address:self.owner?.address)
 
             let compNFT <- self.eyeglasses <-component
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -368,7 +368,7 @@ pub contract Flovatar: NonFungibleToken {
             emit Updated(id: self.id)
             let compNFT <- self.eyeglasses <- nil
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "eyeglasses", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -386,11 +386,11 @@ pub contract Flovatar: NonFungibleToken {
             }
 
             emit Updated(id: self.id)
-	        emit Equipped(id: self.id, subId: component.id, subSlot: "background", resourceType: component.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	        emit Equipped(id: self.id, subId: component.id, subSlot: "background", resourceType: component.getType().identifier, address:self.owner?.address)
 
             let compNFT <- self.background <- component
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
@@ -400,7 +400,7 @@ pub contract Flovatar: NonFungibleToken {
             emit Updated(id: self.id)
             let compNFT <- self.background <- nil
             if compNFT != nil {
-	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address, tags: {} , context: {})
+	            emit Unequipped(id: self.id, subId: compNFT!.id, subSlot: "background", resourceType: compNFT!.getType().identifier, address:self.owner?.address)
             }
             return <-compNFT
         }
