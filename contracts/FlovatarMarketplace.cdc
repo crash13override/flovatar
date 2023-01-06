@@ -3,6 +3,7 @@ import NonFungibleToken from 0x1d7e57aa55817448
 import FlowToken from 0x1654653399040a61
 import Flovatar from 0x921ea449dffec68a
 import FlovatarComponent from 0x921ea449dffec68a
+import MetadataViews from 0x1d7e57aa55817448
 
 /*
  A standard marketplace contract with Royalties management and hardcoded against Flovatar and Components.
@@ -54,7 +55,7 @@ pub contract FlovatarMarketplace {
 
     // NFT Collection object that allows a user to put their NFT up for sale
     // where others can send fungible tokens to purchase it
-    pub resource SaleCollection: SalePublic {
+    pub resource SaleCollection: SalePublic, MetadataViews.ResolverCollection {
 
         // Dictionary of the NFTs that the user is putting up for sale
         access(contract) let flovatarForSale: @{UInt64: Flovatar.NFT}
@@ -75,6 +76,22 @@ pub contract FlovatarMarketplace {
             self.ownerVault = vault
             self.flovatarPrices = {}
             self.flovatarComponentPrices = {}
+        }
+
+		pub fun getIDs() : [UInt64] {
+			return self.flovatarForSale.keys
+		}
+
+        pub fun borrowViewResolver(id: UInt64) : &{MetadataViews.Resolver} {
+			let ref = (&self.flovatarForSale[id] as &Flovatar.NFT?)!
+			return ref
+		}
+
+        pub fun borrowSubCollection(id: UInt64): &AnyResource{MetadataViews.ResolverCollection}? {
+			if let ref = (&self.flovatarForSale[id] as &Flovatar.NFT?) {
+				return ref
+			}
+			return nil
         }
 
         // Gives the owner the opportunity to remove a Flovatar sale from the collection
@@ -178,7 +195,7 @@ pub contract FlovatarMarketplace {
             let creatorAmount = price * Flovatar.getRoyaltyCut()
             let tempCreatorWallet <- buyTokens.withdraw(amount: creatorAmount)
             creatorWallet.deposit(from: <-tempCreatorWallet)
-            
+
 
             let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
             let marketplaceAmount = price * Flovatar.getMarketplaceCut()
@@ -306,7 +323,7 @@ pub contract FlovatarMarketplace {
         }
     }
 
-    // This struct is used to send a data representation of the Component Sales 
+    // This struct is used to send a data representation of the Component Sales
     // when retrieved using the contract helper methods outside the collection.
     pub struct FlovatarComponentSaleData {
         pub let id: UInt64
