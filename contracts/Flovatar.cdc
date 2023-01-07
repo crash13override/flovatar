@@ -683,6 +683,9 @@ pub contract Flovatar: NonFungibleToken {
 
         if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
+                if(!flovatar.isInstance(Type<@Flovatar.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 return FlovatarData(
                     id: flovatarId,
                     name: flovatar!.getName(),

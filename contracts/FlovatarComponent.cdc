@@ -364,6 +364,10 @@ pub contract FlovatarComponent: NonFungibleToken {
         let account = getAccount(address)
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
             if let component = componentCollection.borrowComponent(id: componentId) {
+
+                if(!component.isInstance(Type<@FlovatarComponent.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 return ComponentData(
                     id: componentId,
                     templateId: component!.templateId,

@@ -341,6 +341,9 @@ pub contract FlovatarMarketplace {
             for id in saleCollection.getFlovatarIDs() {
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 let flovatar = saleCollection.getFlovatar(tokenId: id)
+                if(!flovatar.isInstance(Type<@Flovatar.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 saleData.append(FlovatarSaleData(
                     id: id,
                     price: price!,
@@ -364,6 +367,10 @@ pub contract FlovatarMarketplace {
             for id in saleCollection.getFlovatarComponentIDs() {
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id)
+
+                if(!flovatarComponent.isInstance(Type<@FlovatarComponent.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 saleData.append(FlovatarComponentSaleData(
                     id: id,
                     price: price!,
@@ -384,6 +391,9 @@ pub contract FlovatarMarketplace {
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             if let flovatar = saleCollection.getFlovatar(tokenId: id) {
+                if(!flovatar.isInstance(Type<@Flovatar.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 return FlovatarSaleData(
                            id: id,
@@ -406,6 +416,9 @@ pub contract FlovatarMarketplace {
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
             if let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id) {
+                if(!flovatarComponent.isInstance(Type<@FlovatarComponent.NFT>())) {
+                    panic("The NFT is not from the correct Type")
+                }
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 return FlovatarComponentSaleData(
                            id: id,

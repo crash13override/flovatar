@@ -55,7 +55,7 @@ transaction(saleAddress: Address, tokenId: UInt64, amount: UFix64) {
         if(!marketplace.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
             panic("The Marketplace is not from the correct Type")
         }
-        
+
         marketplace.purchaseFlovatarComponent(tokenId: tokenId, recipientCap:self.collectionCap, buyTokens: <- self.temporaryVault)
     }
 
