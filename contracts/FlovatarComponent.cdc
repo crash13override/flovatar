@@ -363,11 +363,11 @@ pub contract FlovatarComponent: NonFungibleToken {
     pub fun getComponent(address: Address, componentId: UInt64) : ComponentData? {
         let account = getAccount(address)
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
+            if(!componentCollection.isInstance(Type<@FlovatarComponent.Collection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             if let component = componentCollection.borrowComponent(id: componentId) {
 
-                if(!component.isInstance(Type<@FlovatarComponent.NFT>())) {
-                    panic("The NFT is not from the correct Type")
-                }
                 return ComponentData(
                     id: componentId,
                     templateId: component!.templateId,
@@ -385,6 +385,9 @@ pub contract FlovatarComponent: NonFungibleToken {
         let account = getAccount(address)
 
         if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
+            if(!componentCollection.isInstance(Type<@FlovatarComponent.Collection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             for id in componentCollection.getIDs() {
                 var component = componentCollection.borrowComponent(id: id)
                 componentData.append(ComponentData(
