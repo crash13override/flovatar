@@ -173,6 +173,10 @@ pub contract FlovatarMarketplace {
 
             let token <-self.withdrawFlovatar(tokenId: tokenId)
 
+            if(!token.isInstance(Type<@Flovatar.NFT>())) {
+                panic("The NFT is not from the correct Type")
+            }
+
             let creatorAccount = getAccount(token.getMetadata().creatorAddress)
             let creatorWallet = creatorAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver).borrow()!
             let creatorAmount = price * Flovatar.getRoyaltyCut()
@@ -213,6 +217,10 @@ pub contract FlovatarMarketplace {
             let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner token vault")
 
             let token <-self.withdrawFlovatarComponent(tokenId: tokenId)
+
+            if(!token.isInstance(Type<@FlovatarComponent.NFT>())) {
+                panic("The NFT is not from the correct Type")
+            }
 
 
             let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
