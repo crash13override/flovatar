@@ -178,6 +178,10 @@ pub contract FlovatarMarketplace {
 
             let token <-self.withdrawFlovatar(tokenId: tokenId)
 
+            if(!token.isInstance(Type<@Flovatar.NFT>())) {
+                panic("The NFT is not from the correct Type")
+            }
+
             let creatorAccount = getAccount(token.getMetadata().creatorAddress)
             let creatorWallet = creatorAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver).borrow()!
             let creatorAmount = price * Flovatar.getRoyaltyCut()
@@ -218,6 +222,10 @@ pub contract FlovatarMarketplace {
             let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner token vault")
 
             let token <-self.withdrawFlovatarComponent(tokenId: tokenId)
+
+            if(!token.isInstance(Type<@FlovatarComponent.NFT>())) {
+                panic("The NFT is not from the correct Type")
+            }
 
 
             let marketplaceWallet = FlovatarMarketplace.marketplaceWallet.borrow()!
@@ -335,9 +343,13 @@ pub contract FlovatarMarketplace {
         let account = getAccount(address)
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
+            if(!saleCollection.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             for id in saleCollection.getFlovatarIDs() {
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 let flovatar = saleCollection.getFlovatar(tokenId: id)
+
                 saleData.append(FlovatarSaleData(
                     id: id,
                     price: price!,
@@ -358,9 +370,13 @@ pub contract FlovatarMarketplace {
         let account = getAccount(address)
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
+            if(!saleCollection.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             for id in saleCollection.getFlovatarComponentIDs() {
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id)
+
                 saleData.append(FlovatarComponentSaleData(
                     id: id,
                     price: price!,
@@ -380,6 +396,9 @@ pub contract FlovatarMarketplace {
         let account = getAccount(address)
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
+            if(!saleCollection.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             if let flovatar = saleCollection.getFlovatar(tokenId: id) {
                 let price = saleCollection.getFlovatarPrice(tokenId: id)
                 return FlovatarSaleData(
@@ -402,6 +421,9 @@ pub contract FlovatarMarketplace {
         let account = getAccount(address)
 
         if let saleCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()  {
+            if(!saleCollection.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             if let flovatarComponent = saleCollection.getFlovatarComponent(tokenId: id) {
                 let price = saleCollection.getFlovatarComponentPrice(tokenId: id)
                 return FlovatarComponentSaleData(

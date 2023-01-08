@@ -52,6 +52,10 @@ transaction(saleAddress: Address, tokenId: UInt64, amount: UFix64) {
         let marketplace = seller.getCapability(FlovatarMarketplace.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()
                          ?? panic("Could not borrow seller's sale reference")
 
+        if(!marketplace.isInstance(Type<@FlovatarMarketplace.SaleCollection>())) {
+            panic("The Marketplace is not from the correct Type")
+        }
+
         marketplace.purchaseFlovatarComponent(tokenId: tokenId, recipientCap:self.collectionCap, buyTokens: <- self.temporaryVault)
     }
 

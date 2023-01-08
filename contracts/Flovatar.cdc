@@ -761,7 +761,10 @@ pub contract Flovatar: NonFungibleToken {
 
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if(!flovatarCollection.isInstance(Type<@Flovatar.Collection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
@@ -796,7 +799,10 @@ pub contract Flovatar: NonFungibleToken {
         var flovatarData: [FlovatarData] = []
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if(!flovatarCollection.isInstance(Type<@Flovatar.Collection>())) {
+                panic("The Collection is not from the correct Type")
+            }
             for id in flovatarCollection.getIDs() {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 let flovatarMetadata = flovatar!.getMetadata()
