@@ -552,18 +552,6 @@ pub contract Flovatar: NonFungibleToken {
                 )
             }
 
-            if type == Type<MetadataViews.NFTCollectionData>() {
-                return MetadataViews.NFTCollectionData(
-                storagePath: Flovatar.CollectionStoragePath,
-                publicPath: Flovatar.CollectionPublicPath,
-                providerPath: /private/FlovatarCollection,
-                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
-                )
-            }
-
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
                     name: self.name == "" ? "Flovatar #".concat(self.id.toString()) : self.name,
@@ -614,6 +602,18 @@ pub contract Flovatar: NonFungibleToken {
 
             if type == Type<MetadataViews.Rarity>() {
                 return MetadataViews.Rarity(score: self.getRarityScore(), max: 100.0, description: nil)
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: Flovatar.CollectionStoragePath,
+                publicPath: Flovatar.CollectionPublicPath,
+                providerPath: /private/FlovatarCollection,
+                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
+                )
             }
 
             return nil

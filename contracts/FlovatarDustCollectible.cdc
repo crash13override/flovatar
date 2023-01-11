@@ -405,18 +405,6 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 )
             }
 
-            if type == Type<MetadataViews.NFTCollectionData>() {
-                return MetadataViews.NFTCollectionData(
-                storagePath: FlovatarDustCollectible.CollectionStoragePath,
-                publicPath: FlovatarDustCollectible.CollectionPublicPath,
-                providerPath: /private/FlovatarDustCollectibleCollection,
-                publicCollection: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
-                publicLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
-                providerLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarDustCollectible.createEmptyCollection()}
-                )
-            }
-
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
                     name: self.name == "" ? "Stardust Collectible #".concat(self.id.toString()) : self.name,
@@ -447,6 +435,18 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 }
 
                 return MetadataViews.Traits(traits)
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: FlovatarDustCollectible.CollectionStoragePath,
+                publicPath: FlovatarDustCollectible.CollectionPublicPath,
+                providerPath: /private/FlovatarDustCollectibleCollection,
+                publicCollection: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                publicLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                providerLinkedType: Type<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectible.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarDustCollectible.createEmptyCollection()}
+                )
             }
 
 
@@ -873,6 +873,33 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         // contains all the SVG and basic informations to represent
         // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
         // More info in the FlovatarComponentTemplate.cdc file
+        pub fun createCollectibleSeries(
+                        name: String,
+                        description: String,
+                        svgPrefix: String,
+                        svgSuffix: String,
+                        priceIncrease: UFix64,
+                        layers: {UInt32: FlovatarDustCollectibleTemplate.Layer},
+                        colors: {UInt32: String},
+                        metadata: {String: String},
+                        maxMintable: UInt64
+                    ) : @FlovatarDustCollectibleTemplate.CollectibleSeries {
+            return <- FlovatarDustCollectibleTemplate.createCollectibleSeries(
+                name: name,
+                description: description,
+                svgPrefix: svgPrefix,
+                svgSuffix: svgSuffix,
+                priceIncrease: priceIncrease,
+                layers: layers,
+                colors: colors,
+                metadata: metadata,
+                maxMintable: maxMintable
+            )
+        }
+        //This will create a new FlovatarComponentTemplate that
+        // contains all the SVG and basic informations to represent
+        // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
+        // More info in the FlovatarComponentTemplate.cdc file
         pub fun createCollectibleTemplate(
                         name: String,
                         description: String,
@@ -899,7 +926,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
         //This will mint a new Component based from a selected Template
         pub fun createCollectible(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
-            return <- FlovatarDustCollectibleAccessory.createCollectibleAccessory(templateId: templateId)
+            return <- FlovatarDustCollectibleAccessory.createCollectibleAccessoryInternal(templateId: templateId)
         }
         //This will mint Components in batch and return a Collection instead of the single NFT
         pub fun batchCreateCollectibles(templateId: UInt64, quantity: UInt64) : @FlovatarDustCollectibleAccessory.Collection {

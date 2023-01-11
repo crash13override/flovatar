@@ -8,6 +8,7 @@ import NonFungibleToken from "./NonFungibleToken.cdc"
 import FlowToken from "./FlowToken.cdc"
 import FlovatarDustCollectibleTemplate from "./FlovatarDustCollectibleTemplate.cdc"
 import MetadataViews from "./MetadataViews.cdc"
+import FlovatarDustToken from "./FlovatarDustToken.cdc"
 
 /*
 
@@ -202,18 +203,6 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
                 )
             }
 
-            if type == Type<MetadataViews.NFTCollectionData>() {
-                return MetadataViews.NFTCollectionData(
-                storagePath: FlovatarDustCollectibleAccessory.CollectionStoragePath,
-                publicPath: FlovatarDustCollectibleAccessory.CollectionPublicPath,
-                providerPath: /private/FlovatarComponentCollection,
-                publicCollection: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
-                publicLinkedType: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
-                providerLinkedType: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarDustCollectibleAccessory.createEmptyCollection()}
-                )
-            }
-
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
                     name: self.name,
@@ -237,6 +226,18 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
             if type == Type<MetadataViews.Rarity>() {
                 let template = self.getTemplate()
                 return MetadataViews.Rarity(score: nil, max: nil, description: template.rarity)
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: FlovatarDustCollectibleAccessory.CollectionStoragePath,
+                publicPath: FlovatarDustCollectibleAccessory.CollectionPublicPath,
+                providerPath: /private/FlovatarComponentCollection,
+                publicCollection: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
+                publicLinkedType: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
+                providerLinkedType: Type<&FlovatarDustCollectibleAccessory.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarDustCollectibleAccessory.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarDustCollectibleAccessory.createEmptyCollection()}
+                )
             }
 
             return nil
@@ -417,19 +418,49 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
         return componentData
     }
 
-    // This method can only be called from another contract in the same account.
-    // In FlovatarComponent case it is called from the Flovatar Admin that is used
-    // to administer the components.
-    // The only parameter is the parent Template ID and it will return a Component NFT resource
-    access(account) fun createCollectibleAccessory(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
+    //This method is used to mint a new Dust Accessory by paying the necessary amount of DUST
+    // The only parameters are the parent Template ID and the vault with the DUST token. It will return a Component NFT resource
+    pub fun createCollectibleAccessory(templateId: UInt64, vault: @FungibleToken.Vault) : @FlovatarDustCollectibleAccessory.NFT {
+        pre {
+            vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+        }
 
         let collectibleTemplate: FlovatarDustCollectibleTemplate.CollectibleTemplateData = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: templateId)!
         let totalMintedComponents: UInt64 = FlovatarDustCollectibleTemplate.getTotalMintedComponents(id: templateId)!
 
         // Makes sure that the original minting limit set for each Template has not been reached
         if(totalMintedComponents >= collectibleTemplate.maxMintableComponents) {
-            panic("Reached maximum mintable components for this type")
+            panic("Reached maximum mintable components for this template")
         }
+
+        if(vault.balance < FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: templateId)!){
+            panic("Price mismatch between the current price and amount paid")
+        }
+
+        FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: templateId)
+        FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
+        FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
+
+        var newNFT <- create NFT(templateId: templateId)
+        emit Created(id: newNFT.id, templateId: templateId, mint: newNFT.mint)
+
+        destroy vault
+
+        return <- newNFT
+    }
+
+    access(account) fun createCollectibleAccessoryInternal(templateId: UInt64) : @FlovatarDustCollectibleAccessory.NFT {
+        let collectibleTemplate: FlovatarDustCollectibleTemplate.CollectibleTemplateData = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: templateId)!
+        let totalMintedComponents: UInt64 = FlovatarDustCollectibleTemplate.getTotalMintedComponents(id: templateId)!
+
+        // Makes sure that the original minting limit set for each Template has not been reached
+        if(totalMintedComponents >= collectibleTemplate.maxMintableComponents) {
+            panic("Reached maximum mintable components for this template")
+        }
+
+        FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: templateId)
+        FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
+        FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
 
         var newNFT <- create NFT(templateId: templateId)
         emit Created(id: newNFT.id, templateId: templateId, mint: newNFT.mint)
@@ -437,13 +468,17 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
         return <- newNFT
     }
 
+
+    // This method can only be called from another contract in the same account.
+    // In FlovatarComponent case it is called from the Flovatar Dust Collectible Admin that is used
+    // to administer the components.
     // This function will batch create multiple Components and pass them back as a Collection
     access(account) fun batchCreateCollectibleAccessory(templateId: UInt64, quantity: UInt64): @Collection {
         let newCollection <- create Collection()
 
         var i: UInt64 = 0
         while i < quantity {
-            newCollection.deposit(token: <-self.createCollectibleAccessory(templateId: templateId))
+            newCollection.deposit(token: <-self.createCollectibleAccessoryInternal(templateId: templateId))
             i = i + UInt64(1)
         }
 

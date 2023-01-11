@@ -198,17 +198,6 @@ pub contract FlovatarComponent: NonFungibleToken {
                 )
             }
 
-            if type == Type<MetadataViews.NFTCollectionData>() {
-                return MetadataViews.NFTCollectionData(
-                storagePath: FlovatarComponent.CollectionStoragePath,
-                publicPath: FlovatarComponent.CollectionPublicPath,
-                providerPath: /private/FlovatarComponentCollection,
-                publicCollection: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
-                publicLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
-                providerLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarComponent.createEmptyCollection()}
-                )
-            }
 
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
@@ -233,6 +222,18 @@ pub contract FlovatarComponent: NonFungibleToken {
             if type == Type<MetadataViews.Rarity>() {
                 let template = self.getTemplate()
                 return MetadataViews.Rarity(score: nil, max: nil, description: template.rarity)
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: FlovatarComponent.CollectionStoragePath,
+                publicPath: FlovatarComponent.CollectionPublicPath,
+                providerPath: /private/FlovatarComponentCollection,
+                publicCollection: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                publicLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                providerLinkedType: Type<&FlovatarComponent.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, FlovatarComponent.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- FlovatarComponent.createEmptyCollection()}
+                )
             }
 
             return nil
