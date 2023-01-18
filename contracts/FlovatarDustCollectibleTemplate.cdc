@@ -269,6 +269,7 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let colors: {UInt32: String}
         pub let metadata: {String: String}
         pub let maxMintable: UInt64
+        pub let totalMintedCollectibles: UInt64
 
         init(
             id: UInt64,
@@ -292,6 +293,7 @@ pub contract FlovatarDustCollectibleTemplate {
             self.colors = colors
             self.metadata = metadata
             self.maxMintable = maxMintable
+            self.totalMintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: id)!
         }
     }
 
@@ -309,7 +311,6 @@ pub contract FlovatarDustCollectibleTemplate {
         pub let svg: String?
         pub let maxMintableComponents: UInt64
         pub let totalMintedComponents: UInt64
-        pub let totalMintedCollectibles: UInt64
         pub let currentPrice: UFix64
         pub let lastComponentMintedAt: UFix64
 
@@ -336,7 +337,6 @@ pub contract FlovatarDustCollectibleTemplate {
             self.svg = svg
             self.maxMintableComponents = maxMintableComponents
             self.totalMintedComponents = FlovatarDustCollectibleTemplate.getTotalMintedComponents(id: id)!
-            self.totalMintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)!
             self.currentPrice = FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: id)!
             self.lastComponentMintedAt = FlovatarDustCollectibleTemplate.getLastComponentMintedAt(id: id)!
         }

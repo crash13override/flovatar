@@ -98,7 +98,11 @@
         "FlovatarPack",
         "Flovatar",
         "FlovatarMarketplace",
-        "FlovatarInbox"
+        "FlovatarInbox",
+        "FlovatarDustCollectibleTemplate",
+        "FlovatarDustCollectibleAccessory",
+        "FlovatarDustCollectible",
+        "FlovatarComponentUpgrader"
       ]
     },
     "emulator": {

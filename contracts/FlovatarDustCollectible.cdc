@@ -41,7 +41,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Created(id: UInt64, mint: UInt64, series: UInt64)
+    pub event Created(id: UInt64, mint: UInt64, series: UInt64, address: Address)
     pub event Updated(id: UInt64)
     pub event Destroyed(id: UInt64)
     pub event NameSet(id: UInt64, name: String)
@@ -836,7 +836,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
 
         // Emits the Created event to notify about its existence
-        emit Created(id: newNFT.id, mint: newNFT.mint, series: newNFT.series)
+        emit Created(id: newNFT.id, mint: newNFT.mint, series: newNFT.series, address: address)
 
         destroy vault
 
