@@ -34,17 +34,19 @@ transaction(
     }
 
     execute {
-        let layers: {UInt32: FlovatarDustCollectibleTemplate.Layer}
+        let layers: {UInt32: FlovatarDustCollectibleTemplate.Layer} = {}
         var i: UInt32 = UInt32(0)
         while(i <  UInt32(layersId.length)){
-            layers.insert(key: layersId[i]!, Layer(id: layersId[i]!, name: layersName[i]!, isAccessory: layersIsAccessory[i]!))
+            layers.insert(key: i, FlovatarDustCollectibleTemplate.Layer(id: layersId[i]!, name: layersName[i]!, isAccessory: layersIsAccessory[i]!))
+            i = i + UInt32(1)
         }
 
 
-        let colors: {UInt32: String}
+        let colors: {UInt32: String} = {}
         i = UInt32(0)
         while(i <  UInt32(colorsId.length)){
             colors.insert(key: colorsId[i]!, colorsName[i]!)
+            i = i + UInt32(1)
         }
 
         let flovatarDustCollectibleSeries <- self.flovatarAdmin.createCollectibleSeries(

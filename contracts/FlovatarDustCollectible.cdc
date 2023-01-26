@@ -733,7 +733,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
     // for each component used
     pub fun createDustCollectible(
         series: UInt64,
-        layers: [UInt64?],
+        layers: [UInt32],
+        templateIds: [UInt64?],
         address: Address,
         vault: @FungibleToken.Vault
     ) : @FlovatarDustCollectible.NFT {
@@ -747,6 +748,9 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         }
         if(seriesData!.layers.length != layers.length){
             panic("The amount of layers is not matching!")
+        }
+        if(templateIds.length != layers.length){
+            panic("The amount of layers and templates is not matching!")
         }
         let mintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)
         if(mintedCollectibles != nil){
@@ -762,15 +766,17 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
         var i: UInt32 = UInt32(0)
         while(i <  UInt32(layers.length)){
-            if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: i, series: series)){
-                if(layers[i] == nil){
-                    panic("Core Layer missing")
+            let layerId: UInt32 = layers[i]!
+            let templateId: UInt64? = templateIds[i] ?? nil
+            if(!FlovatarDustCollectibleTemplate.isCollectibleLayerAccessory(layer: layerId, series: series)){
+                if(templateId == nil){
+                    panic("Core Layer missing ".concat(layerId.toString()).concat(" - ").concat(i.toString()).concat("/").concat(layers.length.toString()))
                 }
-                let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: layers[i]!)!
+                let template = FlovatarDustCollectibleTemplate.getCollectibleTemplate(id: templateId!)!
                 if(template.series != series){
                     panic("Template belonging to the wrong Dust Collectible Series")
                 }
-                if(template.layer != i){
+                if(template.layer != layerId){
                     panic("Template belonging to the wrong Layer")
                 }
 
@@ -780,8 +786,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                     panic("Reached maximum mintable count for this trait")
                 }
 
-                coreLayers[i] = template.id
-                fullLayers[i] = template.id
+                coreLayers[layerId] = template.id
+                fullLayers[layerId] = template.id
                 templates.append(template)
                 totalPrice = totalPrice + FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: template.id)!
 
@@ -789,7 +795,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: template.id)
                 FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: template.id, value: getCurrentBlock().timestamp)
             } else {
-                fullLayers[i] = nil
+                fullLayers[layerId] = nil
             }
 
             i = i + UInt32(1)
