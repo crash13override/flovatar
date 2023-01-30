@@ -368,10 +368,7 @@ pub contract FlovatarComponent: NonFungibleToken {
     // Get a specific Component from an account and the ID as ComponentData
     pub fun getComponent(address: Address, componentId: UInt64) : ComponentData? {
         let account = getAccount(address)
-        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
-            if(!componentCollection.isInstance(Type<@FlovatarComponent.Collection>())) {
-                panic("The Collection is not from the correct Type")
-            }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic}>()  {
             if let component = componentCollection.borrowComponent(id: componentId) {
 
                 return ComponentData(
@@ -390,10 +387,7 @@ pub contract FlovatarComponent: NonFungibleToken {
         var componentData: [ComponentData] = []
         let account = getAccount(address)
 
-        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarComponent.CollectionPublic}>()  {
-            if(!componentCollection.isInstance(Type<@FlovatarComponent.Collection>())) {
-                panic("The Collection is not from the correct Type")
-            }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic}>()  {
             for id in componentCollection.getIDs() {
                 var component = componentCollection.borrowComponent(id: id)
                 componentData.append(ComponentData(

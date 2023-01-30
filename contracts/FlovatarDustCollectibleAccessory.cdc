@@ -369,10 +369,7 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
     // Get the SVG of a specific Component from an account and the ID
     pub fun getSvgForComponent(address: Address, componentId: UInt64) : String? {
         let account = getAccount(address)
-        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
-            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
-                panic("The Collection instance does not belong to the correct type!")
-            }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
             return componentCollection.borrowCollectibleAccessory(id: componentId)!.getSvg()
         }
         return nil
@@ -381,10 +378,7 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
     // Get a specific Component from an account and the ID as CollectibleAccessoryData
     pub fun getAccessory(address: Address, componentId: UInt64) : CollectibleAccessoryData? {
         let account = getAccount(address)
-        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
-            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
-                panic("The Collection instance does not belong to the correct type!")
-            }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
             if let component = componentCollection.borrowCollectibleAccessory(id: componentId) {
                 return CollectibleAccessoryData(
                     id: componentId,
@@ -402,10 +396,7 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
         var componentData: [CollectibleAccessoryData] = []
         let account = getAccount(address)
 
-        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
-            if(! componentCollection.isInstance(Type<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>())){
-                panic("The Collection instance does not belong to the correct type!")
-            }
+        if let componentCollection = account.getCapability(self.CollectionPublicPath).borrow<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic}>()  {
             for id in componentCollection.getIDs() {
                 var component = componentCollection.borrowCollectibleAccessory(id: id)
                 componentData.append(CollectibleAccessoryData(
