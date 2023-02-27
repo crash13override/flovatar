@@ -12,7 +12,7 @@ This repository contains code for contracts, scripts and transaction associated 
 # Integration
 Our contracts are deployed to both networks:
 - `Mainnet` - **0x921ea449dffec68a** - [Flow View Source - Flovatar Account](https://flow-view-source.com/mainnet/account/0x921ea449dffec68a)
-- `Testnet` - **0x0cf264811b95d465** - [Flow View Source - Flovatar Account](https://flow-view-source.com/testnet/account/0x0cf264811b95d465)
+- `Testnet` - **0x9392a4a7c3f49a0b** - [Flow View Source - Flovatar Account](https://flow-view-source.com/testnet/account/0x9392a4a7c3f49a0b)
 
 ## Basic Example
 You can use code in [get_flovatars.cdc](/scripts/get_flovatars.cdc) file to get a list of Flovatars living in account's storage. 

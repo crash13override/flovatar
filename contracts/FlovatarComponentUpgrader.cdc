@@ -242,9 +242,10 @@ pub contract FlovatarComponentUpgrader {
                 panic("Couldn't borrow Flovatar Inbox Collection")
             }
 
+        } else {
+            panic("Can't borrow the Upgrader Collection")
         }
 
-        panic("Can't borrow the Upgrader Collection")
     }
 
     // Admin function to temporarly enable or disable the airdrop and reward withdraw so that
