@@ -887,7 +887,7 @@ pub contract Flovatar: NonFungibleToken {
     // This will check if a specific Name has already been taken
     // and assigned to some Flovatar
     pub fun checkNameAvailable(name: String) : Bool {
-        return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.containsKey(name)
+        return name.length > 2 && name.length < 32 && ! Flovatar.mintedNames.containsKey(name)
     }
 
 

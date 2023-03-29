@@ -428,10 +428,6 @@ pub contract FlovatarDustCollectibleAccessory: NonFungibleToken {
             panic("Price mismatch between the current price and amount paid")
         }
 
-        FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: templateId)
-        FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
-        FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
-
         var newNFT <- create NFT(templateId: templateId)
         emit Created(id: newNFT.id, templateId: templateId, mint: newNFT.mint)
 
