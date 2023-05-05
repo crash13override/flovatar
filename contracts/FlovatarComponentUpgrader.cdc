@@ -120,7 +120,7 @@ pub contract FlovatarComponentUpgrader {
             return <- component
         }
         pub fun withdrawRandomComponent(series: UInt32, rarity: String, category: String?) : @FlovatarComponent.NFT {
-            //TODO FILTER BY SERIES AND RARITY AND THEN RANDOMIZE AND PICK ONE
+            //FILTER BY SERIES AND RARITY AND THEN RANDOMIZE AND PICK ONE
             var components: [UInt64] = []
             if(self.rarityLookup[series] == nil){
                 panic("No Components found for the provided Series")
@@ -130,9 +130,11 @@ pub contract FlovatarComponentUpgrader {
             }
             if(category != nil){
                 if(self.rarityLookup[series]![rarity]![category!] == nil){
-                    panic("No Components found for the provided Category")
+                    //panic("No Components found for the provided Category")
+                    components = self.rarityLookup[series]![rarity]!["all"]!.keys
+                } else {
+                    components = self.rarityLookup[series]![rarity]![category!]!.keys
                 }
-                components = self.rarityLookup[series]![rarity]![category!]!.keys
             } else {
                 components = self.rarityLookup[series]![rarity]!["all"]!.keys
             }
