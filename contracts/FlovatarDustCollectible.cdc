@@ -70,7 +70,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
         init(wallet:Capability<&{FungibleToken.Receiver}>, cut: UFix64, type: RoyaltyType ){
             if(! wallet.check()){
-                panic("Capability not valid!")
+                //panic("Capability not valid!")
             }
             self.wallet = wallet
             self.cut = cut
