@@ -19,7 +19,8 @@ flow transactions send ./transactions/setup/flovatar_collection.cdc
 //SETUP ACCOUNT FOR ALL COLLECTION
 flow transactions send ./transactions/setup/init_account.cdc
 
-
+//REFILL DUST FOR DISTRIBUTION
+flow transactions send ./transactions/setup/refill_dust.cdc 500000.0 -n testnet --signer testnet-account
 
 
 FLOVATAR COMPONENT TEMPLATES

@@ -1,10 +1,19 @@
-import FungibleToken from 0xf233dcee88fe0abe
-import NonFungibleToken from 0x1d7e57aa55817448
-import FlowToken from 0x1654653399040a61
-import FlovatarComponentTemplate from 0x921ea449dffec68a
-import FlovatarComponent from 0x921ea449dffec68a
-import FlovatarPack from 0x921ea449dffec68a
-import MetadataViews from 0x1d7e57aa55817448
+//import FungibleToken from 0xf233dcee88fe0abe
+//import NonFungibleToken from 0x1d7e57aa55817448
+//import FlowToken from 0x1654653399040a61
+//import FlovatarComponentTemplate from 0x921ea449dffec68a
+//import FlovatarComponent from 0x921ea449dffec68a
+//import FlovatarPack from 0x921ea449dffec68a
+//import MetadataViews from 0x1d7e57aa55817448
+//import FlovatarDustToken from 0x921ea449dffec68a
+import FungibleToken from "./FungibleToken.cdc"
+import NonFungibleToken from "./NonFungibleToken.cdc"
+import FlowToken from "./FlowToken.cdc"
+import FlovatarComponentTemplate from "./FlovatarComponentTemplate.cdc"
+import FlovatarComponent from "./FlovatarComponent.cdc"
+import FlovatarPack from "./FlovatarPack.cdc"
+import MetadataViews from "./MetadataViews.cdc"
+import FlovatarDustToken from "./FlovatarDustToken.cdc"
 
 /*
 
@@ -44,6 +53,9 @@ pub contract Flovatar: NonFungibleToken {
     pub event Created(id: UInt64, metadata: Metadata)
     pub event Updated(id: UInt64)
     pub event NameSet(id: UInt64, name: String)
+    pub event PositionChanged(id: UInt64, position: String)
+    pub event StoryAdded(id: UInt64, story: String)
+    pub event Unlocked3DFile(id: UInt64)
 
 
     pub struct Royalties{
@@ -141,7 +153,10 @@ pub contract Flovatar: NonFungibleToken {
     //The private interface can update the Accessory, Hat, Eyeglasses and Background
     //for the Flovatar and is accessible only to the owner of the NFT
     pub resource interface Private {
-        pub fun setName(name: String): String
+        pub fun setName(name: String, vault: @FungibleToken.Vault): String
+        pub fun addStory(text: String, vault: @FungibleToken.Vault): String
+        pub fun unlock3DFile(vault: @FungibleToken.Vault)
+        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FungibleToken.Vault): String
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setEyeglasses(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
@@ -214,13 +229,16 @@ pub contract Flovatar: NonFungibleToken {
 
         // This will allow to change the Name of the Flovatar only once.
         // It checks for the current name is empty, otherwise it will throw an error.
-        pub fun setName(name: String): String {
+        // $DUST vault must contain 100 tokens that will be burned in the process
+        pub fun setName(name: String, vault: @FungibleToken.Vault): String {
             pre {
                 // TODO: Make sure that the text of the name is sanitized
                 //and that bad words are not accepted?
                 name.length > 2 : "The name is too short"
                 name.length < 32 : "The name is too long"
                 self.name == "" : "The name has already been set"
+                vault.balance == 100.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
             }
 
             // Makes sure that the name is available and not taken already
@@ -228,15 +246,77 @@ pub contract Flovatar: NonFungibleToken {
                 panic("This name has already been taken")
             }
 
-            // DISABLING THIS FUNCTIONALITY TO BE INTRODUCED AT A LATER DATE
-            //self.name = name
+            destroy vault
+            self.name = name
 
 
             // Adds the name to the array to remember it
-            //Flovatar.addMintedName(name: name)
-            //emit NameSet(id: self.id, name: name)
+            Flovatar.addMintedName(name: name)
+            emit NameSet(id: self.id, name: name)
 
             return self.name
+        }
+
+        // This will allow to add a text Story to the Flovatar Bio.
+        // The String will be concatenated each time.
+        // There is a limit of 300 characters per story but there is no limit in the full concatenated story length
+        // $DUST vault must contain 50 tokens that will be burned in the process
+        pub fun addStory(text: String, vault: @FungibleToken.Vault): String {
+            pre {
+                // TODO: Make sure that the text of the name is sanitized
+                //and that bad words are not accepted?
+                text.length > 0 : "The text is too short"
+                text.length <= 300 : "The text is too long"
+                vault.balance == 50.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
+
+            destroy vault
+            let currentStory: String = self.bio["story"] ?? ""
+            let story: String = currentStory.concat(" ").concat(text)
+            self.bio.insert(key: "story", story)
+
+            emit StoryAdded(id: self.id, story: story)
+
+            return story
+        }
+
+        // This will unlock the 3D files for a Flovatar.
+        // $DUST vault must contain 50 tokens that will be burned in the process
+        pub fun unlock3DFile(vault: @FungibleToken.Vault) {
+            pre {
+                self.bio["3d"] == nil : "The 3D File has been already unlocked"
+                vault.balance == 150.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
+
+            destroy vault
+            self.bio.insert(key: "3d", "true")
+
+            emit Unlocked3DFile(id: self.id)
+
+        }
+
+        // This will allow to set the GPS location of a Flovatar
+        // It can be run multiple times and each time it will override the previous state
+        // $DUST vault must contain 10 tokens that will be burned in the process
+        pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FungibleToken.Vault): String {
+            pre {
+                latitude >= -90.0 : "The latitude is out of range"
+                latitude <= 90.0 : "The latitude is out of range"
+                longitude >= -180.0 : "The longitude is out of range"
+                longitude <= 180.0 : "The longitude is out of range"
+                vault.balance == 10.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
+
+            destroy vault
+            let position: String = latitude.toString().concat(",").concat(longitude.toString())
+            self.bio.insert(key: "position", position)
+
+            emit PositionChanged(id: self.id, position: position)
+
+            return position
         }
 
         pub fun getAccessory(): UInt64? {
@@ -472,18 +552,6 @@ pub contract Flovatar: NonFungibleToken {
                 )
             }
 
-            if type == Type<MetadataViews.NFTCollectionData>() {
-                return MetadataViews.NFTCollectionData(
-                storagePath: Flovatar.CollectionStoragePath,
-                publicPath: Flovatar.CollectionPublicPath,
-                providerPath: /private/FlovatarCollection,
-                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
-                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
-                )
-            }
-
             if type == Type<MetadataViews.Display>() {
                 return MetadataViews.Display(
                     name: self.name == "" ? "Flovatar #".concat(self.id.toString()) : self.name,
@@ -534,6 +602,18 @@ pub contract Flovatar: NonFungibleToken {
 
             if type == Type<MetadataViews.Rarity>() {
                 return MetadataViews.Rarity(score: self.getRarityScore(), max: 100.0, description: nil)
+            }
+
+            if type == Type<MetadataViews.NFTCollectionData>() {
+                return MetadataViews.NFTCollectionData(
+                storagePath: Flovatar.CollectionStoragePath,
+                publicPath: Flovatar.CollectionPublicPath,
+                providerPath: /private/FlovatarCollection,
+                publicCollection: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                publicLinkedType: Type<&Flovatar.Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                providerLinkedType: Type<&Flovatar.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, Flovatar.CollectionPublic}>(),
+                createEmptyCollectionFunction: fun(): @NonFungibleToken.Collection {return <- Flovatar.createEmptyCollection()}
+                )
             }
 
             return nil
@@ -681,10 +761,7 @@ pub contract Flovatar: NonFungibleToken {
 
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            if(!flovatarCollection.isInstance(Type<@Flovatar.Collection>())) {
-                panic("The Collection is not from the correct Type")
-            }
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
             if let flovatar = flovatarCollection.borrowFlovatar(id: flovatarId) {
                 return FlovatarData(
                     id: flovatarId,
@@ -719,10 +796,7 @@ pub contract Flovatar: NonFungibleToken {
         var flovatarData: [FlovatarData] = []
         let account = getAccount(address)
 
-        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
-            if(!flovatarCollection.isInstance(Type<@Flovatar.Collection>())) {
-                panic("The Collection is not from the correct Type")
-            }
+        if let flovatarCollection = account.getCapability(self.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
             for id in flovatarCollection.getIDs() {
                 var flovatar = flovatarCollection.borrowFlovatar(id: id)
                 let flovatarMetadata = flovatar!.getMetadata()
@@ -813,7 +887,7 @@ pub contract Flovatar: NonFungibleToken {
     // This will check if a specific Name has already been taken
     // and assigned to some Flovatar
     pub fun checkNameAvailable(name: String) : Bool {
-        return name.length > 2 && name.length < 20 && ! Flovatar.mintedNames.containsKey(name)
+        return name.length > 2 && name.length < 32 && ! Flovatar.mintedNames.containsKey(name)
     }
 
 

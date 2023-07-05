@@ -9,10 +9,11 @@ import FlovatarMarketplace from "../../contracts/FlovatarMarketplace.cdc"
 import FlovatarDustToken from "../../contracts/FlovatarDustToken.cdc"
 
 
-//this transaction will set the name to an existing Flovatar
+//this transaction will set a GPS Position for an existing Flovatar
 transaction(
     flovatarId: UInt64,
-    name: String
+    latitude: Fix64,
+    longitude: Fix64
     ) {
 
     let flovatarCollection: &Flovatar.Collection
@@ -27,13 +28,13 @@ transaction(
         let vaultRef = account.borrow<&{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
 
         // withdraw tokens from the buyer's Vault
-        self.temporaryVault <- vaultRef.withdraw(amount: 100.0)
+        self.temporaryVault <- vaultRef.withdraw(amount: 10.0)
     }
 
     execute {
 
         let flovatar: &{Flovatar.Private} = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
-        flovatar.setName(name: name, vault: <- self.temporaryVault)
+        flovatar.setPosition(latitude: latitude, longitude: longitude, vault: <- self.temporaryVault)
     }
 }
