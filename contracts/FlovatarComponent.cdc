@@ -216,6 +216,9 @@ pub contract FlovatarComponent: NonFungibleToken {
                 let trait = MetadataViews.Trait(name: template.category, value: template.name, displayType:"String", rarity: MetadataViews.Rarity(score:nil, max:nil, description: template.rarity))
                 traits.append(trait)
 
+                let setTraits = MetadataViews.Trait(name: "set", value: template.category, displayType:"String", rarity: nil)
+                traits.append(setTrait)
+
                 return MetadataViews.Traits(traits)
             }
 
