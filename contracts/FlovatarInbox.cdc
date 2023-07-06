@@ -107,7 +107,7 @@ pub contract FlovatarInbox {
             let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
             return <- token
         }
-        
+
         destroy(){
             destroy self.dustVault
             destroy self.flovatarComponents
@@ -463,6 +463,27 @@ pub contract FlovatarInbox {
     }
 
 
+    // This is the main Admin resource that will allow the owner
+    // to manage the Inbox
+    pub resource Admin {
+
+        pub fun setDustPerDayPerScore(value: UFix64) {
+            FlovatarInbox.setDustPerDayPerScore(value: value)
+        }
+        pub fun setWithdrawEnable(enabled: Bool) {
+            FlovatarInbox.setWithdrawEnable(enabled: enabled)
+        }
+
+
+        // With this function you can generate a new Admin resource
+        // and pass it to another user if needed
+        pub fun createNewAdmin(): @Admin {
+            return <-create Admin()
+        }
+
+    }
+
+
 	init() {
 	    self.withdrawEnabled = true
 	    self.communityVault <- FlovatarDustToken.createEmptyVault()
@@ -476,6 +497,9 @@ pub contract FlovatarInbox {
 
         self.account.save<@FlovatarInbox.Collection>(<- FlovatarInbox.createEmptyCollection(), to: FlovatarInbox.CollectionStoragePath)
         self.account.link<&{FlovatarInbox.CollectionPublic}>(FlovatarInbox.CollectionPublicPath, target: FlovatarInbox.CollectionStoragePath)
+
+        // Put the Admin resource in storage
+        self.account.save<@Admin>(<- create Admin(), to: /storage/FlovatarInboxAdmin)
 
         emit ContractInitialized()
 	}
