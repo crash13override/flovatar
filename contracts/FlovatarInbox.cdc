@@ -116,8 +116,8 @@ pub contract FlovatarInbox {
 
 
     pub resource interface CollectionPublic {
-        pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault)
-        pub fun depositDustToWallet(address: Address, vault: @FlovatarDustToken.Vault)
+        pub fun depositDustToFlovatar(id: UInt64, vault: @FungibleToken.Vault)
+        pub fun depositDustToWallet(address: Address, vault: @FungibleToken.Vault)
         pub fun depositComponentToFlovatar(id: UInt64, component: @FlovatarComponent.NFT)
         pub fun depositComponentToWallet(address: Address, component: @FlovatarComponent.NFT)
         pub fun getFlovatarDustBalance(id: UInt64): UFix64
@@ -162,13 +162,19 @@ pub contract FlovatarInbox {
             return (&self.walletContainers[address] as auth &FlovatarInbox.Container?)!
         }
 
-        pub fun depositDustToFlovatar(id: UInt64, vault: @FlovatarDustToken.Vault) {
+        pub fun depositDustToFlovatar(id: UInt64, vault: @FungibleToken.Vault) {
+            pre {
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
             let ref = self.borrowFlovatarContainer(id: id)
             emit FlovatarDepositDust(id: id, amount: vault.balance)
             ref.dustVault.deposit(from: <- vault)
         }
 
-        pub fun depositDustToWallet(address: Address, vault: @FlovatarDustToken.Vault) {
+        pub fun depositDustToWallet(address: Address, vault: @FungibleToken.Vault) {
+            pre {
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
             let ref = self.borrowWalletContainer(address: address)
             emit WalletDepositDust(address: address, amount: vault.balance)
             ref.dustVault.deposit(from: <- vault)
@@ -482,7 +488,6 @@ pub contract FlovatarInbox {
         }
 
     }
-
 
 	init() {
 	    self.withdrawEnabled = true
