@@ -94,12 +94,18 @@
       "keys": "6aeadb5ccba5cb1c20e8228306115852e29a1d19a4b0013eee291147da493175"
     },
     "testnet-account": {
-      "address": "$FLOW_TESTNET_ADDRESS",
-      "key": "$FLOW_TESTNET_KEY"
+      "address": "9392a4a7c3f49a0b",
+      "key": {
+        "type": "file",
+        "location": "testnet.pkey"
+      }
     },
     "mainnet-account": {
-      "address": "$FLOW_MAINNET_ADDRESS",
-      "key": "$FLOW_MAINNET_KEY"
+      "address": "921ea449dffec68a",
+      "key": {
+        "type": "file",
+        "location": "mainnet.pkey"
+      }
     }
   },
   "deployments": {

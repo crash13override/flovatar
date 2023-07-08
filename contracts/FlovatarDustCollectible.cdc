@@ -707,13 +707,21 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         layers: {UInt32: UInt64}
     ) : String {
         var combination = "S".concat(series.toString())
-
-        for k in layers.keys {
-            if(layers[k] != nil){
-                let layerId = layers[k]!
-                combination = combination.concat("-L").concat(k.toString()).concat("_").concat(layerId.toString())
+        var i: UInt32 = UInt32(2)
+        while(i <  UInt32(7)){
+            if(layers[i] != nil){
+                let layerId = layers[i]!
+                combination = combination.concat("-L").concat(i.toString()).concat("_").concat(layerId.toString())
             }
+            i = i + UInt32(1)
         }
+        //Disabling because is not ordered and will generate duplicates
+        //for k in layers.keys {
+        //    if(layers[k] != nil){
+        //        let layerId = layers[k]!
+        //        combination = combination.concat("-L").concat(k.toString()).concat("_").concat(layerId.toString())
+        //    }
+        //}
 
         return combination
     }
