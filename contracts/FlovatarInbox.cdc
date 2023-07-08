@@ -493,7 +493,7 @@ pub contract FlovatarInbox {
 	    self.withdrawEnabled = true
 	    self.communityVault <- FlovatarDustToken.createEmptyVault()
 
-	    self.dustDistributionStart = getCurrentBlock().timestamp
+	    self.dustDistributionStart = getCurrentBlock().timestamp - UFix64(86400)
 
 	    self.dustPerDayPerScore = 0.91447
 

@@ -111,12 +111,18 @@
   "deployments": {
     "mainnet": {
       "mainnet-account": [
+        "FlovatarDustToken",
         "FlovatarComponentTemplate",
         "FlovatarComponent",
         "FlovatarPack",
         "Flovatar",
         "Flobot",
-        "FlovatarMarketplace"
+        "FlovatarMarketplace",
+        "FlovatarInbox",
+        "FlovatarDustCollectibleTemplate",
+        "FlovatarDustCollectibleAccessory",
+        "FlovatarDustCollectible",
+        "FlovatarComponentUpgrader"
       ]
     },
     "testnet": {
