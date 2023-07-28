@@ -15,6 +15,8 @@ import FlovatarPack from "./FlovatarPack.cdc"
 import FlovatarDustToken from "./FlovatarDustToken.cdc"
 import Flovatar from "./Flovatar.cdc"
 
+import HybridCustody from "./hc/HybridCustody.cdc"
+
 /*
 
  This contract defines the Inbox for Flovatars and Flovatar owners where they can withdraw their
@@ -439,6 +441,40 @@ pub contract FlovatarInbox {
 
 
                 emit FlovatarClaimedCommunityDust(id: id, amount: vault.balance, to: address)
+
+                receiverRef.deposit(from: <- vault)
+            }
+        }
+    }
+
+    pub fun claimFlovatarCommunityDustFromChild(id: UInt64, parent: Address, child: Address) {
+        pre {
+            self.withdrawEnabled : "Withdrawal is not enabled!"
+        }
+
+        if parent == child {
+            self.claimFlovatarCommunityDust(id: id, address: parent)
+            return
+        }
+
+        let manager = getAccount(parent).getCapability<&HybridCustody.Manager{HybridCustody.ManagerPublic}>(HybridCustody.ManagerPublicPath).borrow()
+            ?? panic("parent account does not have a hybrid custody manager")
+        assert(manager.borrowAccountPublic(addr: child) != nil, message: "parent does not have supplied child account")
+
+        if let claimableDust: ClaimableDust = self.getClaimableFlovatarCommunityDust(id: id, address: child) {
+            if claimableDust.amount > self.communityVault.balance {
+                panic("Not enough community DUST left to be claimed")
+            }
+            if claimableDust.amount > 0.0 {
+                let receiverAccount = getAccount(parent)
+                let receiverRef = receiverAccount.getCapability(FlovatarDustToken.VaultReceiverPath).borrow<&{FungibleToken.Receiver}>()
+                    ?? panic("Could not borrow receiver reference to the recipient's Vault")
+
+                let vault <- self.communityVault.withdraw(amount: claimableDust.amount)
+                self.setLastClaimedDust(id: id, days: claimableDust.days)
+
+                // TODO: not sure who the `to` address should be, here.
+                emit FlovatarClaimedCommunityDust(id: id, amount: vault.balance, to: parent)
 
                 receiverRef.deposit(from: <- vault)
             }
