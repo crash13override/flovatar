@@ -81,6 +81,34 @@
         "testnet": "0x51ea0e37c27a1f1a",
         "mainnet": "0xe544175ee0461c4b"
       }
+    },
+    "HybridCustody": {
+      "source": "./contracts/hc/HybridCustody.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0x294e44e1ec6993c6"
+      }
+    },
+    "CapabilityDelegator": {
+      "source": "./contracts/hc/CapabilityDelegator.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0x294e44e1ec6993c6"
+      }
+    },
+    "CapabilityFactory": {
+      "source": "./contracts/hc/CapabilityFactory.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0x294e44e1ec6993c6"
+      }
+    },
+    "CapabilityFilter": {
+      "source": "./contracts/hc/CapabilityFilter.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0x294e44e1ec6993c6"
+      }
     }
   },
   "networks": {
@@ -159,7 +187,11 @@
         "FlovatarDustCollectibleTemplate",
         "FlovatarDustCollectibleAccessory",
         "FlovatarDustCollectible",
-        "FlovatarComponentUpgrader"
+        "FlovatarComponentUpgrader",
+        "HybridCustody",
+        "CapabilityDelegator",
+        "CapabilityFactory",
+        "CapabilityFilter"
       ]
     }
   }
