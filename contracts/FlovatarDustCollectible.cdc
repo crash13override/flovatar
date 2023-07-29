@@ -365,7 +365,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
         pub fun resolveView(_ type: Type): AnyStruct? {
 
             if type == Type<MetadataViews.ExternalURL>() {
-                return MetadataViews.ExternalURL("https://flovatar.com/stardust-collectible/".concat(self.id.toString()))
+                return MetadataViews.ExternalURL("https://flovatar.com/collectibles/".concat(self.id.toString()))
             }
 
             if type == Type<MetadataViews.Royalties>() {
@@ -384,7 +384,11 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             if type ==  Type<MetadataViews.Editions>() {
                 let series = self.getSeries()
-                let editionInfo = MetadataViews.Edition(name: "Flovatar Stardust Collectible Series ".concat(self.series.toString()), number: self.mint, max: series!.maxMintable)
+                let maxMint = series!.maxMintable
+                if(maxMint == UInt32(0)){
+                    maxMint = 9999999
+                }
+                let editionInfo = MetadataViews.Edition(name: "Flovatar Stardust Collectible Series ".concat(self.series.toString()), number: self.mint, max: maxMint)
                 let editionList: [MetadataViews.Edition] = [editionInfo]
                 return MetadataViews.Editions(
                     editionList
@@ -424,7 +428,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                     name: self.name == "" ? "Stardust Collectible #".concat(self.id.toString()) : self.name,
                     description: self.description,
                     thumbnail: MetadataViews.HTTPFile(
-                        url: "https://images.flovatar.com/stardust-collectible/svg/".concat(self.id.toString()).concat(".svg")
+                        url: "https://images.flovatar.com/collectible/svg/".concat(self.id.toString()).concat(".svg")
                     )
                 )
             }
