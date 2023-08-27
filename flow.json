@@ -86,28 +86,32 @@
       "source": "./contracts/hc/HybridCustody.cdc",
       "aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x294e44e1ec6993c6"
+        "testnet": "0x294e44e1ec6993c6",
+        "mainnet": "0xd8a7e05a7ac670c0"
       }
     },
     "CapabilityDelegator": {
       "source": "./contracts/hc/CapabilityDelegator.cdc",
       "aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x294e44e1ec6993c6"
+        "testnet": "0x294e44e1ec6993c6",
+        "mainnet": "0xd8a7e05a7ac670c0"
       }
     },
     "CapabilityFactory": {
       "source": "./contracts/hc/CapabilityFactory.cdc",
       "aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x294e44e1ec6993c6"
+        "testnet": "0x294e44e1ec6993c6",
+        "mainnet": "0xd8a7e05a7ac670c0"
       }
     },
     "CapabilityFilter": {
       "source": "./contracts/hc/CapabilityFilter.cdc",
       "aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0x294e44e1ec6993c6"
+        "testnet": "0x294e44e1ec6993c6",
+        "mainnet": "0xd8a7e05a7ac670c0"
       }
     }
   },
