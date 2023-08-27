@@ -384,9 +384,9 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
             if type ==  Type<MetadataViews.Editions>() {
                 let series = self.getSeries()
-                let maxMint = series!.maxMintable
-                if(maxMint == UInt32(0)){
-                    maxMint = 9999999
+                var maxMint: UInt64 = series!.maxMintable
+                if(maxMint == UInt64(0)){
+                    maxMint = UInt64(999999)
                 }
                 let editionInfo = MetadataViews.Edition(name: "Flovatar Stardust Collectible Series ".concat(self.series.toString()), number: self.mint, max: maxMint)
                 let editionList: [MetadataViews.Edition] = [editionInfo]
