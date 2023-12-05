@@ -56,6 +56,7 @@ pub contract Flovatar: NonFungibleToken {
     pub event PositionChanged(id: UInt64, position: String)
     pub event StoryAdded(id: UInt64, story: String)
     pub event Unlocked3DFile(id: UInt64)
+    pub event UnlockedChat(id: UInt64)
 
 
     pub struct Royalties{
@@ -156,6 +157,7 @@ pub contract Flovatar: NonFungibleToken {
         pub fun setName(name: String, vault: @FungibleToken.Vault): String
         pub fun addStory(text: String, vault: @FungibleToken.Vault): String
         pub fun unlock3DFile(vault: @FungibleToken.Vault)
+        pub fun unlockChat(vault: @FungibleToken.Vault)
         pub fun setPosition(latitude: Fix64, longitude: Fix64, vault: @FungibleToken.Vault): String
         pub fun setAccessory(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
         pub fun setHat(component: @FlovatarComponent.NFT): @FlovatarComponent.NFT?
@@ -273,7 +275,7 @@ pub contract Flovatar: NonFungibleToken {
 
             destroy vault
             let currentStory: String = self.bio["story"] ?? ""
-            let story: String = currentStory.concat(" ").concat(text)
+            let story: String = currentStory.concat("\n").concat(text)
             self.bio.insert(key: "story", story)
 
             emit StoryAdded(id: self.id, story: story)
@@ -282,7 +284,7 @@ pub contract Flovatar: NonFungibleToken {
         }
 
         // This will unlock the 3D files for a Flovatar.
-        // $DUST vault must contain 50 tokens that will be burned in the process
+        // $DUST vault must contain 150 tokens that will be burned in the process
         pub fun unlock3DFile(vault: @FungibleToken.Vault) {
             pre {
                 self.bio["3d"] == nil : "The 3D File has been already unlocked"
@@ -294,6 +296,22 @@ pub contract Flovatar: NonFungibleToken {
             self.bio.insert(key: "3d", "true")
 
             emit Unlocked3DFile(id: self.id)
+
+        }
+
+        // This will enable the chat customization for a Flovatar.
+        // $DUST vault must contain 5000 tokens that will be burned in the process
+        pub fun unlockChat(vault: @FungibleToken.Vault) {
+            pre {
+                self.bio["chat"] == nil : "The Chat has been already unlocked"
+                vault.balance == 5000.0 : "The amount of $DUST is not correct"
+                vault.isInstance(Type<@FlovatarDustToken.Vault>()) : "Vault not of the right Token Type"
+            }
+
+            destroy vault
+            self.bio.insert(key: "chat", "true")
+
+            emit UnlockedChat(id: self.id)
 
         }
 
