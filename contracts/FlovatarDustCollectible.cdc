@@ -80,9 +80,7 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
 
 
 
-    // The public interface can show metadata and the content for the Flovatar.
-    // In addition to it, it provides methods to access the additional optional
-    // components (accessory, hat, eyeglasses, background) for everyone.
+    // The public interface can show metadata and the content for the Dust Collectible
     pub resource interface Public {
         pub let id: UInt64
         pub let mint: UInt64
@@ -901,10 +899,8 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
     // to generate new Templates, Components and Packs
     pub resource Admin {
 
-        //This will create a new FlovatarComponentTemplate that
-        // contains all the SVG and basic informations to represent
-        // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
-        // More info in the FlovatarComponentTemplate.cdc file
+        //This will create a new Flovatar Collectible Series that
+        // contains all the basic informations about a new Series of NFT
         pub fun createCollectibleSeries(
                         name: String,
                         description: String,
@@ -928,10 +924,10 @@ pub contract FlovatarDustCollectible: NonFungibleToken {
                 maxMintable: maxMintable
             )
         }
-        //This will create a new FlovatarComponentTemplate that
+        //This will create a new Flovatar Dust Collectible Template that
         // contains all the SVG and basic informations to represent
-        // a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
-        // More info in the FlovatarComponentTemplate.cdc file
+        // a specific part of the Collectible (body, hair, eyes, mouth, etc.)
+        // More info in the FlovatarDustCollectibleTemplate.cdc file
         pub fun createCollectibleTemplate(
                         name: String,
                         description: String,
