@@ -1,5 +1,6 @@
 //import FungibleToken from 0xf233dcee88fe0abe
 import FungibleToken from "./FungibleToken.cdc"
+import Toucans from "./toucans/Toucans.cdc"
 
 pub contract FlovatarDustToken: FungibleToken {
 
@@ -146,7 +147,7 @@ pub contract FlovatarDustToken: FungibleToken {
     ///
     /// Resource object that token admin accounts can hold to mint new tokens.
     ///
-    pub resource Minter {
+    pub resource Minter: Toucans.Minter {
 
         /// The amount of tokens that the minter is allowed to mint
         pub var allowedAmount: UFix64
@@ -165,6 +166,11 @@ pub contract FlovatarDustToken: FungibleToken {
             self.allowedAmount = self.allowedAmount - amount
             emit TokensMinted(amount: amount)
             return <-create Vault(balance: amount)
+        }
+
+        pub fun mint(amount: UFix64): @Vault {
+            let vault <- self.mintTokens(amount: amount) as @Vault
+            return <- vault
         }
 
         init(allowedAmount: UFix64) {
