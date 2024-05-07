@@ -24,6 +24,7 @@
 				"testnet": "294e44e1ec6993c6"
 			}
 		},
+		"DummyDustTokenMinter": "./contracts/DummyDustTokenMinter.cdc",
 		"Flobot": "./contracts/Flobot.cdc",
 		"Flovatar": "./contracts/Flovatar.cdc",
 		"FlovatarComponent": "./contracts/FlovatarComponent.cdc",
@@ -165,7 +166,8 @@
 				"HybridCustody",
 				"CapabilityDelegator",
 				"CapabilityFactory",
-				"CapabilityFilter"
+				"CapabilityFilter",
+				"DummyDustTokenMinter"
 			]
 		},
 		"mainnet": {
@@ -181,7 +183,8 @@
 				"FlovatarDustCollectibleTemplate",
 				"FlovatarDustCollectibleAccessory",
 				"FlovatarDustCollectible",
-				"FlovatarComponentUpgrader"
+				"FlovatarComponentUpgrader",
+				"DummyDustTokenMinter"
 			]
 		},
 		"testnet": {
@@ -197,7 +200,8 @@
 				"FlovatarDustCollectibleAccessory",
 				"FlovatarDustCollectible",
 				"FlovatarComponentUpgrader",
-				"FlovatarInbox"
+				"FlovatarInbox",
+				"DummyDustTokenMinter"
 			]
 		}
 	}
