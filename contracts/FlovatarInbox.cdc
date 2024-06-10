@@ -149,6 +149,11 @@ contract FlovatarInbox{
 			let token <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
 			return <-token
 		}
+
+		access(all)
+		fun withdrawDust(amount: UFix64): @{FungibleToken.Vault}{ 
+			return <-self.dustVault.withdraw(amount: amount)
+		}
 	}
 	
 	access(all)
@@ -310,18 +315,14 @@ contract FlovatarInbox{
 		
 		access(all)
 		fun withdrawFlovatarDust(id: UInt64): @{FungibleToken.Vault}{ 
-			//TODO CRESCENDO! Update withdraw capability
-			//let ref = self.borrowFlovatarContainer(id: id)
-			//return <-ref.dustVault.withdraw(amount: ref.dustVault.balance)
-			return <- FlovatarDustToken.createEmptyVault(vaultType: Type<@FlovatarDustToken.Vault>())
+			let ref = self.borrowFlovatarContainer(id: id)
+			return <-ref.withdrawDust(amount: ref.dustVault.balance)
 		}
 		
 		access(all)
 		fun withdrawWalletDust(address: Address): @{FungibleToken.Vault}{ 
-			//TODO CRESCENDO! Update withdraw capability
-			//let ref = self.borrowWalletContainer(address: address)
-			//return <-ref.dustVault.withdraw(amount: ref.dustVault.balance)
-			return <- FlovatarDustToken.createEmptyVault(vaultType: Type<@FlovatarDustToken.Vault>())
+			let ref = self.borrowWalletContainer(address: address)
+			return <-ref.withdrawDust(amount: ref.dustVault.balance)
 		}
 	}
 	
