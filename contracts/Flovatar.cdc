@@ -1404,8 +1404,7 @@ contract Flovatar: NonFungibleToken{
 	resource Admin{ 
 		
 
-			//TODO CRESCENDO! Update Admin Flovatar
-		/*
+
 
 		//This will create a new FlovatarComponentTemplate that
 		// contains all the SVG and basic informations to represent
@@ -1436,7 +1435,7 @@ contract Flovatar: NonFungibleToken{
 		fun createPack(components: @[FlovatarComponent.NFT], randomString: String, price: UFix64, sparkCount: UInt32, series: UInt32, name: String): @FlovatarPack.Pack{ 
 			return <-FlovatarPack.createPack(components: <-components, randomString: randomString, price: price, sparkCount: sparkCount, series: series, name: name)
 		}
-		 */
+		 
 		
 		// With this function you can generate a new Admin resource
 		// and pass it to another user if needed

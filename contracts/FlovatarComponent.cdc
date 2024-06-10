@@ -121,10 +121,9 @@ contract FlovatarComponent: NonFungibleToken{
 			self.schema = nil
 			
 
-			//TODO CRESCENDO! Update access(account)
 			// Increments the counter and stores the timestamp
-			//FlovatarComponentTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
-			//FlovatarComponentTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
+			FlovatarComponentTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
+			FlovatarComponentTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
 		}
 		
 		access(all)

@@ -244,8 +244,7 @@ contract FlovatarComponentUpgrader{
 			if !checkCategory{ 
 				componentCategory = nil
 			}
-			//TODO Crescendo: Update self.account.Storage
-			/* 
+
 			let component <-
 				upgraderCollection.withdrawRandomComponent(
 					series: componentSeries,
@@ -254,17 +253,16 @@ contract FlovatarComponentUpgrader{
 				)
 			destroy components
 			destroy vault
+
 			if let inboxCollection =
-				self.account.storage.borrow<&FlovatarInbox.Collection>(
+				self.account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarInbox.Collection>(
 					from: FlovatarInbox.CollectionStoragePath
 				){ 
-				inboxCollection.depositComponentToWallet(address: address, component: <-component)
+					inboxCollection.depositComponentToWallet(address: address, component: <-component)
 			} else{ 
 				panic("Couldn't borrow Flovatar Inbox Collection")
 			}
-			*/
-			destroy components
-			destroy vault
+			
 		} else{ 
 			panic("Can't borrow the Upgrader Collection")
 		}

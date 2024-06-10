@@ -244,8 +244,7 @@ contract FlovatarDustCollectible: NonFungibleToken{
 		init(series: UInt64, layers:{ UInt32: UInt64?}, creatorAddress: Address, royalties: Royalties){ 
 			FlovatarDustCollectible.totalSupply = FlovatarDustCollectible.totalSupply + UInt64(1)
 
-			//TODO CRESCENDO! Update auth(account)
-			//FlovatarDustCollectibleTemplate.increaseTotalMintedCollectibles(series: series)
+			FlovatarDustCollectibleTemplate.increaseTotalMintedCollectibles(series: series)
 			let coreLayers:{ UInt32: UInt64} = FlovatarDustCollectible.getCoreLayers(series: series, layers: layers)
 			self.id = FlovatarDustCollectible.totalSupply
 			self.mint = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: series)!
@@ -976,12 +975,11 @@ contract FlovatarDustCollectible: NonFungibleToken{
 				templates.append(template)
 				totalPrice = totalPrice + FlovatarDustCollectibleTemplate.getTemplateCurrentPrice(id: template.id)!
 
-			//TODO CRESCENDO! Update auth(account)
-			/*
+
 				FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: template.id)
 				FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: template.id)
 				FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: template.id, value: getCurrentBlock().timestamp)
-				*/
+				
 			} else{ 
 				fullLayers[layerId] = nil
 			}
@@ -1046,8 +1044,7 @@ contract FlovatarDustCollectible: NonFungibleToken{
 	access(all)
 	resource Admin{ 
 		
-			//TODO CRESCENDO! Update Admin Flovatar
-		/*
+
 		//This will create a new FlovatarComponentTemplate that
 		// contains all the SVG and basic informations to represent
 		// a specific part of the Flovatar (body, hair, eyes, mouth, etc.)
@@ -1096,7 +1093,7 @@ contract FlovatarDustCollectible: NonFungibleToken{
 		fun setMarketplaceCut(value: UFix64){ 
 			FlovatarDustCollectible.setMarketplaceCut(value: value)
 		}
-		*/
+		
 	}
 	
 	init(){ 

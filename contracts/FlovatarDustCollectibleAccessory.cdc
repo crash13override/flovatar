@@ -126,11 +126,10 @@ contract FlovatarDustCollectibleAccessory: NonFungibleToken{
 			self.schema = nil
 			
 
-			//TODO CRESCENDO! Update access(account)
 			// Increments the counter and stores the timestamp
-			//FlovatarDustCollectibleTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
-			//FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
-			//FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
+			FlovatarDustCollectibleTemplate.setTotalMintedComponents(id: templateId, value: self.mint)
+			FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
+			FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
 		}
 		
 		access(all)
@@ -589,12 +588,11 @@ contract FlovatarDustCollectibleAccessory: NonFungibleToken{
 			panic("Reached maximum mintable components for this template")
 		}
 
-			//TODO CRESCENDO! Update auth(account)
-			/*
+
 		FlovatarDustCollectibleTemplate.increaseTotalMintedComponents(id: templateId)
 		FlovatarDustCollectibleTemplate.increaseTemplatesCurrentPrice(id: templateId)
 		FlovatarDustCollectibleTemplate.setLastComponentMintedAt(id: templateId, value: getCurrentBlock().timestamp)
-		*/
+		
 		
 		var newNFT <- create NFT(templateId: templateId)
 		emit Created(id: newNFT.id, templateId: templateId, mint: newNFT.mint)
