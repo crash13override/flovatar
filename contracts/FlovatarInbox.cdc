@@ -6,6 +6,7 @@ import "FlovatarComponent"
 import "FlovatarPack"
 import "FlovatarDustToken"
 import "Flovatar"
+import "HybridCustody"
 
 /*
 
@@ -549,8 +550,7 @@ contract FlovatarInbox{
 	
 	access(all)
 	fun claimFlovatarCommunityDustFromChild(id: UInt64, parent: Address, child: Address){ 
-			//TODO CRESCENDO! Update Hybrid Custody
-			/*
+
 		pre{ 
 			self.withdrawEnabled:
 				"Withdrawal is not enabled!"
@@ -575,7 +575,7 @@ contract FlovatarInbox{
 			}
 			if claimableDust.amount > 0.0{ 
 				let receiverAccount = getAccount(parent)
-				let receiverRef = receiverAccount.capabilities.get<&{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath).borrow<&{FungibleToken.Receiver}>() ?? panic("Could not borrow receiver reference to the recipient's Vault")
+				let receiverRef = (receiverAccount.capabilities.get<&{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)!).borrow() ?? panic("Could not borrow receiver reference to the recipient's Vault")
 				let vault <- self.communityVault.withdraw(amount: claimableDust.amount)
 				self.setLastClaimedDust(id: id, days: claimableDust.days)
 				
@@ -584,7 +584,7 @@ contract FlovatarInbox{
 				receiverRef.deposit(from: <-vault)
 			}
 		}
-		*/
+		
 	}
 	
 	// Admin function to temporarly enable or disable the airdrop and reward withdraw so that

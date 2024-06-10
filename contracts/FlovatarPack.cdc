@@ -314,14 +314,13 @@ contract FlovatarPack{
 			signatureSet.append(Crypto.KeyListSignature(keyIndex: 0, signature: signature.decodeHex()))
 			
 
-			//TODO CRESCENDO! Update Keylist.verify
-			/*
+
 			// Verifies that the signature is valid and that it was generated from the
 			// owner of the collection
-			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8){ 
+			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8, domainSeparationTag: "FLOW-V0.0-user"){ 
 				panic("Unable to validate the signature for the pack!")
 			}
-			*/
+			
 			
 			// Borrows the recipient's capability and withdraws the Pack from the collection.
 			// If this fails the transaction will revert but the signature will be exposed.
@@ -373,14 +372,13 @@ contract FlovatarPack{
 			signatureSet.append(Crypto.KeyListSignature(keyIndex: 0, signature: signature.decodeHex()))
 			
 
-			//TODO CRESCENDO! Update Keylist.verify
-			/*
+
 			// Verifies that the signature is valid and that it was generated from the
 			// owner of the collection
-			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8){ 
+			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8, domainSeparationTag: "FLOW-V0.0-user"){ 
 				panic("Unable to validate the signature for the pack!")
 			}
-			*/
+			
 			
 			// Borrows the recipient's capability and withdraws the Pack from the collection.
 			// If this fails the transaction will revert but the signature will be exposed.
@@ -429,14 +427,13 @@ contract FlovatarPack{
 			let signatureSet: [Crypto.KeyListSignature] = []
 			signatureSet.append(Crypto.KeyListSignature(keyIndex: 0, signature: signature.decodeHex()))
 			
-			//TODO CRESCENDO! Update Keylist.verify
-			/*
+
 			// Verifies that the signature is valid and that it was generated from the
 			// owner of the collection
-			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8){ 
+			if !keyList.verify(signatureSet: signatureSet, signedData: self.getRandomString(id: tokenId).utf8, domainSeparationTag: "FLOW-V0.0-user"){ 
 				panic("Unable to validate the signature for the pack!")
 			}
-			*/
+			
 			
 			// Borrows the recipient's capability and withdraws the Pack from the collection.
 			// If this fails the transaction will revert but the signature will be exposed.
