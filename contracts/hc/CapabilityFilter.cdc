@@ -6,29 +6,31 @@
 /// - `AllowlistFilter` - A filter which contains a mapping of allowed Types
 /// - `AllowAllFilter`  - A passthrough, all requested capabilities are allowed
 /// 
-pub contract CapabilityFilter {
+access(all) contract CapabilityFilter {
     
     /* --- Canonical Paths --- */
     //
-    pub let StoragePath: StoragePath
-    pub let PublicPath: PublicPath
-    pub let PrivatePath: PrivatePath
+    access(all) let StoragePath: StoragePath
+    access(all) let PublicPath: PublicPath
+
+    access(all) entitlement Add
+    access(all) entitlement Delete
 
     /* --- Events --- */
     //
-    pub event FilterUpdated(id: UInt64, filterType: Type, type: Type, active: Bool)
+    access(all) event FilterUpdated(id: UInt64, filterType: Type, type: Type, active: Bool)
 
     /// `Filter` is a simple interface with methods to determine if a Capability is allowed and retrieve details about
     /// the Filter itself
     ///
-    pub resource interface Filter {
-        pub fun allowed(cap: Capability): Bool
-        pub fun getDetails(): AnyStruct
+    access(all) resource interface Filter {
+        access(all) view fun allowed(cap: Capability): Bool
+        access(all) view fun getDetails(): AnyStruct
     }
 
     /// `DenylistFilter` is a `Filter` which contains a mapping of denied Types
     ///
-    pub resource DenylistFilter: Filter {
+    access(all) resource DenylistFilter: Filter {
 
         /// Represents the underlying types which should not ever be returned by a RestrictedChildAccount. The filter
         /// will borrow a requested capability, and make sure that the type it gets back is not in the list of denied
@@ -39,7 +41,7 @@ pub contract CapabilityFilter {
         /// 
         /// @param type: The type to add to the denied types mapping
         ///
-        pub fun addType(_ type: Type) {
+        access(Add) fun addType(_ type: Type) {
             self.deniedTypes.insert(key: type, true)
             emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: true)
         }
@@ -48,9 +50,17 @@ pub contract CapabilityFilter {
         ///
         /// @param type: The type to remove from the denied types mapping
         ///
-        pub fun removeType(_ type: Type) {
+        access(Delete) fun removeType(_ type: Type) {
             if let removed = self.deniedTypes.remove(key: type) {
                 emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            }
+        }
+
+        /// Removes all types from the mapping of denied types
+        ///
+        access(Delete) fun removeAllTypes() {
+            for type in self.deniedTypes.keys {
+                self.removeType(type)
             }
         }
 
@@ -59,7 +69,7 @@ pub contract CapabilityFilter {
         /// @param cap: The capability to check
         /// @return: true if the capability is allowed, false otherwise
         ///
-        pub fun allowed(cap: Capability): Bool {
+        access(all) view fun allowed(cap: Capability): Bool {
             if let item = cap.borrow<&AnyResource>() {
                 return !self.deniedTypes.containsKey(item.getType())
             }
@@ -72,7 +82,7 @@ pub contract CapabilityFilter {
         /// @return A struct containing details about this filter including this Filter's Type indexed on the `type`
         ///         key as well as types denied indexed on the `deniedTypes` key
         ///
-        pub fun getDetails(): AnyStruct {
+        access(all) view fun getDetails(): AnyStruct {
             return {
                 "type": self.getType(),
                 "deniedTypes": self.deniedTypes.keys
@@ -86,7 +96,7 @@ pub contract CapabilityFilter {
 
     /// `AllowlistFilter` is a `Filter` which contains a mapping of allowed Types
     ///
-    pub resource AllowlistFilter: Filter {
+    access(all) resource AllowlistFilter: Filter {
         // allowedTypes
         // Represents the set of underlying types which are allowed to be 
         // returned by a RestrictedChildAccount. The filter will borrow
@@ -98,7 +108,7 @@ pub contract CapabilityFilter {
         /// 
         /// @param type: The type to add to the allowed types mapping
         ///
-        pub fun addType(_ type: Type) {
+        access(Add) fun addType(_ type: Type) {
             self.allowedTypes.insert(key: type, true)
             emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: true)
         }
@@ -107,9 +117,17 @@ pub contract CapabilityFilter {
         ///
         /// @param type: The type to remove from the denied types mapping
         ///
-        pub fun removeType(_ type: Type) {
+        access(Delete) fun removeType(_ type: Type) {
             if let removed = self.allowedTypes.remove(key: type) {
                 emit FilterUpdated(id: self.uuid, filterType: self.getType(), type: type, active: false)
+            }
+        }
+
+        /// Removes all types from the mapping of denied types
+        ///
+        access(Delete) fun removeAllTypes() {
+            for type in self.allowedTypes.keys {
+                self.removeType(type)
             }
         }
         
@@ -118,7 +136,7 @@ pub contract CapabilityFilter {
         /// @param cap: The capability to check
         /// @return: true if the capability is allowed, false otherwise
         ///
-        pub fun allowed(cap: Capability): Bool {
+        access(all) view fun allowed(cap: Capability): Bool {
             if let item = cap.borrow<&AnyResource>() {
                 return self.allowedTypes.containsKey(item.getType())
             }
@@ -131,7 +149,7 @@ pub contract CapabilityFilter {
         /// @return A struct containing details about this filter including this Filter's Type indexed on the `type`
         ///         key as well as types allowed indexed on the `allowedTypes` key
         ///
-        pub fun getDetails(): AnyStruct {
+        access(all) view fun getDetails(): AnyStruct {
             return {
                 "type": self.getType(),
                 "allowedTypes": self.allowedTypes.keys
@@ -145,13 +163,13 @@ pub contract CapabilityFilter {
 
     /// AllowAllFilter is a passthrough, all requested capabilities are allowed
     ///
-    pub resource AllowAllFilter: Filter {
+    access(all) resource AllowAllFilter: Filter {
         /// Determines if a requested capability is allowed by this `Filter`
         ///
         /// @param cap: The capability to check
         /// @return: true since this filter is a passthrough
         ///
-        pub fun allowed(cap: Capability): Bool {
+        access(all) view fun allowed(cap: Capability): Bool {
             return true
         }
         
@@ -160,7 +178,7 @@ pub contract CapabilityFilter {
         /// @return A struct containing details about this filter including this Filter's Type indexed on the `type`
         ///         key
         ///
-        pub fun getDetails(): AnyStruct {
+        access(all) view fun getDetails(): AnyStruct {
             return {
                 "type": self.getType()
             }
@@ -172,7 +190,7 @@ pub contract CapabilityFilter {
     /// @param t: The type of `Filter` to create
     /// @return: A new instance of the given `Filter` type
     ///
-    pub fun create(_ t: Type): @AnyResource{Filter} {
+    access(all) fun createFilter(_ t: Type): @{Filter} {
         post {
             result.getType() == t
         }
@@ -194,6 +212,5 @@ pub contract CapabilityFilter {
         
         self.StoragePath = StoragePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
     }
 }

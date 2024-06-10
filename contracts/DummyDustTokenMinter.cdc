@@ -1,20 +1,21 @@
-import FungibleToken from "./FungibleToken.cdc"
-import Toucans from "./toucans/Toucans.cdc"
-import FlovatarDustToken from "./FlovatarDustToken.cdc"
+import "FungibleToken"
+import "Toucans"
+import "FlovatarDustToken"
 
-pub contract DummyDustTokenMinter {
-
-    pub resource DummyMinter: Toucans.Minter {
-       pub fun mint(amount: UFix64): @FlovatarDustToken.Vault {
-        return <- FlovatarDustToken.createEmptyVault()
-       }
-    }
-
-    pub fun createMinter(): @DummyMinter {
-       return <- create DummyMinter()
-    }
-
-    init() {
-
-    }
+access(all)
+contract DummyDustTokenMinter{ 
+	access(all)
+	resource DummyMinter: Toucans.Minter{ 
+		access(all)
+		fun mint(amount: UFix64): @FlovatarDustToken.Vault{ 
+			return <-FlovatarDustToken.createEmptyDustVault()
+		}
+	}
+	
+	access(all)
+	fun createMinter(): @DummyMinter{ 
+		return <-create DummyMinter()
+	}
+	
+	init(){} 
 }

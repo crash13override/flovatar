@@ -13,37 +13,40 @@
 /// Capabilities is critical to the use case of Hybrid Custody. It's advised to use Factories sparingly and only for
 /// cases where Capabilities must be castable by the caller.
 ///
-pub contract CapabilityFactory {
+access(all) contract CapabilityFactory {
     
-    pub let StoragePath: StoragePath
-    pub let PrivatePath: PrivatePath
-    pub let PublicPath: PublicPath
+    access(all) let StoragePath: StoragePath
+    access(all) let PublicPath: PublicPath
+
+    access(all) entitlement Add
+    access(all) entitlement Delete
     
     /// Factory structures a common interface for Capability retrieval from a given account at a specified path
     ///
-    pub struct interface Factory {
-        pub fun getCapability(acct: &AuthAccount, path: CapabilityPath): Capability
+    access(all) struct interface Factory {
+        access(all) view fun getCapability(acct: auth(Capabilities) &Account, controllerID: UInt64): Capability?
+        access(all) view fun getPublicCapability(acct: &Account, path: PublicPath): Capability?
     }
 
     /// Getter defines an interface for retrieval of a Factory if contained within the implementing resource
     ///
-    pub resource interface Getter {
-        pub fun getSupportedTypes(): [Type]
-        pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
+    access(all) resource interface Getter {
+        access(all) view fun getSupportedTypes(): [Type]
+        access(all) view fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
     }
 
     /// Manager is a resource that contains Factories and implements the Getter interface for retrieval of contained
     /// Factories
     ///
-    pub resource Manager: Getter {
+    access(all) resource Manager: Getter {
         /// Mapping of Factories indexed on Type of Capability they retrieve
-        pub let factories: {Type: {CapabilityFactory.Factory}}
+        access(all) let factories: {Type: {CapabilityFactory.Factory}}
 
         /// Retrieves a list of Types supported by contained Factories
         ///
         /// @return List of Types supported by the Manager
         ///
-        pub fun getSupportedTypes(): [Type] {
+        access(all) view fun getSupportedTypes(): [Type] {
             return self.factories.keys
         }
 
@@ -51,7 +54,7 @@ pub contract CapabilityFactory {
         ///
         /// @param t: Type the Factory is indexed on
         ///
-        pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}? {
+        access(all) view fun getFactory(_ t: Type): {CapabilityFactory.Factory}? {
             return self.factories[t]
         }
 
@@ -60,7 +63,7 @@ pub contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to add
         ///
-        pub fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Add) fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             pre {
                 !self.factories.containsKey(t): "Factory of given type already exists"
             }
@@ -72,7 +75,7 @@ pub contract CapabilityFactory {
         /// @param t: Type of Capability the Factory retrieves
         /// @param f: Factory to replace existing Factory
         ///
-        pub fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
+        access(Add) fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory}) {
             self.factories[t] = f
         }
 
@@ -80,7 +83,7 @@ pub contract CapabilityFactory {
         ///
         /// @param t: Type the Factory is indexed on
         ///
-        pub fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
+        access(Delete) fun removeFactory(_ t: Type): {CapabilityFactory.Factory}? {
             return self.factories.remove(key: t)
         }
 
@@ -92,14 +95,13 @@ pub contract CapabilityFactory {
     /// Creates a Manager resource
     ///
     /// @return Manager resource
-    pub fun createFactoryManager(): @Manager {
+    access(all) fun createFactoryManager(): @Manager {
         return <- create Manager()
     }
 
     init() {
         let identifier = "CapabilityFactory_".concat(self.account.address.toString())
         self.StoragePath = StoragePath(identifier: identifier)!
-        self.PrivatePath = PrivatePath(identifier: identifier)!
         self.PublicPath = PublicPath(identifier: identifier)!
     }
 }
