@@ -428,8 +428,7 @@ contract FlovatarDustCollectibleTemplate{
 			self.colors = colors
 			self.metadata = metadata
 			self.maxMintable = maxMintable
-			self.totalMintedCollectibles = FlovatarDustCollectibleTemplate
-					.getTotalMintedCollectibles(series: id)!
+			self.totalMintedCollectibles = FlovatarDustCollectibleTemplate.getTotalMintedCollectibles(series: id)!
 		}
 	}
 	
