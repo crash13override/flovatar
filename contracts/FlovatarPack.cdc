@@ -25,7 +25,7 @@ import "FlovatarDustToken"
 access(all)
 contract FlovatarPack{
 
-    access(all) entitlement Withdraw
+    access(all) entitlement WithdrawEnt
 
 	access(all)
 	let CollectionStoragePath: StoragePath
@@ -231,7 +231,7 @@ contract FlovatarPack{
 		}
 		
 		// withdraw removes a Pack from the collection and moves it to the caller
-		access(Withdraw)
+		access(WithdrawEnt)
 		fun withdraw(withdrawID: UInt64): @FlovatarPack.Pack{ 
 			let token <- self.ownedPacks.remove(key: withdrawID) ?? panic("Missing Pack")
 			emit Withdraw(id: token.id, from: self.owner?.address)
@@ -241,7 +241,7 @@ contract FlovatarPack{
 		// This function allows any Pack owner to open the pack and receive its content
 		// into the owner's Component Collection.
 		// The pack is destroyed after the Components are delivered.
-		access(Withdraw)
+		access(WithdrawEnt)
 		fun openPack(id: UInt64){ 
 			
 			// Gets the Component Collection Public capability to be able to
