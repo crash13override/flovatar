@@ -25,7 +25,9 @@ import "HybridCustody"
  */
 
 access(all)
-contract FlovatarInbox{ 
+contract FlovatarInbox{
+
+    access(all) entitlement Withdraw
 	
 	// The withdrawEnabled will allow to put all withdraws on hold while the distribution of new airdrops is happening
 	// So that everyone will be then be able to access his rewards at the same time
@@ -302,25 +304,25 @@ contract FlovatarInbox{
 			self.lastClaimedDust[id] = value
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawFlovatarComponent(id: UInt64, withdrawID: UInt64): @{NonFungibleToken.NFT}{ 
 			let ref = self.borrowFlovatarContainer(id: id)
 			return <-ref.withdrawComponent(id: withdrawID)
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawWalletComponent(address: Address, withdrawID: UInt64): @{NonFungibleToken.NFT}{ 
 			let ref = self.borrowWalletContainer(address: address)
 			return <-ref.withdrawComponent(id: withdrawID)
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawFlovatarDust(id: UInt64): @{FungibleToken.Vault}{ 
 			let ref = self.borrowFlovatarContainer(id: id)
 			return <-ref.withdrawDust(amount: ref.dustVault.balance)
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawWalletDust(address: Address): @{FungibleToken.Vault}{ 
 			let ref = self.borrowWalletContainer(address: address)
 			return <-ref.withdrawDust(amount: ref.dustVault.balance)

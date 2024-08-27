@@ -15,7 +15,9 @@ import "Flovatar"
  */
 
 access(all)
-contract FlovatarComponentUpgrader{ 
+contract FlovatarComponentUpgrader{
+
+    access(all) entitlement Withdraw
 	
 	// The withdrawEnabled will allow to put all withdraws on hold while the distribution of new airdrops is happening
 	// So that everyone will be then be able to access his rewards at the same time
@@ -128,7 +130,7 @@ contract FlovatarComponentUpgrader{
 			destroy oldComponent
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawComponent(id: UInt64): @FlovatarComponent.NFT{ 
 			let component <- self.flovatarComponents.remove(key: id) ?? panic("missing NFT")
 			(((self.rarityLookup[component.getSeries()]!)[component.getRarity()]!)["all"]!).remove(key: component.id)
@@ -136,7 +138,7 @@ contract FlovatarComponentUpgrader{
 			return <-component
 		}
 		
-		access(all)
+		access(Withdraw)
 		fun withdrawRandomComponent(series: UInt32, rarity: String, category: String?): @FlovatarComponent.NFT{ 
 			//FILTER BY SERIES AND RARITY AND THEN RANDOMIZE AND PICK ONE
 			var components: [UInt64] = []

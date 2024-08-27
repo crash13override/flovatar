@@ -13,7 +13,10 @@ import "FlovatarComponent"
 */
 
 access(all)
-contract FlovatarMarketplace{ 
+contract FlovatarMarketplace{
+
+    access(all) entitlement Withdraw
+
 	access(all)
 	let CollectionPublicPath: PublicPath
 	
@@ -127,7 +130,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Gives the owner the opportunity to remove a Flovatar sale from the collection
-		access(all)
+		access(Withdraw)
 		fun withdrawFlovatar(tokenId: UInt64): @Flovatar.NFT{ 
 			// remove the price
 			self.flovatarPrices.remove(key: tokenId)
@@ -139,7 +142,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Gives the owner the opportunity to remove a Component sale from the collection
-		access(all)
+		access(Withdraw)
 		fun withdrawFlovatarComponent(tokenId: UInt64): @FlovatarComponent.NFT{ 
 			// remove the price
 			self.flovatarComponentPrices.remove(key: tokenId)
@@ -151,7 +154,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Lists a Flovatar NFT for sale in this collection
-		access(all)
+		access(Withdraw)
 		fun listFlovatarForSale(token: @Flovatar.NFT, price: UFix64){ 
 			let id = token.id
 			
@@ -166,7 +169,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Lists a Component NFT for sale in this collection
-		access(all)
+		access(Withdraw)
 		fun listFlovatarComponentForSale(token: @FlovatarComponent.NFT, price: UFix64){ 
 			let id = token.id
 			let mint = token.mint
@@ -182,7 +185,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Changes the price of a Flovatar that is currently for sale
-		access(all)
+		access(Withdraw)
 		fun changeFlovatarPrice(tokenId: UInt64, newPrice: UFix64){ 
 			self.flovatarPrices[tokenId] = newPrice
 			let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner token vault")
@@ -190,7 +193,7 @@ contract FlovatarMarketplace{
 		}
 		
 		// Changes the price of a Component that is currently for sale
-		access(all)
+		access(Withdraw)
 		fun changeFlovatarComponentPrice(tokenId: UInt64, newPrice: UFix64){ 
 			self.flovatarComponentPrices[tokenId] = newPrice
 			let vaultRef = self.ownerVault.borrow() ?? panic("Could not borrow reference to owner token vault")

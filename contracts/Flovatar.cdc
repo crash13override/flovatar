@@ -943,7 +943,7 @@ contract Flovatar: NonFungibleToken{
 				// but it could be IPFS, S3, a data URL containing the JSON directly, etc.
 				return MetadataViews.EVMBridgedMetadata(
 					name: "Flovatar",
-					symbol: "XMPL",
+					symbol: "FLVT",
 					uri: MetadataViews.URI(
 						baseURI: nil, // setting baseURI as nil sets the given value as the uri field value
 						value: "https://flovatar.com"
