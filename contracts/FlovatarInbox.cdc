@@ -360,7 +360,7 @@ contract FlovatarInbox{
 	access(all)
 	fun getFlovatarComponentIDs(id: UInt64): [UInt64]{ 
 		
-		if let inboxCollection = self.account.capabilities.borrow<&FlovatarInbox.Collection>(FlovatarInbox.CollectionPublicPath){ 
+		if let inboxCollection = self.account.capabilities.borrow<auth(Withdraw) &FlovatarInbox.Collection>(FlovatarInbox.CollectionPublicPath){ 
 			return inboxCollection.getFlovatarComponentIDs(id: id)
 		}
 		
@@ -386,7 +386,7 @@ contract FlovatarInbox{
 				"Withdrawal is not enabled!"
 		}
 		if let inboxCollection =
-			self.account.storage.borrow<&FlovatarInbox.Collection>(
+			self.account.storage.borrow<auth(Withdraw) &FlovatarInbox.Collection>(
 				from: self.CollectionStoragePath
 			){ 
 			if let flovatar = Flovatar.getFlovatar(address: address, flovatarId: id){ 
@@ -417,7 +417,7 @@ contract FlovatarInbox{
 				"Withdrawal is not enabled!"
 		}
 		if let inboxCollection =
-			self.account.storage.borrow<&FlovatarInbox.Collection>(
+			self.account.storage.borrow<auth(Withdraw) &FlovatarInbox.Collection>(
 				from: self.CollectionStoragePath
 			){ 
 			let receiverAccount = getAccount(address)
@@ -449,7 +449,7 @@ contract FlovatarInbox{
 				"Withdrawal is not enabled!"
 		}
 		if let inboxCollection =
-			self.account.storage.borrow<&FlovatarInbox.Collection>(
+			self.account.storage.borrow<auth(Withdraw) &FlovatarInbox.Collection>(
 				from: self.CollectionStoragePath
 			){ 
 			if let flovatar = Flovatar.getFlovatar(address: address, flovatarId: id){ 
@@ -470,7 +470,7 @@ contract FlovatarInbox{
 				"Withdrawal is not enabled!"
 		}
 		if let inboxCollection =
-			self.account.storage.borrow<&FlovatarInbox.Collection>(
+			self.account.storage.borrow<auth(Withdraw) &FlovatarInbox.Collection>(
 				from: self.CollectionStoragePath
 			){ 
 			let receiverAccount = getAccount(address)

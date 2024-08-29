@@ -207,7 +207,7 @@ contract FlovatarComponentUpgrader{
 				"You need to provide exactly 10 Flobits for the upgrade"
 		}
 		if let upgraderCollection =
-			self.account.storage.borrow<&FlovatarComponentUpgrader.Collection>(
+			self.account.storage.borrow<auth(Withdraw) &FlovatarComponentUpgrader.Collection>(
 				from: self.CollectionStoragePath
 			){ 
 			var componentSeries: UInt32 = 0
