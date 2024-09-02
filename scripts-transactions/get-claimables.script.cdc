@@ -18,16 +18,16 @@ access(all) struct Claimables {
   access(all) var flovatarCommunityDust: UFix64
   init (_ address:Address, _ ownerAddress:Address?, _ childAddresses:[Address], _ flovatarComponents:[UInt64], _ flovatarsWithDust:[UInt64], _ childFlovatarsWithDust:[UInt64], _ childFlovatarsWithDustAddress:[Address], _ walletComponents:[UInt64], _ flovatarDust:UFix64, _ walletDust:UFix64, _ flovatarCommunityDust:UFix64) {
     self.address = address
-    self.ownerAddress = nil
-    self.childAddresses = []
-    self.flovatarComponents = []
-    self.flovatarsWithDust = []
-    self.childFlovatarsWithDust = []
-    self.childFlovatarsWithDustAddress = []
-    self.walletComponents = []
-    self.flovatarDust = 0.0
-    self.walletDust = 0.0
-    self.flovatarCommunityDust = 0.0
+    self.ownerAddress = ownerAddress
+    self.childAddresses = childAddresses
+    self.flovatarComponents = flovatarComponents
+    self.flovatarsWithDust = flovatarsWithDust
+    self.childFlovatarsWithDust = childFlovatarsWithDust
+    self.childFlovatarsWithDustAddress = childFlovatarsWithDustAddress
+    self.walletComponents = walletComponents
+    self.flovatarDust = flovatarDust
+    self.walletDust = walletDust
+    self.flovatarCommunityDust = flovatarCommunityDust
   }
 }
 
