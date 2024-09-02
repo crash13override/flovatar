@@ -15,7 +15,7 @@ access(all) struct Collections {
     self.address = address
     self.flovatars = []
     self.components = []
-    self.flovatarSales = []
+    self.flovatarSales = flovatarSales
     self.componentSales = []
     self.packs = []
   }

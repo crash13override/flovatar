@@ -28,7 +28,7 @@ init (_ address:Address, _ collectibles: [FlovatarDustCollectible.FlovatarDustCo
   self.components = []
   self.flovatarSales = []
   self.componentSales = []
-  self.collectibles = []
+  self.collectibles = collectibles
   self.packs = []
 }
 }

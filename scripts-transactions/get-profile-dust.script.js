@@ -22,10 +22,10 @@ access(all) var name: String?
 access(all) var balance: UFix64
 access(all) var dustBalance: UFix64
 init (_ address:Address,_ name: String?, _ balance: UFix64, _ dustBalance: UFix64) {
-  self.address = address
-  self.balance = 0.0
-  self.dustBalance = 0.0
-  self.name = nil
+    self.address = address
+    self.balance = balance
+    self.dustBalance = dustBalance
+    self.name = name
 }
 }
 

@@ -16,7 +16,7 @@ access(all) struct Collections {
   init (_ address:Address, _ flovatarIds: [UInt64]) {
     self.address = address
     self.flovatars = []
-    self.flovatarIds = []
+    self.flovatarIds = flovatarIds
     self.components = []
     self.flovatarSales = []
     self.componentSales = []

@@ -18,7 +18,7 @@ access(all) struct Collections {
   access(all) var flobots: [Flobot.FlobotData]
   init (_ address:Address, _ flobots: [Flobot.FlobotData]) {
     self.address = address
-    self.flobots = []
+    self.flobots = flobots
   }
 }
 

@@ -15,12 +15,12 @@ access(all) struct Collections {
   access(all) var packs: [UInt64]
   init (_ address:Address, _ flovatars: [Flovatar.FlovatarData], _ flovatarIds: [UInt64], _ components: [FlovatarComponent.ComponentData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData], _ componentSales: [FlovatarMarketplace.FlovatarComponentSaleData], _ packs: [UInt64]) {
     self.address = address
-    self.flovatars = []
-    self.flovatarIds = []
-    self.components = []
-    self.flovatarSales = []
-    self.componentSales = []
-    self.packs = []
+    self.flovatars = flovatars
+    self.flovatarIds = flovatarIds
+    self.components = components
+    self.flovatarSales = flovatarSales
+    self.componentSales = componentSales
+    self.packs = packs
   }
 }
 

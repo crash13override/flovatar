@@ -9,8 +9,8 @@ access(all) struct Collections {
   access(all) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
   init (_ address:Address, _ flovatars: [Flovatar.FlovatarData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData]) {
     self.address = address
-    self.flovatars = []
-    self.flovatarSales = []
+    self.flovatars = flovatars
+    self.flovatarSales = flovatarSales
   }
 }
 

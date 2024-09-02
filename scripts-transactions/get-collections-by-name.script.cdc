@@ -13,18 +13,20 @@ access(all) struct Collections {
   access(all) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
   access(all) var componentSales: [FlovatarMarketplace.FlovatarComponentSaleData]
   access(all) var packs: [UInt64]
-  init (_ address:Address,_ flovatars: [Flovatar.FlovatarData], _ components: [FlovatarComponent.ComponentData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData], _ componentSales: [FlovatarMarketplace.FlovatarComponentSaleData], _ packs: [UInt64]) {
+  init (_ address:Address,_ flovatars: [Flovatar.FlovatarData], _ flovatarIds: [UInt64], _ components: [FlovatarComponent.ComponentData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData], _ componentSales: [FlovatarMarketplace.FlovatarComponentSaleData], _ packs: [UInt64]) {
     self.address = address
-    self.flovatars = []
-    self.components = []
-    self.flovatarSales = []
-    self.componentSales = []
-    self.packs = []
+    self.flovatars = flovatars
+    self.flovatarIds = flovatarIds
+    self.components = components
+    self.flovatarSales = flovatarSales
+    self.componentSales = componentSales
+    self.packs = packs
   }
 }
 
 access(all) fun main(name: String) :Collections? {
 
+    var flovatarIds: [UInt64] = []
     let address = FIND.lookupAddress(name)
     var flovatars: [Flovatar.FlovatarData] = []
     var components: [FlovatarComponent.ComponentData] = []
@@ -39,7 +41,11 @@ access(all) fun main(name: String) :Collections? {
         flovatarSales = FlovatarMarketplace.getFlovatarSales(address: address!)
         componentSales = FlovatarMarketplace.getFlovatarComponentSales(address: address!)
 
-        return Collections(address!, flovatars, components, flovatarSales, componentSales, packs)
+        if let flovatarCollection = account.capabilities.borrow<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)  {
+            flovatarIds = flovatarCollection.getIDs()
+        }
+
+        return Collections(address!, flovatars, flovatarIds, components, flovatarSales, componentSales, packs)
     } else {
         return nil
     }

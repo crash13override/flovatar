@@ -12,11 +12,11 @@ access(all) struct Claimables {
   access(all) var flovatarCommunityDust: UFix64
   init (_ address:Address, _ flovatarComponents: [UInt64], _ walletComponents: [UInt64], _ flovatarDust: UFix64, _ walletDust: UFix64, _ flovatarCommunityDust: UFix64) {
     self.address = address
-    self.flovatarComponents = []
-    self.walletComponents = []
-    self.flovatarDust = 0.0
-    self.walletDust = 0.0
-    self.flovatarCommunityDust = 0.0
+    self.flovatarComponents = flovatarComponents
+    self.walletComponents = walletComponents
+    self.flovatarDust = flovatarDust
+    self.walletDust = walletDust
+    self.flovatarCommunityDust = flovatarCommunityDust
   }
 }
 

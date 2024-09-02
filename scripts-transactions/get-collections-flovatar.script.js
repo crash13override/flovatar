@@ -23,7 +23,7 @@ access(all) struct Collections {
   access(all) var packs: [UInt64]
   init (_ address:Address, _ flovatars: [Flovatar.FlovatarData]){
     self.address = address
-    self.flovatars = []
+    self.flovatars = flovatars
     self.components = []
     self.flovatarSales = []
     self.componentSales = []

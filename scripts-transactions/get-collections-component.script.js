@@ -24,7 +24,7 @@ access(all) struct Collections {
   init (_ address:Address, _ components: [FlovatarComponent.ComponentData]) {
     self.address = address
     self.flovatars = []
-    self.components = []
+    self.components = components
     self.flovatarSales = []
     self.componentSales = []
     self.packs = []
