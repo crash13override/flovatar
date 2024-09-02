@@ -15,72 +15,74 @@ import FlowUtilityToken from 0xDuc
 import FlovatarDustToken from 0xFlovatar
 
 
-pub struct AddressStatus {
+access(all) struct AddressStatus {
 
-  pub(set) var address: Address
-  pub(set) var name: String?
-  pub(set) var balance: UFix64
-  pub(set) var dustBalance: UFix64
-  init (_ address:Address) {
-    self.address = address
-    self.balance = 0.0
-    self.dustBalance = 0.0
-    self.name = nil
-  }
+access(all) var address: Address
+access(all) var name: String?
+access(all) var balance: UFix64
+access(all) var dustBalance: UFix64
+init (_ address:Address,_ name: String?, _ balance: UFix64, _ dustBalance: UFix64) {
+  self.address = address
+  self.balance = 0.0
+  self.dustBalance = 0.0
+  self.name = nil
+}
 }
 
 // This script checks that the accounts are set up correctly for the marketplace tutorial.
 
-pub fun main(address:Address) : AddressStatus {
-    // get the accounts' public address objects
-    let account = getAccount(address)
-    let status = AddressStatus(address)
+access(all) fun main(address:Address) : AddressStatus {
+  // get the accounts' public address objects
+  let account = getAccount(address)
+  var balance = 0.0
+  var name: String? = nil
+  var dustBalance = 0.0
 
-    if let vault = account.getCapability(/public/flowTokenBalance).borrow<&FlowToken.Vault{FungibleToken.Balance}>() {
-       status.balance = vault.balance
-    }
-    if let dustVault = account.getCapability(FlovatarDustToken.VaultBalancePath).borrow<&FlovatarDustToken.Vault{FungibleToken.Balance}>() {
-       status.dustBalance = dustVault.balance
-    }
+  if let vault = account.capabilities.borrow<&FlowToken.Vault>(/public/flowTokenBalance){
+     balance = vault.balance
+  }
+  if let dustVault = account.capabilities.borrow<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultBalancePath) {
+     dustBalance = dustVault.balance
+  }
 
-    let leaseCap = account.getCapability<&FIND.LeaseCollection{FIND.LeaseCollectionPublic}>(FIND.LeasePublicPath)
+  let leaseCap = account.capabilities.get<&FIND.LeaseCollection>(FIND.LeasePublicPath)
 
-    //we do have leases
-    if leaseCap.check() {
-        let profile= Profile.find(address).asProfile()
-        let leases = leaseCap.borrow()!.getLeaseInformation()
-        var time : UFix64? = nil
-        var name :String? = nil
-        var profileName :String? = nil
+  //we do have leases
+  if leaseCap.check() {
+      let profile= Profile.find(address).asProfile()
+      let leases = leaseCap.borrow()!.getLeaseInformation()
+      var time : UFix64? = nil
+      var name :String? = nil
+      var profileName :String? = nil
 
-        for lease in leases {
+      for lease in leases {
 
-            //filter out all leases that are FREE or LOCKED since they are not actice
-            if lease.status != "TAKEN" {
-                continue
-            }
+          //filter out all leases that are FREE or LOCKED since they are not actice
+          if lease.status != "TAKEN" {
+              continue
+          }
 
-            //if we have not set a findName in profile we find the one that has the least validUntil, first registerd
-            if profile.findName == "" {
-                if time == nil || lease.validUntil < time! {
-                    time = lease.validUntil
-                    name = lease.name
-                }
-            } else if profile.findName == lease.name {
-                profileName = lease.name
-            }
-        }
+          //if we have not set a findName in profile we find the one that has the least validUntil, first registerd
+          if profile.findName == "" {
+              if time == nil || lease.validUntil < time! {
+                  time = lease.validUntil
+                  name = lease.name
+              }
+          } else if profile.findName == lease.name {
+              profileName = lease.name
+          }
+      }
 
-        if(profileName != nil){
-            status.name = profileName
-        } else if(name != nil) {
-            status.name = name
-        }
+      if(profileName != nil){
+          name = profileName
+      } else if(name != nil) {
+          name = name
+      }
 
-    }
+  }
 
 
-    return status
+  return AddressStatus(address, name, balance, dustBalance)
 
 }
 `,

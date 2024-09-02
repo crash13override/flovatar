@@ -10,7 +10,7 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub fun main(
+access(all) fun main(
     body: UInt64,
     head: UInt64,
     arms: UInt64,

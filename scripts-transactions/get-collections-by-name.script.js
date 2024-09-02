@@ -13,15 +13,15 @@ import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 import FIND from 0xFind
 
-pub struct Collections {
+access(all) struct Collections {
 
-  pub(set) var address: Address
-  pub(set) var flovatars: [Flovatar.FlovatarData]
-  pub(set) var components: [FlovatarComponent.ComponentData]
-  pub(set) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
-  pub(set) var componentSales: [FlovatarMarketplace.FlovatarComponentSaleData]
-  pub(set) var packs: [UInt64]
-  init (_ address:Address) {
+  access(all) var address: Address
+  access(all) var flovatars: [Flovatar.FlovatarData]
+  access(all) var components: [FlovatarComponent.ComponentData]
+  access(all) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
+  access(all) var componentSales: [FlovatarMarketplace.FlovatarComponentSaleData]
+  access(all) var packs: [UInt64]
+  init (_ address:Address,_ flovatars: [Flovatar.FlovatarData], _ components: [FlovatarComponent.ComponentData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData], _ componentSales: [FlovatarMarketplace.FlovatarComponentSaleData], _ packs: [UInt64]) {
     self.address = address
     self.flovatars = []
     self.components = []
@@ -31,22 +31,23 @@ pub struct Collections {
   }
 }
 
-pub fun main(name: String) :Collections? {
+access(all) fun main(name: String) :Collections? {
 
     let address = FIND.lookupAddress(name)
+    var flovatars: [Flovatar.FlovatarData] = []
+    var components: [FlovatarComponent.ComponentData] = []
+    var packs: [UInt64] = []
+    var flovatarSales: [FlovatarMarketplace.FlovatarSaleData] = []
+    var componentSales: [FlovatarMarketplace.FlovatarComponentSaleData] = []
 
     if (address != nil) {
-        // get the accounts' public address objects
-        let account = getAccount(address!)
-        let status = Collections(address!)
+        flovatars = Flovatar.getFlovatars(address: address!)
+        components = FlovatarComponent.getComponents(address: address!)
+        packs = FlovatarPack.getPacks(address: address!) ?? []
+        flovatarSales = FlovatarMarketplace.getFlovatarSales(address: address!)
+        componentSales = FlovatarMarketplace.getFlovatarComponentSales(address: address!)
 
-        status.flovatars = Flovatar.getFlovatars(address: address!)
-        status.components = FlovatarComponent.getComponents(address: address!)
-        status.packs = FlovatarPack.getPacks(address: address!) ?? []
-        status.flovatarSales = FlovatarMarketplace.getFlovatarSales(address: address!)
-        status.componentSales = FlovatarMarketplace.getFlovatarComponentSales(address: address!)
-
-        return status
+        return Collections(address!, flovatars, components, flovatarSales, componentSales, packs)
     } else {
         return nil
     }

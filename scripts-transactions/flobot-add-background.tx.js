@@ -18,21 +18,21 @@ transaction(
     ) {
 
     let flobotCollection: &Flobot.Collection
-    let flovatarComponentCollection: &FlovatarComponent.Collection
+    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
 
     let backgroundNFT: @FlovatarComponent.NFT
 
-    prepare(account: AuthAccount) {
-        self.flobotCollection = account.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath)!
+    prepare(account: auth(Storage, Capabilities) &Account) {
+        self.flobotCollection = account.storage.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath)!
 
-        self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
+        self.flovatarComponentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
         self.backgroundNFT <- self.flovatarComponentCollection.withdraw(withdrawID: background) as! @FlovatarComponent.NFT
     }
 
     execute {
 
-        let flobot: &{Flobot.Private} = self.flobotCollection.borrowFlobotPrivate(id: flobotId)!
+        let flobot= self.flobotCollection.borrowFlobot(id: flobotId)! as! auth(Flobot.PrivateEnt) &Flobot.NFT
 
         let background <-flobot.setBackground(component: <-self.backgroundNFT)
         if(background != nil){

@@ -16,90 +16,106 @@ transaction {
   // We want the account's address for later so we can verify if the account was initialized properly
   let address: Address
 
-  prepare(account: AuthAccount) {
+  prepare(account: auth(Storage, Capabilities) &Account) {
     // save the address for the post check
     self.address = account.address
 
 
-    if account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
+    if account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- Flovatar.createEmptyCollection(nftType: Type<@Flovatar.Collection>()), to: Flovatar.CollectionStoragePath)
     }
-    let flovatarCap = account.getCapability<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
+    let flovatarCap = account.capabilities.get<&Flovatar.Collection>(Flovatar.CollectionPublicPath)
     if(!flovatarCap.check()) {
-        account.unlink(Flovatar.CollectionPublicPath)
-        account.link<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
+        account.capabilities.unpublish(Flovatar.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&Flovatar.Collection>(Flovatar.CollectionStoragePath),
+            at: Flovatar.CollectionPublicPath
+        )
     }
 
 
-    if account.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- Flobot.createEmptyCollection(), to: Flobot.CollectionStoragePath)
+    if account.storage.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- Flobot.createEmptyCollection(nftType: Type<@Flobot.Collection>()), to: Flobot.CollectionStoragePath)
     }
-    let flobotCap = account.getCapability<&{Flobot.CollectionPublic}>(Flobot.CollectionPublicPath)
+    let flobotCap = account.capabilities.get<&Flobot.Collection>(Flobot.CollectionPublicPath)
     if(!flobotCap.check()) {
-        account.unlink(Flobot.CollectionPublicPath)
-        account.link<&Flobot.Collection{Flobot.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flobot.CollectionPublicPath, target: Flobot.CollectionStoragePath)
+        account.capabilities.unpublish(Flobot.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&Flobot.Collection>(Flobot.CollectionStoragePath),
+            at: Flobot.CollectionPublicPath
+        )
     }
 
 
-    if account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarComponent.createEmptyCollection(), to: FlovatarComponent.CollectionStoragePath)
+    if account.storage.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarComponent.createEmptyCollection(nftType: Type<@FlovatarComponent.Collection>()), to: FlovatarComponent.CollectionStoragePath)
     }
-    let flovatarComponentCap = account.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
+    let flovatarComponentCap = account.capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
     if(!flovatarComponentCap.check()) {
-        account.unlink(FlovatarComponent.CollectionPublicPath)
-        account.link<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarComponent.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarComponent.Collection>(FlovatarComponent.CollectionStoragePath),
+            at: FlovatarComponent.CollectionPublicPath
+        )
     }
 
-    let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
+
+
+    let flovatarPackCap = account.capabilities.get<&FlovatarPack.Collection>(FlovatarPack.CollectionPublicPath)
     if(!flovatarPackCap.check()) {
-        let wallet =  account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
-        account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
-        account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
+        let wallet =  account.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
+        account.storage.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarPack.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarPack.Collection>(FlovatarPack.CollectionStoragePath),
+            at: FlovatarPack.CollectionPublicPath
+        )
     }
 
-    if account.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarDustCollectible.createEmptyCollection(), to: FlovatarDustCollectible.CollectionStoragePath)
+    if account.storage.borrow<&FlovatarDustCollectibleAccessory.Collection>(from: FlovatarDustCollectibleAccessory.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarDustCollectibleAccessory.createEmptyCollection(nftType: Type<@FlovatarDustCollectibleAccessory.Collection>()), to: FlovatarDustCollectibleAccessory.CollectionStoragePath)
     }
-    let flovatarCollectibleCap = account.getCapability<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
-    if(!flovatarCollectibleCap.check()) {
-        account.unlink(FlovatarDustCollectible.CollectionPublicPath)
-        account.link<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectible.CollectionPublicPath, target: FlovatarDustCollectible.CollectionStoragePath)
-    }
-
-    if account.borrow<&FlovatarDustCollectibleAccessory.Collection>(from: FlovatarDustCollectibleAccessory.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarDustCollectibleAccessory.createEmptyCollection(), to: FlovatarDustCollectibleAccessory.CollectionStoragePath)
-    }
-    let flovatarAccessoryCap = account.getCapability<&{FlovatarDustCollectibleAccessory.CollectionPublic}>(FlovatarDustCollectibleAccessory.CollectionPublicPath)
+    let flovatarAccessoryCap = account.capabilities.get<&FlovatarDustCollectibleAccessory.Collection>(FlovatarDustCollectibleAccessory.CollectionPublicPath)
     if(!flovatarAccessoryCap.check()) {
-        account.unlink(FlovatarDustCollectibleAccessory.CollectionPublicPath)
-        account.link<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectibleAccessory.CollectionPublicPath, target: FlovatarDustCollectibleAccessory.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarDustCollectibleAccessory.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarDustCollectibleAccessory.Collection>(FlovatarDustCollectibleAccessory.CollectionStoragePath),
+            at: FlovatarDustCollectibleAccessory.CollectionPublicPath
+        )
     }
 
     // If the account doesn't already have a Storefront
-    if account.borrow<&NFTStorefrontV2.Storefront>(from: NFTStorefrontV2.StorefrontStoragePath) == nil {
+    if account.storage.borrow<&NFTStorefrontV2.Storefront>(from: NFTStorefrontV2.StorefrontStoragePath) == nil {
 
         // Create a new empty Storefront
         let storefront <- NFTStorefrontV2.createStorefront() as! @NFTStorefrontV2.Storefront
 
         // save it to the account
-        account.save(<-storefront, to: NFTStorefrontV2.StorefrontStoragePath)
+        account.storage.save(<-storefront, to: NFTStorefrontV2.StorefrontStoragePath)
 
-        // create a public capability for the Storefront
-        account.link<&NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}>(NFTStorefrontV2.StorefrontPublicPath, target: NFTStorefrontV2.StorefrontStoragePath)
+        // create a public capability for the .Storefront & publish
+        let storefrontPublicCap = account.capabilities.storage.issue<&NFTStorefrontV2.Storefront>(
+                NFTStorefrontV2.StorefrontStoragePath
+            )
+        account.capabilities.unpublish(NFTStorefrontV2.StorefrontPublicPath)
+        account.capabilities.publish(storefrontPublicCap, at: NFTStorefrontV2.StorefrontPublicPath)
+    
     }
 
-    if account.borrow<&{FungibleToken.Receiver}>(from: /storage/flowUtilityTokenReceiver) == nil {
+    if account.storage.borrow<&{FungibleToken.Receiver}>(from: /storage/flowUtilityTokenReceiver) == nil {
         let dapper = getAccount(0xFut)
-        let dapperFUTReceiver = dapper.getCapability<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)!
+        let dapperFUTReceiver = dapper.capabilities.get<&{FungibleToken.Receiver}>(/public/flowUtilityTokenReceiver)
 
         // Create a new Forwarder resource for FUT and store it in the new account's storage
         let futForwarder <- TokenForwarding.createNewForwarder(recipient: dapperFUTReceiver)
-        account.save(<-futForwarder, to: /storage/flowUtilityTokenReceiver)
+        account.storage.save(<-futForwarder, to: /storage/flowUtilityTokenReceiver)
 
         // Publish a Receiver capability for the new account, which is linked to the FUT Forwarder
-        account.link<&FlowUtilityToken.Vault{FungibleToken.Receiver}>(
-            /public/flowUtilityTokenReceiver,
-            target: /storage/flowUtilityTokenReceiver
+        account.capabilities.unpublish(/public/flowUtilityTokenReceiver)
+        // Create a public Receiver capability to the Vault
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlowUtilityToken.Vault>(/storage/flowUtilityTokenReceiver),
+            at: /public/flowUtilityTokenReceiver
         )
     }
 

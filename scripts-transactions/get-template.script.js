@@ -12,7 +12,7 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub fun main(templateId: UInt64) : FlovatarComponentTemplate.ComponentTemplateData? {
+access(all) fun main(templateId: UInt64) : FlovatarComponentTemplate.ComponentTemplateData? {
     return FlovatarComponentTemplate.getComponentTemplate(id: templateId)
 }
 `,

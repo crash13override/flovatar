@@ -13,38 +13,40 @@ import MetadataViews from 0xMetadataViews
 import FlovatarDustCollectible from 0xFlovatar
 
 transaction(storefrontAddress: Address, listingResourceID: UInt64, expectedPrice: UFix64, commissionRecipient: Address) {
-    let paymentVault: @FungibleToken.Vault
-    let buyerFlovatarCollection: &FlovatarDustCollectible.Collection{NonFungibleToken.Receiver}
-    let storefront: &NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}
-    let listing: &NFTStorefrontV2.Listing{NFTStorefrontV2.ListingPublic}
+    let paymentVault: @{FungibleToken.Vault}
+    let buyerFlovatarCollection: &FlovatarDustCollectible.Collection
+    let storefront: &NFTStorefrontV2.Storefront
+    let listing: &NFTStorefrontV2.Listing
     let balanceBeforeTransfer: UFix64
-    let mainFlowVault: &FlowToken.Vault
+    let mainFlowVault: auth(FungibleToken.Withdraw) &FlowToken.Vault
     let commissionRecipientCap: Capability<&{FungibleToken.Receiver}>
 
-    prepare(buyer: AuthAccount) {
+    prepare(buyer: auth(Storage, Capabilities) &Account) {
 
         // Initialize the buyer's account if it is not already initialized
-        let flovatarCap = buyer.getCapability<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
+        let flovatarCap = buyer.capabilities.get<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
         if(!flovatarCap.check()) {
-            buyer.save<@NonFungibleToken.Collection>(<- FlovatarDustCollectible.createEmptyCollection(), to: FlovatarDustCollectible.CollectionStoragePath)
-            buyer.link<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectible.CollectionPublicPath, target: FlovatarDustCollectible.CollectionStoragePath)
+             // create a public capability for the collection
+            buyer.capabilities.unpublish(FlovatarDustCollectible.CollectionPublicPath)
+            buyer.capabilities.publish(
+                buyer.capabilities.storage.issue<&FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionStoragePath),
+                at: FlovatarDustCollectible.CollectionPublicPath
+            )
         }
 
         // Fetch the storefront where the listing exists
         self.storefront = getAccount(storefrontAddress)
-              .getCapability<&NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}>(
+              .capabilities.borrow<&NFTStorefrontV2.Storefront>(
                   NFTStorefrontV2.StorefrontPublicPath
-              )!
-              .borrow()
-              ?? panic("Could not borrow Storefront from provided address")
+              ) ?? panic("Could not borrow Storefront from provided address")
 
         // Fetch the listing from the storefront by ID
-        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)
-            ?? panic("No Offer with that ID in Storefront")
+        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)! as! &NFTStorefrontV2.Listing
+
 
         // Get access to Flow Token vault
         let salePrice = self.listing.getDetails().salePrice
-        self.mainFlowVault = buyer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
+        self.mainFlowVault = buyer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Cannot borrow FlowToken vault from dapper storage")
 
         // Withdraw the appropriate amount of DUC from the vault
@@ -57,12 +59,12 @@ transaction(storefrontAddress: Address, listingResourceID: UInt64, expectedPrice
         }
 
         self.buyerFlovatarCollection = buyer
-            .getCapability<&FlovatarDustCollectible.Collection{NonFungibleToken.Receiver}>(FlovatarDustCollectible.CollectionPublicPath)
-            .borrow()
+            .capabilities.borrow<&FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionPublicPath)
             ?? panic("Cannot borrow Dust Collectible collection receiver from buyer")
 
+
         // Access the capability to receive the commission.
-        self.commissionRecipientCap = getAccount(commissionRecipient).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        self.commissionRecipientCap = getAccount(commissionRecipient).capabilities.get<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
         assert(self.commissionRecipientCap.check(), message: "Commission Recipient doesn't have flowtoken receiving capability")
     }
 
@@ -73,10 +75,6 @@ transaction(storefrontAddress: Address, listingResourceID: UInt64, expectedPrice
         )
 
         self.buyerFlovatarCollection.deposit(token: <-item)
-    }
-
-    post {
-
     }
 }
 `,

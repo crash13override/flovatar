@@ -14,20 +14,20 @@ import FlowToken from 0xFlowToken
 import FIND from 0xFind
 import HybridCustody from 0xHybridCustody
 
-pub struct Claimables {
+access(all) struct Claimables {
 
-  pub(set) var address: Address
-  pub(set) var ownerAddress: Address?
-  pub(set) var childAddresses: [Address]
-  pub(set) var flovatarComponents: [UInt64]
-  pub(set) var flovatarsWithDust: [UInt64]
-  pub(set) var childFlovatarsWithDust: [UInt64]
-  pub(set) var childFlovatarsWithDustAddress: [Address]
-  pub(set) var walletComponents: [UInt64]
-  pub(set) var flovatarDust: UFix64
-  pub(set) var walletDust: UFix64
-  pub(set) var flovatarCommunityDust: UFix64
-  init (_ address:Address) {
+    access(all) var address: Address
+    access(all) var ownerAddress: Address?
+    access(all) var childAddresses: [Address]
+    access(all) var flovatarComponents: [UInt64]
+    access(all) var flovatarsWithDust: [UInt64]
+    access(all) var childFlovatarsWithDust: [UInt64]
+    access(all) var childFlovatarsWithDustAddress: [Address]
+    access(all) var walletComponents: [UInt64]
+    access(all) var flovatarDust: UFix64
+    access(all) var walletDust: UFix64
+    access(all) var flovatarCommunityDust: UFix64
+  init (_ address:Address, _ ownerAddress: Address?, _ childAddresses: [Address], _ flovatarComponents: [UInt64], _ flovatarsWithDust: [UInt64], _ childFlovatarsWithDust: [UInt64], _ childFlovatarsWithDustAddress: [Address], _ walletComponents: [UInt64], _ flovatarDust: UFix64, _ walletDust: UFix64, _ flovatarCommunityDust: UFix64) {
     self.address = address
     self.ownerAddress = nil
     self.childAddresses = []
@@ -42,42 +42,53 @@ pub struct Claimables {
   }
 }
 
-pub fun main(name: String) : Claimables {
+access(all) fun main(name: String) : Claimables {
 
     let address = FIND.lookupAddress(name)!
     // get the accounts' public address objects
-    let status = Claimables(address)
     let account = getAccount(address)
-    let authAccount = getAuthAccount(address)
+    let authAccount =  getAuthAccount<auth(Storage) &Account>(address)
 
-    if let flovatarCollection = account.getCapability(Flovatar.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+
+    var ownerAddress: Address? = nil
+    var childAddresses: [Address] = []
+    var flovatarComponents: [UInt64] = []
+    var flovatarsWithDust: [UInt64] = []
+    var childFlovatarsWithDust: [UInt64] = []
+    var childFlovatarsWithDustAddress: [Address] = []
+    var walletComponents: [UInt64] = []
+    var flovatarDust: UFix64 = 0.0
+    var walletDust: UFix64 = 0.0
+    var flovatarCommunityDust: UFix64 = 0.0
+
+    if let flovatarCollection = account.capabilities.borrow<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)  {
         for id in flovatarCollection.getIDs() {
             let flovatarDustBalance = FlovatarInbox.getFlovatarDustBalance(id: id)
-            status.flovatarDust = status.flovatarDust + flovatarDustBalance
+            flovatarDust = flovatarDust + flovatarDustBalance
             if(flovatarDustBalance > UFix64(0.0)){
-                status.flovatarsWithDust.append(id)
+                flovatarsWithDust.append(id)
             }
             if let claimableCommunityDust = FlovatarInbox.getClaimableFlovatarCommunityDust(id: id, address: address) {
-                status.flovatarCommunityDust = status.flovatarCommunityDust + claimableCommunityDust.amount
+                flovatarCommunityDust = flovatarCommunityDust + claimableCommunityDust.amount
                 if(claimableCommunityDust.amount > UFix64(0.0)){
-                    status.flovatarsWithDust.append(id)
+                    flovatarsWithDust.append(id)
                 }
             }
-            status.flovatarComponents = status.flovatarComponents.concat(FlovatarInbox.getFlovatarComponentIDs(id: id))
+            flovatarComponents = flovatarComponents.concat(FlovatarInbox.getFlovatarComponentIDs(id: id))
         }
     }
 
-    if let manager = authAccount.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
-        status.childAddresses = manager.getChildAddresses()
-        for childAddress in status.childAddresses {
+    if let manager = authAccount.storage.borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
+        childAddresses = manager.getChildAddresses()
+        for childAddress in childAddresses {
             let tempAccount = getAccount(childAddress)
-            if let flovatarChildCollection = tempAccount.getCapability(Flovatar.CollectionPublicPath).borrow<&{Flovatar.CollectionPublic}>()  {
+            if let flovatarChildCollection = tempAccount.capabilities.borrow<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)  {
                 for id in flovatarChildCollection.getIDs() {
                     if let claimableCommunityDust = FlovatarInbox.getClaimableFlovatarCommunityDust(id: id, address: childAddress) {
-                        status.flovatarCommunityDust = status.flovatarCommunityDust + claimableCommunityDust.amount
+                        flovatarCommunityDust = flovatarCommunityDust + claimableCommunityDust.amount
                         if(claimableCommunityDust.amount > UFix64(0.0)){
-                            status.childFlovatarsWithDust.append(id)
-                            status.childFlovatarsWithDustAddress.append(childAddress)
+                            childFlovatarsWithDust.append(id)
+                            childFlovatarsWithDustAddress.append(childAddress)
                         }
                     }
                 }
@@ -86,17 +97,17 @@ pub fun main(name: String) : Claimables {
     }
 
 
-    if let o = authAccount.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
+    if let o = authAccount.storage.borrow<&HybridCustody.OwnedAccount>(from: HybridCustody.OwnedAccountStoragePath) {
         let parentAddr: [Address] = o.getParentAddresses()
         if parentAddr.length > 0 {
-            status.ownerAddress = parentAddr[0]
+            ownerAddress = parentAddr[0]
         }
     }
 
-    status.walletComponents = FlovatarInbox.getWalletComponentIDs(address: address)
-    status.walletDust = FlovatarInbox.getWalletDustBalance(address: address)
+    walletComponents = FlovatarInbox.getWalletComponentIDs(address: address)
+    walletDust = FlovatarInbox.getWalletDustBalance(address: address)
 
-    return status
+    return Claimables(address, ownerAddress, childAddresses, flovatarComponents, flovatarsWithDust, childFlovatarsWithDust, childFlovatarsWithDustAddress, walletComponents, flovatarDust, walletDust, flovatarCommunityDust)
 }
 `,
             args: (arg, t) => [

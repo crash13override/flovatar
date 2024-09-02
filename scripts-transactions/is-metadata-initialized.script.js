@@ -14,12 +14,12 @@ import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 import MetadataViews from 0xMetadataViews
 
-pub fun main(address: Address): Bool {
+access(all) fun main(address: Address): Bool {
 
   let account = getAccount(address)
 
-  let flovatarCap = account.getCapability<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath)
-  let flovatarComponentCap = account.getCapability<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath)
+  let flovatarCap = account.capabilities.get<&Flovatar.Collection>(Flovatar.CollectionPublicPath)
+  let flovatarComponentCap = account.capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
 
   return (flovatarCap.check() && flovatarComponentCap.check())
 }

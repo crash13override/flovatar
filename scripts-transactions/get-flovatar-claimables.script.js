@@ -12,15 +12,15 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub struct Claimables {
+access(all) struct Claimables {
 
-  pub(set) var address: Address
-  pub(set) var flovatarComponents: [UInt64]
-  pub(set) var walletComponents: [UInt64]
-  pub(set) var flovatarDust: UFix64
-  pub(set) var walletDust: UFix64
-  pub(set) var flovatarCommunityDust: UFix64
-  init (_ address:Address) {
+  access(all) var address: Address
+  access(all) var flovatarComponents: [UInt64]
+  access(all) var walletComponents: [UInt64]
+  access(all) var flovatarDust: UFix64
+  access(all) var walletDust: UFix64
+  access(all) var flovatarCommunityDust: UFix64
+  init (_ address:Address, _ flovatarComponents: [UInt64], _ walletComponents: [UInt64], _ flovatarDust: UFix64, _ walletDust: UFix64, _ flovatarCommunityDust: UFix64) {
     self.address = address
     self.flovatarComponents = []
     self.walletComponents = []
@@ -30,20 +30,24 @@ pub struct Claimables {
   }
 }
 
-pub fun main(address:Address, id: UInt64) : Claimables {
+access(all) fun main(address:Address, id: UInt64) : Claimables {
     // get the accounts' public address objects
-    let status = Claimables(address)
     let account = getAccount(address)
+    var flovatarComponents: [UInt64] = []
+    var walletComponents: [UInt64] = []
+    var flovatarDust: UFix64 = 0.0
+    var walletDust: UFix64 = 0.0
+    var flovatarCommunityDust: UFix64 = 0.0
 
-    if let flovatarCollection = account.getCapability(Flovatar.CollectionPublicPath).borrow<&Flovatar.Collection{Flovatar.CollectionPublic}>()  {
-        status.flovatarDust = FlovatarInbox.getFlovatarDustBalance(id: id)
+    if let flovatarCollection = account.capabilities.borrow<&Flovatar.Collection>(Flovatar.CollectionPublicPath)  {
+        flovatarDust = FlovatarInbox.getFlovatarDustBalance(id: id)
         if let claimableCommunityDust = FlovatarInbox.getClaimableFlovatarCommunityDust(id: id, address: address) {
-            status.flovatarCommunityDust = claimableCommunityDust.amount
+            flovatarCommunityDust = claimableCommunityDust.amount
         }
-        status.flovatarComponents = status.flovatarComponents.concat(FlovatarInbox.getFlovatarComponentIDs(id: id))
+        flovatarComponents = flovatarComponents.concat(FlovatarInbox.getFlovatarComponentIDs(id: id))
     }
 
-    return status
+    return Claimables(address, flovatarComponents, walletComponents, flovatarDust, walletDust, flovatarCommunityDust)
 }
 `,
             args: (arg, t) => [

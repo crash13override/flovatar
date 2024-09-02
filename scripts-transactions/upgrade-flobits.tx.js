@@ -15,15 +15,15 @@ transaction(
     componentIds: [UInt64]
     ) {
 
-    let componentCollection: &FlovatarComponent.Collection
+    let componentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
     let upgradeNFT: @[FlovatarComponent.NFT]
-    let vaultCap: Capability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>
-    let temporaryVault: @FungibleToken.Vault
+    let vaultCap: Capability<&FlovatarDustToken.Vault>
+    let temporaryVault: @{FungibleToken.Vault}
     let address: Address
 
-    prepare(account: AuthAccount) {
+    prepare(account: auth(Storage) &Account) {
 
-        self.componentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
+        self.componentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
         self.upgradeNFT <-[]
         for componentId in componentIds {
@@ -31,9 +31,9 @@ transaction(
             self.upgradeNFT.append(<-tempNFT)
         }
 
-        self.vaultCap = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
+        self.vaultCap = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultReceiverPath)
 
-        let vaultRef = account.borrow<&{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
+        let vaultRef = account.storage.borrow<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
 
         // withdraw tokens from the buyer's Vault
         self.temporaryVault <- vaultRef.withdraw(amount: 20.0)

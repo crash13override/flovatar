@@ -12,7 +12,7 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub fun main(address:Address) : [FlovatarMarketplace.FlovatarComponentSaleData] {
+access(all) fun main(address:Address) : [FlovatarMarketplace.FlovatarComponentSaleData] {
 
     return FlovatarMarketplace.getFlovatarComponentSales(address: address)
 

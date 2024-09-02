@@ -18,21 +18,21 @@ transaction(
     ) {
 
     let flovatarCollection: &Flovatar.Collection
-    let flovatarComponentCollection: &FlovatarComponent.Collection
+    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
 
     let accessoryNFT: @FlovatarComponent.NFT
 
-    prepare(account: AuthAccount) {
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
-        self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
+        self.flovatarComponentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
         self.accessoryNFT <- self.flovatarComponentCollection.withdraw(withdrawID: accessory) as! @FlovatarComponent.NFT
     }
 
     execute {
 
-        let flovatar: &{Flovatar.Private} = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
+        let flovatar = self.flovatarCollection.borrowFlovatar(id: flovatarId)! as! auth(Flovatar.PrivateEnt) &Flovatar.NFT
 
         let accessory <-flovatar.setAccessory(component: <-self.accessoryNFT)
         if(accessory != nil){

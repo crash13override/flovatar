@@ -14,25 +14,30 @@ transaction(
     flovatarId: UInt64,
     price: UFix64) {
 
-    let flovatarCollection: &Flovatar.Collection
-    let marketplace: &FlovatarMarketplace.SaleCollection
+    let flovatarCollection: auth(NonFungibleToken.Withdraw) &Flovatar.Collection
+    let marketplace: auth(FlovatarMarketplace.Withdraw) &FlovatarMarketplace.SaleCollection
 
-    prepare(account: AuthAccount) {
+    prepare(account: auth(Storage, Capabilities) &Account) {
 
-        let marketplaceCap = account.getCapability<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath)
+        let marketplaceCap = account.capabilities.get<&FlovatarMarketplace.SaleCollection>(FlovatarMarketplace.CollectionPublicPath)
         // if sale collection is not created yet we make it.
         if !marketplaceCap.check() {
-             let wallet =  account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+             let wallet =  account.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
              let sale <- FlovatarMarketplace.createSaleCollection(ownerVault: wallet)
 
             // store an empty NFT Collection in account storage
-            account.save<@FlovatarMarketplace.SaleCollection>(<- sale, to:FlovatarMarketplace.CollectionStoragePath)
+            account.storage.save<@FlovatarMarketplace.SaleCollection>(<- sale, to:FlovatarMarketplace.CollectionStoragePath)
+
             // publish a capability to the Collection in storage
-            account.link<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath, target: FlovatarMarketplace.CollectionStoragePath)
+            account.capabilities.unpublish(FlovatarMarketplace.CollectionPublicPath)
+            account.capabilities.publish(
+                account.capabilities.storage.issue<&FlovatarMarketplace.SaleCollection>(FlovatarMarketplace.CollectionStoragePath),
+                at: FlovatarMarketplace.CollectionPublicPath
+            )
         }
 
-        self.marketplace = account.borrow<&FlovatarMarketplace.SaleCollection>(from: FlovatarMarketplace.CollectionStoragePath)!
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+        self.marketplace = account.storage.borrow<auth(FlovatarMarketplace.Withdraw) &FlovatarMarketplace.SaleCollection>(from: FlovatarMarketplace.CollectionStoragePath)!
+        self.flovatarCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
     }
 
     execute {

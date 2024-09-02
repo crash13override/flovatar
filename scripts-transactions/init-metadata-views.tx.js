@@ -16,20 +16,26 @@ transaction {
   // We want the account's address for later so we can verify if the account was initialized properly
   let address: Address
 
-  prepare(account: AuthAccount) {
+  prepare(account: auth(Capabilities) &Account) {
     // save the address for the post check
     self.address = account.address
 
-    let flovatarCapMeta = account.getCapability<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath)
+    let flovatarCapMeta = account.capabilities.get<&Flovatar.Collection>(Flovatar.CollectionPublicPath)
     if(!flovatarCapMeta.check()) {
-        account.unlink(Flovatar.CollectionPublicPath)
-        account.link<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
+        account.capabilities.unpublish(Flovatar.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&Flovatar.Collection>(Flovatar.CollectionStoragePath),
+            at: Flovatar.CollectionPublicPath
+        )
     }
 
-    let flovatarComponentCapMeta = account.getCapability<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath)
+    let flovatarComponentCapMeta = account.capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
     if(!flovatarComponentCapMeta.check()) {
-        account.unlink(FlovatarComponent.CollectionPublicPath)
-        account.link<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarComponent.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarComponent.Collection>(FlovatarComponent.CollectionStoragePath),
+            at: FlovatarComponent.CollectionPublicPath
+        )
     }
 
 

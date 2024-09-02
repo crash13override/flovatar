@@ -13,31 +13,35 @@ import FlowToken from 0xFlowToken
 //this transaction will claim all content of the Inbox
 transaction(ids: [UInt64]) {
 
-    let flovatarCollection: &Flovatar.Collection
     let address: Address
 
-    prepare(account: AuthAccount) {
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+    prepare(account: auth(Storage, Capabilities) &Account) {
         self.address = account.address
 
 
-        if account.borrow<&FlovatarDustToken.Vault>(from: FlovatarDustToken.VaultStoragePath) == nil {
-            let vault <- FlovatarDustToken.createEmptyVault()
-            account.save<@FlovatarDustToken.Vault>(<-vault, to: FlovatarDustToken.VaultStoragePath)
+        if account.storage.borrow<&FlovatarDustToken.Vault>(from: FlovatarDustToken.VaultStoragePath) == nil {
+            let vault <- FlovatarDustToken.createEmptyVault(vaultType: Type<@FlovatarDustToken.Vault>())
+            account.storage.save(<-vault, to: FlovatarDustToken.VaultStoragePath)
         }
 
-        let dustTokenCap = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
+        let dustTokenCap = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultReceiverPath)
         if(!dustTokenCap.check()) {
-            account.unlink(FlovatarDustToken.VaultReceiverPath)
+            account.capabilities.unpublish(FlovatarDustToken.VaultReceiverPath)
             // Create a public Receiver capability to the Vault
-            account.link<&FlovatarDustToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(FlovatarDustToken.VaultReceiverPath, target: FlovatarDustToken.VaultStoragePath)
+            account.capabilities.publish(
+                account.capabilities.storage.issue<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultStoragePath),
+                at: FlovatarDustToken.VaultReceiverPath
+            )
         }
 
-        let dustTokenCapBalance = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Balance}>(FlovatarDustToken.VaultBalancePath)
+        let dustTokenCapBalance = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultBalancePath)
         if(!dustTokenCapBalance.check()) {
-            account.unlink(FlovatarDustToken.VaultBalancePath)
+            account.capabilities.unpublish(FlovatarDustToken.VaultBalancePath)
             // Create a public Receiver capability to the Vault
-            account.link<&FlovatarDustToken.Vault{FungibleToken.Balance}>(FlovatarDustToken.VaultBalancePath, target: FlovatarDustToken.VaultStoragePath)
+            account.capabilities.publish(
+                account.capabilities.storage.issue<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultStoragePath),
+                at: FlovatarDustToken.VaultBalancePath
+            )
         }
     }
 

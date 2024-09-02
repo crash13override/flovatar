@@ -16,97 +16,127 @@ transaction {
   // We want the account's address for later so we can verify if the account was initialized properly
   let address: Address
 
-  prepare(account: AuthAccount) {
+  prepare(account: auth(Storage, Capabilities) &Account) {
     // save the address for the post check
     self.address = account.address
 
-
-    if account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- Flovatar.createEmptyCollection(), to: Flovatar.CollectionStoragePath)
+    if account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- Flovatar.createEmptyCollection(nftType: Type<@Flovatar.Collection>()), to: Flovatar.CollectionStoragePath)
     }
-    let flovatarCap = account.getCapability<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
+    let flovatarCap = account.capabilities.get<&Flovatar.Collection>(Flovatar.CollectionPublicPath)
     if(!flovatarCap.check()) {
-        account.unlink(Flovatar.CollectionPublicPath)
-        account.link<&Flovatar.Collection{Flovatar.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flovatar.CollectionPublicPath, target: Flovatar.CollectionStoragePath)
+        account.capabilities.unpublish(Flovatar.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&Flovatar.Collection>(Flovatar.CollectionStoragePath),
+            at: Flovatar.CollectionPublicPath
+        )
     }
 
 
-    if account.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- Flobot.createEmptyCollection(), to: Flobot.CollectionStoragePath)
+    if account.storage.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- Flobot.createEmptyCollection(nftType: Type<@Flobot.Collection>()), to: Flobot.CollectionStoragePath)
     }
-    let flobotCap = account.getCapability<&{Flobot.CollectionPublic}>(Flobot.CollectionPublicPath)
+    let flobotCap = account.capabilities.get<&Flobot.Collection>(Flobot.CollectionPublicPath)
     if(!flobotCap.check()) {
-        account.unlink(Flobot.CollectionPublicPath)
-        account.link<&Flobot.Collection{Flobot.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(Flobot.CollectionPublicPath, target: Flobot.CollectionStoragePath)
+        account.capabilities.unpublish(Flobot.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&Flobot.Collection>(Flobot.CollectionStoragePath),
+            at: Flobot.CollectionPublicPath
+        )
     }
 
 
-    if account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarComponent.createEmptyCollection(), to: FlovatarComponent.CollectionStoragePath)
+    if account.storage.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarComponent.createEmptyCollection(nftType: Type<@FlovatarComponent.Collection>()), to: FlovatarComponent.CollectionStoragePath)
     }
-    let flovatarComponentCap = account.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
+    let flovatarComponentCap = account.capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
     if(!flovatarComponentCap.check()) {
-        account.unlink(FlovatarComponent.CollectionPublicPath)
-        account.link<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarComponent.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarComponent.Collection>(FlovatarComponent.CollectionStoragePath),
+            at: FlovatarComponent.CollectionPublicPath
+        )
     }
 
-    let flovatarPackCap = account.getCapability<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath)
+
+
+    let flovatarPackCap = account.capabilities.get<&FlovatarPack.Collection>(FlovatarPack.CollectionPublicPath)
     if(!flovatarPackCap.check()) {
-        let wallet =  account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
-        account.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
-        account.link<&{FlovatarPack.CollectionPublic}>(FlovatarPack.CollectionPublicPath, target: FlovatarPack.CollectionStoragePath)
+        let wallet =  account.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
+        account.storage.save<@FlovatarPack.Collection>(<- FlovatarPack.createEmptyCollection(ownerVault: wallet), to: FlovatarPack.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarPack.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarPack.Collection>(FlovatarPack.CollectionStoragePath),
+            at: FlovatarPack.CollectionPublicPath
+        )
     }
 
-    let marketplaceCap = account.getCapability<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath)
+    let marketplaceCap = account.capabilities.get<&FlovatarMarketplace.SaleCollection>(FlovatarMarketplace.CollectionPublicPath)
     if(!marketplaceCap.check()) {
-        let wallet =  account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        let wallet =  account.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
 
         // store an empty Sale Collection in account storage
-        account.save<@FlovatarMarketplace.SaleCollection>(<- FlovatarMarketplace.createSaleCollection(ownerVault: wallet), to:FlovatarMarketplace.CollectionStoragePath)
+        account.storage.save<@FlovatarMarketplace.SaleCollection>(<- FlovatarMarketplace.createSaleCollection(ownerVault: wallet), to:FlovatarMarketplace.CollectionStoragePath)
 
         // publish a capability to the Collection in storage
-        account.link<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath, target: FlovatarMarketplace.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarMarketplace.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarMarketplace.SaleCollection>(FlovatarMarketplace.CollectionStoragePath),
+            at: FlovatarMarketplace.CollectionPublicPath
+        )
     }
 
 
 
-    if account.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarDustCollectible.createEmptyCollection(), to: FlovatarDustCollectible.CollectionStoragePath)
+    if account.storage.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarDustCollectible.createEmptyCollection(nftType: Type<@FlovatarDustCollectible.Collection>()), to: FlovatarDustCollectible.CollectionStoragePath)
     }
-    let flovatarCollectibleCap = account.getCapability<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
+    let flovatarCollectibleCap = account.capabilities.get<&FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionPublicPath)
     if(!flovatarCollectibleCap.check()) {
-        account.unlink(FlovatarDustCollectible.CollectionPublicPath)
-        account.link<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectible.CollectionPublicPath, target: FlovatarDustCollectible.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarDustCollectible.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionStoragePath),
+            at: FlovatarDustCollectible.CollectionPublicPath
+        )
     }
 
-    if account.borrow<&FlovatarDustCollectibleAccessory.Collection>(from: FlovatarDustCollectibleAccessory.CollectionStoragePath) == nil {
-        account.save<@NonFungibleToken.Collection>(<- FlovatarDustCollectibleAccessory.createEmptyCollection(), to: FlovatarDustCollectibleAccessory.CollectionStoragePath)
+    if account.storage.borrow<&FlovatarDustCollectibleAccessory.Collection>(from: FlovatarDustCollectibleAccessory.CollectionStoragePath) == nil {
+        account.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarDustCollectibleAccessory.createEmptyCollection(nftType: Type<@FlovatarDustCollectibleAccessory.Collection>()), to: FlovatarDustCollectibleAccessory.CollectionStoragePath)
     }
-    let flovatarAccessoryCap = account.getCapability<&{FlovatarDustCollectibleAccessory.CollectionPublic}>(FlovatarDustCollectibleAccessory.CollectionPublicPath)
+    let flovatarAccessoryCap = account.capabilities.get<&FlovatarDustCollectibleAccessory.Collection>(FlovatarDustCollectibleAccessory.CollectionPublicPath)
     if(!flovatarAccessoryCap.check()) {
-        account.unlink(FlovatarDustCollectibleAccessory.CollectionPublicPath)
-        account.link<&FlovatarDustCollectibleAccessory.Collection{FlovatarDustCollectibleAccessory.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectibleAccessory.CollectionPublicPath, target: FlovatarDustCollectibleAccessory.CollectionStoragePath)
+        account.capabilities.unpublish(FlovatarDustCollectibleAccessory.CollectionPublicPath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarDustCollectibleAccessory.Collection>(FlovatarDustCollectibleAccessory.CollectionStoragePath),
+            at: FlovatarDustCollectibleAccessory.CollectionPublicPath
+        )
     }
 
 
 
-    if account.borrow<&FlovatarDustToken.Vault>(from: FlovatarDustToken.VaultStoragePath) == nil {
-        let vault <- FlovatarDustToken.createEmptyVault()
-        account.save<@FlovatarDustToken.Vault>(<-vault, to: FlovatarDustToken.VaultStoragePath)
+    if account.storage.borrow<&FlovatarDustToken.Vault>(from: FlovatarDustToken.VaultStoragePath) == nil {
+        let vault <- FlovatarDustToken.createEmptyVault(vaultType: Type<@FlovatarDustToken.Vault>())
+        account.storage.save(<-vault, to: FlovatarDustToken.VaultStoragePath)
     }
 
-    let dustTokenCap = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
+    let dustTokenCap = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultReceiverPath)
     if(!dustTokenCap.check()) {
-        account.unlink(FlovatarDustToken.VaultReceiverPath)
-        // Create a public Receiver capability to the Vault
-        account.link<&FlovatarDustToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(FlovatarDustToken.VaultReceiverPath, target: FlovatarDustToken.VaultStoragePath)
+        account.capabilities.unpublish(FlovatarDustToken.VaultReceiverPath)
+            // Create a public Receiver capability to the Vault
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultStoragePath),
+            at: FlovatarDustToken.VaultReceiverPath
+        )
     }
 
-    let dustTokenCapBalance = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Balance}>(FlovatarDustToken.VaultBalancePath)
+    let dustTokenCapBalance = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultBalancePath)
     if(!dustTokenCapBalance.check()) {
-        account.unlink(FlovatarDustToken.VaultBalancePath)
+        account.capabilities.unpublish(FlovatarDustToken.VaultBalancePath)
         // Create a public Receiver capability to the Vault
-        account.link<&FlovatarDustToken.Vault{FungibleToken.Balance}>(FlovatarDustToken.VaultBalancePath, target: FlovatarDustToken.VaultStoragePath)
+        account.capabilities.publish(
+            account.capabilities.storage.issue<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultStoragePath),
+            at: FlovatarDustToken.VaultBalancePath
+        )
     }
 
   }
