@@ -13,28 +13,25 @@ import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 import FIND from 0xFind
 
-pub struct Collections {
+access(all) struct Collections {
 
-  pub(set) var address: Address
-  pub(set) var flobots: [Flobot.FlobotData]
-  init (_ address:Address) {
+  access(all) var address: Address
+  access(all) var flobots: [Flobot.FlobotData]
+  init (_ address:Address, _ flobots: [Flobot.FlobotData]) {
     self.address = address
     self.flobots = []
   }
 }
 
-pub fun main(name: String) :Collections? {
+access(all) fun main(name: String) :Collections? {
 
     let address = FIND.lookupAddress(name)
 
     if (address != nil) {
-        // get the accounts' public address objects
-        let account = getAccount(address!)
-        let status = Collections(address!)
 
-        status.flobots = Flobot.getFlobots(address: address!)
+        let flobots = Flobot.getFlobots(address: address!)
 
-        return status
+        return Collections(address!, flobots)
     } else {
         return nil
     }

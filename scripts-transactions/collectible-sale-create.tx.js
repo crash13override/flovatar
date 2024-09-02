@@ -12,18 +12,24 @@ import NFTStorefrontV2 from 0xStorefront2
 import MetadataViews from 0xMetadataViews
 import Flovatar, FlovatarComponent, FlovatarComponentTemplate, FlovatarPack, FlovatarMarketplace, FlovatarDustToken, FlovatarDustCollectible, FlovatarDustCollectibleAccessory, FlovatarDustCollectibleTemplate from 0xFlovatar
 
-pub fun getOrCreateStorefront(account: AuthAccount): &NFTStorefrontV2.Storefront {
-    if let storefrontRef = account.borrow<&NFTStorefrontV2.Storefront>(from: NFTStorefrontV2.StorefrontStoragePath) {
+access(all) fun getOrCreateStorefront(account: auth(Storage, Capabilities) &Account): auth(NFTStorefrontV2.CreateListing) &NFTStorefrontV2.Storefront {
+    if let storefrontRef = account.storage.borrow<auth(NFTStorefrontV2.CreateListing) &NFTStorefrontV2.Storefront>(from: NFTStorefrontV2.StorefrontStoragePath) {
         return storefrontRef
     }
 
-    let storefront <- NFTStorefrontV2.createStorefront() as! @NFTStorefrontV2.Storefront
+    let storefront <- NFTStorefrontV2.createStorefront()
 
-    let storefrontRef = &storefront as &NFTStorefrontV2.Storefront
+    account.storage.save(<-storefront, to: NFTStorefrontV2.StorefrontStoragePath)
 
-    account.save(<-storefront, to: NFTStorefrontV2.StorefrontStoragePath)
-
-    account.link<&NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}>(NFTStorefrontV2.StorefrontPublicPath, target: NFTStorefrontV2.StorefrontStoragePath)
+    // create a public capability for the .Storefront & publish
+    let storefrontPublicCap = account.capabilities.storage.issue<&NFTStorefrontV2.Storefront>(
+            NFTStorefrontV2.StorefrontStoragePath
+        )
+    account.capabilities.unpublish(NFTStorefrontV2.StorefrontPublicPath)
+    account.capabilities.publish(storefrontPublicCap, at: NFTStorefrontV2.StorefrontPublicPath)
+    
+    let storefrontRef = account.storage.borrow<auth(NFTStorefrontV2.CreateListing)  &NFTStorefrontV2.Storefront>(from: NFTStorefrontV2.StorefrontStoragePath)
+        ?? panic("Could not borrow Storefront from provided address")
 
     return storefrontRef
 }
@@ -31,40 +37,36 @@ pub fun getOrCreateStorefront(account: AuthAccount): &NFTStorefrontV2.Storefront
 transaction(saleItemID: UInt64, saleItemPrice: UFix64, customID: String?, expiry: UInt64) {
     let flowReceiver: Capability<&{FungibleToken.Receiver}>
     let flowReceiverMarket: Capability<&{FungibleToken.Receiver}>
-    let flovatarNFTProvider: Capability<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>
-    let storefront: &NFTStorefrontV2.Storefront
+    let flovatarNFTProvider: Capability<auth(NonFungibleToken.Withdraw) &FlovatarDustCollectible.Collection>
+    let storefront: auth(NFTStorefrontV2.CreateListing) &NFTStorefrontV2.Storefront
     var saleCuts: [NFTStorefrontV2.SaleCut]
 
-    prepare(acct: AuthAccount) {
+    prepare(acct: auth(Storage, Capabilities) &Account) {
         self.saleCuts = []
 
-        let flovatarCollectionProviderPrivatePath = /private/FlovatarDustCollectibleCollection
-        // Check if the Provider capability exists or not if \`no\` then create a new link for the same.
-        if !acct.getCapability<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(flovatarCollectionProviderPrivatePath)!.check() {
-            acct.link<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(flovatarCollectionProviderPrivatePath, target: FlovatarDustCollectible.CollectionStoragePath)
-        }
+        self.flovatarNFTProvider = acct.capabilities.storage.issue<auth(NonFungibleToken.Withdraw) &FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionStoragePath)
+        assert(self.flovatarNFTProvider.borrow() != nil, message: "Missing or mis-typed FlovatarDustCollectible.Collection provider")
 
-
-        self.flowReceiver = acct.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        self.flowReceiver = acct.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
         assert(self.flowReceiver.borrow() != nil, message: "Missing or mis-typed Flow receiver for seller")
 
         let marketAccount = getAccount(0xComponent)
-        self.flowReceiverMarket = marketAccount.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        self.flowReceiverMarket = marketAccount.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
         assert(self.flowReceiverMarket.borrow() != nil, message: "Missing or mis-typed Flow receiver for merchant account")
 
         // Initialize the buyer's account if it is not already initialized
-        let flovatarCollectibleCap = acct.getCapability<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
-        if(!flovatarCollectibleCap.check()) {
-            acct.unlink(FlovatarDustCollectible.CollectionPublicPath)
-            acct.link<&FlovatarDustCollectible.Collection{FlovatarDustCollectible.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarDustCollectible.CollectionPublicPath, target: FlovatarDustCollectible.CollectionStoragePath)
+        let flovatarCap = acct.capabilities.get<&{FlovatarDustCollectible.CollectionPublic}>(FlovatarDustCollectible.CollectionPublicPath)
+        if(!flovatarCap.check()) {
+            acct.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarDustCollectible.createEmptyCollection(nftType: Type<@FlovatarDustCollectible.Collection>()), to: FlovatarDustCollectible.CollectionStoragePath)
+
+            acct.capabilities.unpublish(FlovatarDustCollectible.CollectionPublicPath)
+            acct.capabilities.publish(
+                acct.capabilities.storage.issue<&FlovatarDustCollectible.Collection>(FlovatarDustCollectible.CollectionStoragePath),
+                at: FlovatarDustCollectible.CollectionPublicPath
+            )
         }
 
-        self.flovatarNFTProvider = acct.getCapability<&FlovatarDustCollectible.Collection{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(flovatarCollectionProviderPrivatePath)
-        assert(self.flovatarNFTProvider.borrow() != nil, message: "Missing or mis-typed FlovatarDustCollectible.Collection provider")
-
         self.storefront = getOrCreateStorefront(account: acct)
-
-
 
         self.saleCuts.append(NFTStorefrontV2.SaleCut(
             receiver: self.flowReceiver,

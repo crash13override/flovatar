@@ -15,13 +15,13 @@ import FlowUtilityToken from 0xDuc
 //import FlovatarDustToken from 0xFlovatar
 
 
-pub struct AddressStatus {
+access(all) struct AddressStatus {
 
-  pub(set) var address: Address
-  pub(set) var name: String?
-  pub(set) var balance: UFix64
-  pub(set) var dustBalance: UFix64
-  init (_ address:Address) {
+  access(all) var address: Address
+  access(all) var name: String?
+  access(all) var balance: UFix64
+  access(all) var dustBalance: UFix64
+  init (_ address:Address,_ name: String?, _ balance: UFix64, _ dustBalance: UFix64) {
     self.address = address
     self.balance = 0.0
     self.dustBalance = 0.0
@@ -31,19 +31,21 @@ pub struct AddressStatus {
 
 // This script checks that the accounts are set up correctly for the marketplace tutorial.
 
-pub fun main(address:Address) : AddressStatus {
+access(all) fun main(address:Address) : AddressStatus {
     // get the accounts' public address objects
     let account = getAccount(address)
-    let status = AddressStatus(address)
+    var balance = 0.0
+    var name: String? = nil
+    var dustBalance = 0.0
 
-    if let vault = account.getCapability(/public/flowTokenBalance).borrow<&FlowToken.Vault{FungibleToken.Balance}>() {
-       status.balance = vault.balance
+    if let vault = account.capabilities.borrow<&FlowToken.Vault>(/public/flowTokenBalance) {
+       balance = vault.balance
     }
-    //if let dustVault = account.getCapability(FlovatarDustToken.VaultReceiverPath).borrow<&FlovatarDustToken.Vault{FungibleToken.Balance}>() {
+    //if let dustVault = account.capabilities.get(FlovatarDustToken.VaultReceiverPath).borrow<&FlovatarDustToken.Vault{FungibleToken.Balance}>() {
     //   status.dustBalance = dustVault.balance
     //}
 
-    let leaseCap = account.getCapability<&FIND.LeaseCollection{FIND.LeaseCollectionPublic}>(FIND.LeasePublicPath)
+    let leaseCap = account.capabilities.get<&FIND.LeaseCollection>(FIND.LeasePublicPath)
 
     //we do have leases
     if leaseCap.check() {
@@ -72,15 +74,15 @@ pub fun main(address:Address) : AddressStatus {
         }
 
         if(profileName != nil){
-            status.name = profileName
+            name = profileName
         } else if(name != nil) {
-            status.name = name
+            name = name
         }
 
     }
 
 
-    return status
+    return AddressStatus(address, name, balance, dustBalance)
 
 }
 `,

@@ -12,23 +12,22 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub struct Collections {
+access(all) struct Collections {
 
-  pub(set) var address: Address
-  pub(set) var flovatars: [Flovatar.FlovatarData]
-  pub(set) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
-  init (_ address:Address) {
+  access(all) var address: Address
+  access(all) var flovatars: [Flovatar.FlovatarData]
+  access(all) var flovatarSales: [FlovatarMarketplace.FlovatarSaleData]
+  init (_ address:Address, _ flovatars: [Flovatar.FlovatarData], _ flovatarSales: [FlovatarMarketplace.FlovatarSaleData]) {
     self.address = address
     self.flovatars = []
     self.flovatarSales = []
   }
 }
 
-pub fun main(address:Address) : Collections {
-    let status = Collections(address)
-
-    status.flovatars = Flovatar.getFlovatars(address: address)
-    status.flovatarSales = FlovatarMarketplace.getFlovatarSales(address: address)
+access(all) fun main(address:Address) : Collections {
+    let flovatars = Flovatar.getFlovatars(address: address)
+    let flovatarSales = FlovatarMarketplace.getFlovatarSales(address: address)
+    let status = Collections(address, flovatars, flovatarSales)
 
     return status
 }

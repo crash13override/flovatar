@@ -7,7 +7,7 @@ export async function signDapperMessageTx(message) {
             cadence: `
 transaction(message: String) {
 
-    prepare(account: AuthAccount) {
+    prepare(account: &Account) {
 
     }
 

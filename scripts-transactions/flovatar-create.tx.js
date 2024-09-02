@@ -32,7 +32,7 @@ transaction(
 
 
     let flovatarCollection: &Flovatar.Collection
-    let flovatarComponentCollection: &FlovatarComponent.Collection
+    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
 
     let sparkNFT: @FlovatarComponent.NFT
     let accessoryNFT: @FlovatarComponent.NFT?
@@ -44,10 +44,10 @@ transaction(
     let legendaryBoostNFT: @[FlovatarComponent.NFT]
     let accountAddress: Address
 
-    prepare(account: AuthAccount) {
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
-        self.flovatarComponentCollection = account.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
+        self.flovatarComponentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 
         self.rareBoostNFT <-[]
         for componentId in rareBoost {

@@ -10,7 +10,7 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub fun main(
+access(all) fun main(
     series: UInt64,
     layersId: [UInt32],
     layersValue: [UInt64]) : Bool {

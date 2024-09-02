@@ -12,10 +12,10 @@ import FlowToken from 0xFlowToken
 
 transaction(packId: UInt64) {
 
-    let flovatarPackCollection: &FlovatarPack.Collection
+    let flovatarPackCollection: auth(FlovatarPack.WithdrawEnt) &FlovatarPack.Collection
 
-    prepare(account: AuthAccount) {
-        self.flovatarPackCollection = account.borrow<&FlovatarPack.Collection>(from: FlovatarPack.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flovatarPackCollection = account.storage.borrow<auth(FlovatarPack.WithdrawEnt) &FlovatarPack.Collection>(from: FlovatarPack.CollectionStoragePath)!
     }
 
     execute {

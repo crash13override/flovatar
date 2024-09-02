@@ -10,40 +10,41 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-
 //this transaction buy a Flovatar Component from a direct sale listing from another user
 transaction(saleAddresses: [Address], tokenIds: [UInt64], amounts: [UFix64]) {
 
     // reference to the buyer's NFT collection where they
     // will store the bought NFT
 
-    let vaultCap: Capability<&FlowToken.Vault{FungibleToken.Receiver}>
+    let vaultCap: Capability<&FlowToken.Vault>
     let collectionCap: Capability<&{FlovatarComponent.CollectionPublic}>
     // Vault that will hold the tokens that will be used
     // to buy the NFT
-    let vaultRef: &FlowToken.Vault
+    let vaultRef: auth(FungibleToken.Withdraw) &FlowToken.Vault
 
-    prepare(account: AuthAccount) {
+    prepare(account: auth(Storage, Capabilities) &Account) {
 
         // get the references to the buyer's Vault and NFT Collection receiver
-        var collectionCap = account.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
+        var collectionCap = account.capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
 
         // if collection is not created yet we make it.
         if !collectionCap.check() {
+            let collection <- FlovatarComponent.createEmptyCollection(nftType: Type<@FlovatarComponent.Collection>())
             // store an empty NFT Collection in account storage
-            account.save<@NonFungibleToken.Collection>(<- FlovatarComponent.createEmptyCollection(), to: FlovatarComponent.CollectionStoragePath)
-            // publish a capability to the Collection in storage
-            account.link<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
+            account.storage.save<@{NonFungibleToken.Collection}>(<- collection, to: FlovatarComponent.CollectionStoragePath)
+            // create a public capability for the collection
+            account.capabilities.unpublish(FlovatarComponent.CollectionPublicPath)
+            account.capabilities.publish(
+                account.capabilities.storage.issue<&FlovatarComponent.Collection>(FlovatarComponent.CollectionStoragePath),
+                at: FlovatarComponent.CollectionPublicPath
+            )
         }
-
-
 
         self.collectionCap = collectionCap
 
-        self.vaultCap = account.getCapability<&FlowToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        self.vaultCap = account.capabilities.get<&FlowToken.Vault>(/public/flowTokenReceiver)
 
-        self.vaultRef = account.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault) ?? panic("Could not borrow owner's Vault reference")
-
+        self.vaultRef = account.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault) ?? panic("Could not borrow owner's Vault reference")
     }
 
     execute {
@@ -53,10 +54,10 @@ transaction(saleAddresses: [Address], tokenIds: [UInt64], amounts: [UFix64]) {
             // get the read-only account storage of the seller
             let seller = getAccount(saleAddress)
 
-            let marketplace = seller.getCapability(FlovatarMarketplace.CollectionPublicPath).borrow<&{FlovatarMarketplace.SalePublic}>()
+            let marketplace = seller.capabilities.borrow<&{FlovatarMarketplace.SalePublic}>(FlovatarMarketplace.CollectionPublicPath)
                              ?? panic("Could not borrow seller's sale reference")
 
-            let temporaryVault: @FungibleToken.Vault <- self.vaultRef.withdraw(amount: amounts[i])
+            let temporaryVault <- self.vaultRef.withdraw(amount: amounts[i])
             marketplace.purchaseFlovatarComponent(tokenId: tokenIds[i], recipientCap:self.collectionCap, buyTokens: <- temporaryVault)
             i = i + Int(1)
         }

@@ -16,8 +16,8 @@ transaction() {
     let flovatarCollection: &Flovatar.Collection
     let address: Address
 
-    prepare(account: AuthAccount) {
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
         self.address = account.address
 
     }

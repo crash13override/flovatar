@@ -12,7 +12,7 @@ import NonFungibleToken from 0xNonFungible
 import FungibleToken from 0xFungible
 import FlowToken from 0xFlowToken
 
-pub fun main(address:Address) : [FlovatarComponent.ComponentData] {
+access(all) fun main(address:Address) : [FlovatarComponent.ComponentData] {
     // get the accounts' public address objects
     return FlovatarComponent.getComponents(address: address)
 }

@@ -13,38 +13,41 @@ import MetadataViews from 0xMetadataViews
 import Flovatar, FlovatarComponent from 0xFlovatar
 
 transaction(storefrontAddress: Address, listingResourceID: UInt64, expectedPrice: UFix64, commissionRecipient: Address) {
-    let paymentVault: @FungibleToken.Vault
-    let buyerFlovatarCollection: &FlovatarComponent.Collection{NonFungibleToken.Receiver}
-    let storefront: &NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}
-    let listing: &NFTStorefrontV2.Listing{NFTStorefrontV2.ListingPublic}
+    let paymentVault: @{FungibleToken.Vault}
+    let buyerFlovatarCollection: &FlovatarComponent.Collection
+    let storefront: &NFTStorefrontV2.Storefront
+    let listing: &NFTStorefrontV2.Listing
     let balanceBeforeTransfer: UFix64
-    let mainDucVault: &FlowUtilityToken.Vault
+    let mainDucVault: auth(FungibleToken.Withdraw)  &FlowUtilityToken.Vault
     let commissionRecipientCap: Capability<&{FungibleToken.Receiver}>
 
-    prepare(dapper: AuthAccount, buyer: AuthAccount) {
+    prepare(dapper: auth(Storage) &Account, buyer: auth(Storage, Capabilities) &Account) {
 
         // Initialize the buyer's account if it is not already initialized
-        let flovatarCap = buyer.getCapability<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
+        let flovatarCap = buyer.capabilities.get<&{FlovatarComponent.CollectionPublic}>(FlovatarComponent.CollectionPublicPath)
         if(!flovatarCap.check()) {
-            buyer.save<@NonFungibleToken.Collection>(<- FlovatarComponent.createEmptyCollection(), to: FlovatarComponent.CollectionStoragePath)
-            buyer.link<&FlovatarComponent.Collection{FlovatarComponent.CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(FlovatarComponent.CollectionPublicPath, target: FlovatarComponent.CollectionStoragePath)
+            buyer.storage.save<@{NonFungibleToken.Collection}>(<- FlovatarComponent.createEmptyCollection(nftType: Type<@FlovatarComponent.Collection>()), to: FlovatarComponent.CollectionStoragePath)
+
+            buyer.capabilities.unpublish(FlovatarComponent.CollectionPublicPath)
+            buyer.capabilities.publish(
+                buyer.capabilities.storage.issue<&FlovatarComponent.Collection>(FlovatarComponent.CollectionStoragePath),
+                at: FlovatarComponent.CollectionPublicPath
+            )
         }
 
         // Fetch the storefront where the listing exists
         self.storefront = getAccount(storefrontAddress)
-              .getCapability<&NFTStorefrontV2.Storefront{NFTStorefrontV2.StorefrontPublic}>(
+              .capabilities.borrow<&NFTStorefrontV2.Storefront>(
                   NFTStorefrontV2.StorefrontPublicPath
-              )!
-              .borrow()
+              )
               ?? panic("Could not borrow Storefront from provided address")
 
         // Fetch the listing from the storefront by ID
-        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID)
-            ?? panic("No Offer with that ID in Storefront")
+        self.listing = self.storefront.borrowListing(listingResourceID: listingResourceID) as! &NFTStorefrontV2.Listing
 
         // Get access to Dapper's DUC vault
         let salePrice = self.listing.getDetails().salePrice
-        self.mainDucVault = dapper.borrow<&FlowUtilityToken.Vault>(from: /storage/flowUtilityTokenVault)
+        self.mainDucVault = dapper.storage.borrow<auth(FungibleToken.Withdraw) &FlowUtilityToken.Vault>(from: /storage/flowUtilityTokenVault)
             ?? panic("Cannot borrow FlowUtilityToken vault from dapper storage")
 
         // Withdraw the appropriate amount of DUC from the vault
@@ -57,12 +60,12 @@ transaction(storefrontAddress: Address, listingResourceID: UInt64, expectedPrice
         }
 
         self.buyerFlovatarCollection = buyer
-            .getCapability<&FlovatarComponent.Collection{NonFungibleToken.Receiver}>(FlovatarComponent.CollectionPublicPath)
+            .capabilities.get<&FlovatarComponent.Collection>(FlovatarComponent.CollectionPublicPath)
             .borrow()
             ?? panic("Cannot borrow Flovatar collection receiver from buyer")
 
         // Access the capability to receive the commission.
-        self.commissionRecipientCap = getAccount(commissionRecipient).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+        self.commissionRecipientCap = getAccount(commissionRecipient).capabilities.get<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
         assert(self.commissionRecipientCap.check(), message: "Commission Recipient doesn't have flowtoken receiving capability")
     }
 

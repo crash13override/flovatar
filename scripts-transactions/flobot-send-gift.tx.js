@@ -13,15 +13,15 @@ transaction(
     flobotId: UInt64,
     address: Address) {
 
-    let flobotCollection: &Flobot.Collection
+    let flobotCollection: auth(NonFungibleToken.Withdraw) &Flobot.Collection
     let flobotReceiverCollection: Capability<&{Flobot.CollectionPublic}>
 
-    prepare(account: AuthAccount) {
-        self.flobotCollection = account.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flobotCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &Flobot.Collection>(from: Flobot.CollectionStoragePath)!
 
 
         let receiverAccount = getAccount(address)
-        self.flobotReceiverCollection = receiverAccount.getCapability<&{Flobot.CollectionPublic}>(Flobot.CollectionPublicPath)
+        self.flobotReceiverCollection = receiverAccount.capabilities.get<&{Flobot.CollectionPublic}>(Flobot.CollectionPublicPath)
     }
 
     execute {

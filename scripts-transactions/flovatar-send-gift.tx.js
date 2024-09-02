@@ -13,15 +13,15 @@ transaction(
     flovatarId: UInt64,
     address: Address) {
 
-    let flovatarCollection: &Flovatar.Collection
+    let flovatarCollection: auth(NonFungibleToken.Withdraw) &Flovatar.Collection
     let flovatarReceiverCollection: Capability<&{Flovatar.CollectionPublic}>
 
-    prepare(account: AuthAccount) {
-        self.flovatarCollection = account.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.flovatarCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
 
         let receiverAccount = getAccount(address)
-        self.flovatarReceiverCollection = receiverAccount.getCapability<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
+        self.flovatarReceiverCollection = receiverAccount.capabilities.get<&{Flovatar.CollectionPublic}>(Flovatar.CollectionPublicPath)
     }
 
     execute {

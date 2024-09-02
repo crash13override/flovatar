@@ -20,15 +20,12 @@ transaction(
     ) {
 
     let collectibleCollection: &FlovatarDustCollectible.Collection
-    let vaultCap: Capability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>
-    let temporaryVault: @FungibleToken.Vault
+    let temporaryVault: @{FungibleToken.Vault}
 
-    prepare(account: AuthAccount) {
-        self.collectibleCollection = account.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath)!
+    prepare(account: auth(Storage) &Account) {
+        self.collectibleCollection = account.storage.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath)!
 
-        self.vaultCap = account.getCapability<&FlovatarDustToken.Vault{FungibleToken.Receiver}>(FlovatarDustToken.VaultReceiverPath)
-
-        let vaultRef = account.borrow<&{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
+        let vaultRef = account.storage.borrow<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
 
         // withdraw tokens from the buyer's Vault
         self.temporaryVault <- vaultRef.withdraw(amount: 10.0)
@@ -36,7 +33,7 @@ transaction(
 
     execute {
 
-        let collectible: &{FlovatarDustCollectible.Private} = self.collectibleCollection.borrowDustCollectiblePrivate(id: collectibleId)!
+        let collectible = self.collectibleCollection.borrowDustCollectible(id: collectibleId)! as! auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.NFT
 
         collectible.setPosition(latitude: latitude, longitude: longitude, vault: <- self.temporaryVault)
     }
