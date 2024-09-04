@@ -820,7 +820,7 @@ contract Flovatar: NonFungibleToken{
 		fun borrowFlovatar(id: UInt64): &Flovatar.NFT?{ 
 			if self.ownedNFTs[id] != nil {
 				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)
-				let flovatarNFT = ref as! &Flovatar.NFT
+				let flovatarNFT = ref as! &Flovatar.NFT?
 				return flovatarNFT
 			} else {
 				return nil
