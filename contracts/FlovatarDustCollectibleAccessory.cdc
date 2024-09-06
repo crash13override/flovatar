@@ -350,7 +350,7 @@ contract FlovatarDustCollectibleAccessory: NonFungibleToken{
 		access(all)
 		fun borrowCollectibleAccessory(id: UInt64): &FlovatarDustCollectibleAccessory.NFT?{ 
 			if self.ownedNFTs[id] != nil {
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)
+				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
 				let collectibleNFT = ref as! &FlovatarDustCollectibleAccessory.NFT
 				return collectibleNFT
 			} else {

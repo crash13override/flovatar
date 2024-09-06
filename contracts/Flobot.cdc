@@ -560,7 +560,7 @@ contract Flobot: NonFungibleToken{
 		access(all)
 		fun borrowFlobot(id: UInt64): &Flobot.NFT?{ 
 			if self.ownedNFTs[id] != nil {
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)
+				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
 				let flobotNFT = ref as! &Flobot.NFT
 				return flobotNFT
 			} else {
