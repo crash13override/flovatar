@@ -343,8 +343,8 @@ contract FlovatarComponent: NonFungibleToken{
 		access(all)
 		fun borrowComponent(id: UInt64): &FlovatarComponent.NFT?{ 
 			if self.ownedNFTs[id] != nil {
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)
-				let componentNFT = ref as! &FlovatarComponent.NFT?
+				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
+				let componentNFT = ref as! &FlovatarComponent.NFT
 				return componentNFT
 			} else {
 				return nil
