@@ -832,7 +832,7 @@ contract Flovatar: NonFungibleToken{
 		access(Flovatar.PrivateEnt)
 		fun borrowFlovatarPrivate(id: UInt64): auth(Flovatar.PrivateEnt) &Flovatar.NFT?{ 
 			if self.ownedNFTs[id] != nil{ 
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
+				let ref = (&self.ownedNFTs[id] as auth(Flovatar.PrivateEnt) &{NonFungibleToken.NFT}?)!
 				return ref as! auth(Flovatar.PrivateEnt) &Flovatar.NFT
 			} else{ 
 				return nil
