@@ -1,7 +1,9 @@
 import "FungibleToken"
 import "Toucans"
 import "FlovatarDustToken"
-
+/*
+    This is a Dummy Token Minter for Toucans to allow the use of DUST within the DAO tools.
+*/
 access(all)
 contract DummyDustTokenMinter{ 
 	access(all)
