@@ -6,11 +6,12 @@ transaction(
     flovatarId: UInt64
     ) {
 
-    let flovatarCollection: &Flovatar.Collection
+    let flovatarCollection: auth(Flovatar.PrivateEnt) &Flovatar.Collection
     let flovatarComponentCollection: &FlovatarComponent.Collection
 
+
     prepare(account: auth(Storage) &Account) {
-        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+        self.flovatarCollection = account.storage.borrow<auth(Flovatar.PrivateEnt) &Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
         self.flovatarComponentCollection = account.storage.borrow<&FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
     }

@@ -17,13 +17,14 @@ transaction(
     background: UInt64
     ) {
 
-    let flobotCollection: &Flobot.Collection
-    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
+    let flobotCollection: auth(Flobot.PrivateEnt) &Flobot.Collection
+    let flovatarComponentCollection: &FlovatarComponent.Collection
 
     let backgroundNFT: @FlovatarComponent.NFT
 
-    prepare(account: auth(Storage, Capabilities) &Account) {
-        self.flobotCollection = account.storage.borrow<&Flobot.Collection>(from: Flobot.CollectionStoragePath)!
+
+    prepare(account: auth(Storage) &Account) {
+        self.flobotCollection = account.storage.borrow<auth(Flobot.PrivateEnt) &Flobot.Collection>(from: Flobot.CollectionStoragePath)!
 
         self.flovatarComponentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 

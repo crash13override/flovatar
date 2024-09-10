@@ -8,13 +8,13 @@ transaction(
     accessory: UInt64
     ) {
 
-    let flovatarCollection: &Flovatar.Collection
-    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
+    let flovatarCollection: auth(Flovatar.PrivateEnt) &Flovatar.Collection
+    let flovatarComponentCollection: &FlovatarComponent.Collection
 
     let accessoryNFT: @FlovatarComponent.NFT
 
     prepare(account: auth(Storage) &Account) {
-        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+        self.flovatarCollection = account.storage.borrow<auth(Flovatar.PrivateEnt) &Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
         self.flovatarComponentCollection = account.storage.borrow<auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection>(from: FlovatarComponent.CollectionStoragePath)!
 

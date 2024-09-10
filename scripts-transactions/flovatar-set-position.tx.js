@@ -18,12 +18,12 @@ transaction(
     longitude: Fix64
     ) {
 
-    let flovatarCollection: &Flovatar.Collection
+    let flovatarCollection: auth(Flovatar.PrivateEnt) &Flovatar.Collection
     let vaultCap: Capability<&FlovatarDustToken.Vault>
     let temporaryVault: @{FungibleToken.Vault}
 
     prepare(account: auth(Storage) &Account) {
-        self.flovatarCollection = account.storage.borrow<&Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
+        self.flovatarCollection = account.storage.borrow<auth(Flovatar.PrivateEnt) &Flovatar.Collection>(from: Flovatar.CollectionStoragePath)!
 
         self.vaultCap = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultReceiverPath)
 

@@ -571,16 +571,17 @@ contract Flobot: NonFungibleToken{
 		/*
 		// borrowFlobotPrivate returns a borrowed reference to a Flobot using the Private interface
 		// so that the caller can read data and call methods from it, like setting the optional components.
-		access(all)
-		fun borrowFlobotPrivate(id: UInt64): &{Flobot.Private}?{ 
+		*/
+		access(Flobot.PrivateEnt)
+		fun borrowFlobotPrivate(id: UInt64): auth(Flobot.PrivateEnt) &Flobot.NFT?{
 			if self.ownedNFTs[id] != nil{ 
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
-				return ref as! &Flobot.NFT
+				let ref = (&self.ownedNFTs[id] as auth(Flobot.PrivateEnt) &{NonFungibleToken.NFT}?)!
+				return ref as! auth(Flobot.PrivateEnt) &Flobot.NFT
 			} else{ 
 				return nil
 			}
 		}
-		 */
+
 
 
 		access(all)

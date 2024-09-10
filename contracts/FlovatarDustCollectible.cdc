@@ -638,16 +638,16 @@ contract FlovatarDustCollectible: NonFungibleToken{
 		/*
 		// borrowFlovatarPrivate returns a borrowed reference to a Flovatar using the Private interface
 		// so that the caller can read data and call methods from it, like setting the optional components.
-		access(all)
-		fun borrowDustCollectiblePrivate(id: UInt64): &{FlovatarDustCollectible.Private}?{ 
+		 */
+		access(FlovatarDustCollectible.PrivateEnt)
+		fun borrowDustCollectiblePrivate(id: UInt64): auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.NFT?{
 			if self.ownedNFTs[id] != nil{ 
-				let ref = (&self.ownedNFTs[id] as &{NonFungibleToken.NFT}?)!
-				return ref as! &FlovatarDustCollectible.NFT
+				let ref = (&self.ownedNFTs[id] as auth(FlovatarDustCollectible.PrivateEnt) &{NonFungibleToken.NFT}?)!
+				return ref as! auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.NFT
 			} else{ 
 				return nil
 			}
 		}
-		 */
 		
 		access(all)
 		view fun borrowViewResolver(id: UInt64): &{ViewResolver.Resolver}?{ 
