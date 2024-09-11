@@ -308,12 +308,10 @@ contract Flobot: NonFungibleToken{
 			if(component.getCategory() != "background") {
 				panic("The component needs to be a background")
 			}
-			if(component.getSeries() != self.metadata.series) {
-				panic("The accessory belongs to a different series")
-			}
 			if(component.getSeries() != UInt32(1)) {
 				panic("The accessory doesn't belong to series 1")
 			}
+
 			emit Updated(id: self.id)
 			let compNFT <- self.background <- component
 			return <-compNFT
