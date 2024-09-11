@@ -308,7 +308,7 @@ contract Flobot: NonFungibleToken{
 			if(component.getCategory() != "background") {
 				panic("The component needs to be a background")
 			}
-			if(component.getSeries() != self.metadata.series || component.getSeries() != 1) {
+			if(component.getSeries() != self.metadata.series || component.getSeries() != UInt32(1)) {
 				panic("The accessory belongs to a different series")
 			}
 			emit Updated(id: self.id)
