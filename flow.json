@@ -1,35 +1,54 @@
 {
 	"contracts": {
-		"FungibleToken": {
-			"source": "./contracts/core/FungibleToken.cdc",
+		"Burner": {
+			"source": "./contracts/core/Burner.cdc",
 			"aliases": {
-				"emulator": "ee82856bf20e2aa6",
-				"testing": "0000000000000007",
+				"emulator": "f8d6e0586b0a20c7",
 				"previewnet": "a0225e7000ac82a9",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"testing": "0000000000000007",
+				"testnet": "9a0766d93b6608b7"
 			}
 		},
-		"FungibleTokenSwitchboard": {
-		  "source": "./contracts/core/FungibleTokenSwitchboard.cdc",
-		  "aliases": {
-			"emulator": "f8d6e0586b0a20c7",
-			"testing": "0000000000000007",
-			"previewnet": "a0225e7000ac82a9",
-			"mainnet": "f233dcee88fe0abe",
-			"testnet": "9a0766d93b6608b7"
-		  }
+		"CapabilityDelegator": {
+			"source": "./contracts/hc/CapabilityDelegator.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
 		},
-		"FungibleTokenMetadataViews": {
-		  "source": "./contracts/core/FungibleTokenMetadataViews.cdc",
-		  "aliases": {
-			"emulator": "f8d6e0586b0a20c7",
-			"testing": "0000000000000007",
-			"previewnet": "a0225e7000ac82a9",
-			"mainnet": "f233dcee88fe0abe",
-			"testnet": "9a0766d93b6608b7"
-		  }
+		"CapabilityFactory": {
+			"source": "./contracts/hc/CapabilityFactory.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
 		},
+		"CapabilityFilter": {
+			"source": "./contracts/hc/CapabilityFilter.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
+				"testing": "0000000000000007",
+				"testnet": "294e44e1ec6993c6"
+			}
+		},
+		"DummyDustTokenMinter": "./contracts/DummyDustTokenMinter.cdc",
+		"Flobot": "./contracts/Flobot.cdc",
+		"Flovatar": "./contracts/Flovatar.cdc",
+		"FlovatarComponent": "./contracts/FlovatarComponent.cdc",
+		"FlovatarComponentTemplate": "./contracts/FlovatarComponentTemplate.cdc",
+		"FlovatarComponentUpgrader": "./contracts/FlovatarComponentUpgrader.cdc",
+		"FlovatarDustCollectible": "./contracts/FlovatarDustCollectible.cdc",
+		"FlovatarDustCollectibleAccessory": "./contracts/FlovatarDustCollectibleAccessory.cdc",
+		"FlovatarDustCollectibleTemplate": "./contracts/FlovatarDustCollectibleTemplate.cdc",
+		"FlovatarDustToken": "./contracts/FlovatarDustToken.cdc",
+		"FlovatarInbox": "./contracts/FlovatarInbox.cdc",
+		"FlovatarMarketplace": "./contracts/FlovatarMarketplace.cdc",
+		"FlovatarPack": "./contracts/FlovatarPack.cdc",
 		"FlowToken": {
 			"source": "./contracts/core/FlowToken.cdc",
 			"aliases": {
@@ -46,68 +65,53 @@
 				"testnet": "82ec283f88a62e65"
 			}
 		},
-		"Burner": {
-			"source": "./contracts/core/Burner.cdc",
+		"FungibleToken": {
+			"source": "./contracts/core/FungibleToken.cdc",
 			"aliases": {
-			  "emulator": "f8d6e0586b0a20c7",
-			  "testing": "0000000000000007",
-			  "previewnet": "a0225e7000ac82a9",
-			  "testnet": "9a0766d93b6608b7"
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testing": "0000000000000007",
+				"testnet": "9a0766d93b6608b7"
 			}
-		  },
+		},
+		"FungibleTokenMetadataViews": {
+			"source": "./contracts/core/FungibleTokenMetadataViews.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testing": "0000000000000007",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"FungibleTokenSwitchboard": {
+			"source": "./contracts/core/FungibleTokenSwitchboard.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testing": "0000000000000007",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
 		"HybridCustody": {
 			"source": "./contracts/hc/HybridCustody.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "d8a7e05a7ac670c0",
 				"testing": "0000000000000007",
-				"testnet": "294e44e1ec6993c6",
-				"mainnet": "d8a7e05a7ac670c0"
-			}
-		},
-		"CapabilityDelegator": {
-			"source": "./contracts/hc/CapabilityDelegator.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"testing": "0000000000000007",
-				"testnet": "294e44e1ec6993c6",
-				"mainnet": "d8a7e05a7ac670c0"
-			}
-		},
-		"CapabilityFactory": {
-			"source": "./contracts/hc/CapabilityFactory.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"testing": "0000000000000007",
-				"testnet": "294e44e1ec6993c6",
-				"mainnet": "d8a7e05a7ac670c0"
-			}
-		},
-		"CapabilityFilter": {
-			"source": "./contracts/hc/CapabilityFilter.cdc",
-			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"testing": "0000000000000007",
-				"testnet": "294e44e1ec6993c6",
-				"mainnet": "d8a7e05a7ac670c0"
+				"testnet": "294e44e1ec6993c6"
 			}
 		},
 		"MetadataViews": {
 			"source": "./contracts/core/MetadataViews.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testing": "0000000000000007",
 				"mainnet": "1d7e57aa55817448",
+				"testing": "0000000000000007",
 				"testnet": "631e88ae7f1d7c20"
 			}
-		},
-		"ViewResolver": {
-		  "source": "./contracts/core/ViewResolver.cdc",
-		  "aliases": {
-			"emulator": "f8d6e0586b0a20c7",
-			"mainnet": "1d7e57aa55817448",
-			"testnet": "631e88ae7f1d7c20",
-			"testing": "0000000000000007"
-		  }
 		},
 		"NFTCatalog": {
 			"source": "./contracts/core/NFTCatalog.cdc",
@@ -117,22 +121,28 @@
 				"testnet": "324c34e1c517e4db"
 			}
 		},
+		"NFTForwarding": {
+			"source": "./contracts/core/NFTForwarding.cdc",
+			"aliases": {
+				"testing": "0000000000000007"
+			}
+		},
 		"NFTStorefrontV2": {
 			"source": "./contracts/core/NFTStorefrontV2.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
 				"testing": "0000000000000007",
-				"testnet": "631e88ae7f1d7c20",
-				"mainnet": "1d7e57aa55817448"
+				"testnet": "631e88ae7f1d7c20"
 			}
 		},
 		"NonFungibleToken": {
 			"source": "./contracts/core/NonFungibleToken.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
 				"testing": "0000000000000007",
-				"testnet": "631e88ae7f1d7c20",
-				"mainnet": "1d7e57aa55817448"
+				"testnet": "631e88ae7f1d7c20"
 			}
 		},
 		"TokenForwarding": {
@@ -140,8 +150,8 @@
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"mainnet": "e544175ee0461c4b",
-				"testnet": "51ea0e37c27a1f1a",
-				"testing": "0000000000000007"
+				"testing": "0000000000000007",
+				"testnet": "51ea0e37c27a1f1a"
 			}
 		},
 		"Toucans": {
@@ -152,31 +162,21 @@
 				"testnet": "918c2008c16da416"
 			}
 		},
-		"NFTForwarding": {
-		  "source": "./contracts/core/NFTForwarding.cdc",
-		  "aliases": {
-			"testing": "0000000000000007"
-		  }
-		},
-		"DummyDustTokenMinter": "./contracts/DummyDustTokenMinter.cdc",
-		"Flobot": "./contracts/Flobot.cdc",
-		"Flovatar": "./contracts/Flovatar.cdc",
-		"FlovatarComponent": "./contracts/FlovatarComponent.cdc",
-		"FlovatarComponentTemplate": "./contracts/FlovatarComponentTemplate.cdc",
-		"FlovatarComponentUpgrader": "./contracts/FlovatarComponentUpgrader.cdc",
-		"FlovatarDustCollectible": "./contracts/FlovatarDustCollectible.cdc",
-		"FlovatarDustCollectibleAccessory": "./contracts/FlovatarDustCollectibleAccessory.cdc",
-		"FlovatarDustCollectibleTemplate": "./contracts/FlovatarDustCollectibleTemplate.cdc",
-		"FlovatarDustToken": "./contracts/FlovatarDustToken.cdc",
-		"FlovatarInbox": "./contracts/FlovatarInbox.cdc",
-		"FlovatarMarketplace": "./contracts/FlovatarMarketplace.cdc",
-		"FlovatarPack": "./contracts/FlovatarPack.cdc"
+		"ViewResolver": {
+			"source": "./contracts/core/ViewResolver.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"testing": "0000000000000007",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
-		"testing": "127.0.0.1:3569",
-		"previewnet": "access.previewnet.nodes.onflow.org:9000",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"previewnet": "access.previewnet.nodes.onflow.org:9000",
+		"testing": "127.0.0.1:3569",
 		"testnet": "access.devnet.nodes.onflow.org:9000"
 	},
 	"accounts": {

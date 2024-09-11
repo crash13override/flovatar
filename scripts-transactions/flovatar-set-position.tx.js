@@ -35,7 +35,7 @@ transaction(
 
     execute {
 
-        let flovatar = self.flovatarCollection.borrowFlovatar(id: flovatarId)! as! auth(Flovatar.PrivateEnt) &Flovatar.NFT
+        let flovatar = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
         flovatar.setPosition(latitude: latitude, longitude: longitude, vault: <- self.temporaryVault)
     }

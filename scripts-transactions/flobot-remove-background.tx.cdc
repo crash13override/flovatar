@@ -18,7 +18,7 @@ transaction(
 
     execute {
 
-        let flobot = self.flobotCollection.borrowFlobot(id: flobotId)! as! auth(Flobot.PrivateEnt) &Flobot.NFT
+        let flobot = self.flobotCollection.borrowFlobotPrivate(id: flobotId)!
 
         let background <-flobot.removeBackground()
         if(background != nil){

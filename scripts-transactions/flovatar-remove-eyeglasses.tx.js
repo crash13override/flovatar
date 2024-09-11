@@ -28,7 +28,7 @@ transaction(
 
     execute {
 
-        let flovatar = self.flovatarCollection.borrowFlovatar(id: flovatarId)! as! auth(Flovatar.PrivateEnt) &Flovatar.NFT
+        let flovatar = self.flovatarCollection.borrowFlovatarPrivate(id: flovatarId)!
 
         let eyeglasses <-flovatar.removeEyeglasses()
         if(eyeglasses != nil){
