@@ -18,14 +18,11 @@ transaction(
     name: String
     ) {
 
-    let collectibleCollection: &FlovatarDustCollectible.Collection
-    let vaultCap: Capability<&FlovatarDustToken.Vault>
+    let collectibleCollection: auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.Collection
     let temporaryVault: @{FungibleToken.Vault}
 
     prepare(account: auth(Storage) &Account) {
-        self.collectibleCollection = account.storage.borrow<&FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath)!
-
-        self.vaultCap = account.capabilities.get<&FlovatarDustToken.Vault>(FlovatarDustToken.VaultReceiverPath)
+        self.collectibleCollection = account.storage.borrow<auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.Collection>(from: FlovatarDustCollectible.CollectionStoragePath)!
 
         let vaultRef = account.storage.borrow<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(from: FlovatarDustToken.VaultStoragePath) ?? panic("Could not borrow owner's Vault reference")
 
@@ -35,7 +32,7 @@ transaction(
 
     execute {
 
-        let collectible = self.collectibleCollection.borrowDustCollectible(id: collectibleId)! as! auth(FlovatarDustCollectible.PrivateEnt) &FlovatarDustCollectible.NFT
+        let collectible = self.collectibleCollection.borrowDustCollectible(id: collectibleId)!
 
         collectible.setName(name: name, vault: <- self.temporaryVault)
     }
