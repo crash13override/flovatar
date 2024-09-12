@@ -7,16 +7,8 @@ export async function getDustAccessoryScript(address, accessoryId) {
     return await fcl
         .query({
             cadence: `
-import "Flovatar"
-import "FlovatarComponent" 
-import "FlovatarComponentTemplate"
-import "FlovatarPack"
-import "FlovatarMarketplace"
-import "FlovatarDustCollectible"
-import "FlovatarDustCollectibleAccessory"
-import "FlovatarDustCollectibleTemplate"import NonFungibleToken from 0xNonFungible
-import FungibleToken from 0xFungible
-import FlowToken from 0xFlowToken
+
+import FlovatarDustCollectibleAccessory from 0xFlovatar
 
 access(all) fun main(address:Address, accessoryId:UInt64) : FlovatarDustCollectibleAccessory.CollectibleAccessoryData? {
     // get the accounts' public address objects
