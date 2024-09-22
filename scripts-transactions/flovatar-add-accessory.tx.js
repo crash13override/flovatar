@@ -18,7 +18,7 @@ transaction(
     ) {
 
     let flovatarCollection: auth(Flovatar.PrivateEnt) &Flovatar.Collection
-    let flovatarComponentCollection: &FlovatarComponent.Collection
+    let flovatarComponentCollection: auth(NonFungibleToken.Withdraw) &FlovatarComponent.Collection
 
     let accessoryNFT: @FlovatarComponent.NFT
 

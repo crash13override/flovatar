@@ -23,7 +23,7 @@ transaction(
 
     execute {
 
-        let collectible = self.collectibleCollection.borrowDustCollectible(id: collectibleId)!
+        let collectible = self.collectibleCollection.borrowDustCollectiblePrivate(id: collectibleId)!
 
         collectible.setPosition(latitude: latitude, longitude: longitude, vault: <- self.temporaryVault)
     }

@@ -22,7 +22,7 @@ transaction(
 
     execute {
 
-        let collectible = self.collectibleCollection.borrowDustCollectible(id: collectibleId)!
+        let collectible = self.collectibleCollection.borrowDustCollectiblePrivate(id: collectibleId)!
 
         collectible.setName(name: name, vault: <- self.temporaryVault)
     }
